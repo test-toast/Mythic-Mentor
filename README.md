@@ -1,70 +1,70 @@
-```markdown
-# 🌟 Mythic Mentor
+4. Start WoW og aktiver addon’et på login-skærmen.  
 
-Et **World of Warcraft addon** designet til at hjælpe spillere med at blive bedre i Mythic+ dungeons.  
-Mythic Mentor giver dig tips, noter og værktøjer, så du kan klare højere keys med mere kontrol og bedre overblik.
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
-## ✨ Features
-- 📖 **Boss Notes** – Få vigtige taktiske noter vist direkte under boss-kampe.
-- ⏱️ **Dungeon Timer & Progress** – Hold styr på tid og fjender undervejs.
-- 📊 **Player Reminders** – Personlige påmindelser om mechanics, interrupts og defensive cooldowns.
-- ⚙️ **Custom Settings** – Tilpas hvordan information vises, så det passer til din spillestil.
+## Usage
+Når addon’et er installeret, vil du automatisk se dine boss notes og dungeon værktøjer i spillet.  
+Du kan justere indstillingerne via `/mythicmentor` i chatten.  
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
-## 📥 Installation
-1. Download den nyeste release fra [Releases](https://github.com/DIT-BRUGERNAVN/Mythic-Mentor/releases).
-2. Pak zip-filen ud.
-3. Flyt mappen `MythicMentor` til din WoW AddOns mappe:
-```
+## Roadmap
+- [ ] Flere detaljerede boss notes  
+- [ ] GUI forbedringer  
+- [ ] Route integration  
+- [ ] Community notes system  
 
-*retail*/Interface/AddOns/
+Se alle åbne issues [her](https://github.com/DIT-BRUGERNAVN/Mythic-Mentor/issues).  
 
-````
-4. Start (eller genstart) World of Warcraft.
-5. Aktiver **Mythic Mentor** i addon-listen på karaktervalgskærmen.
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
-## 🖼️ Screenshots
-*(Indsæt dine egne billeder her, f.eks. fra `media/` mappen i repoet)*
+## Contributing
+Bidrag er meget velkomne!  
+1. Fork projektet  
+2. Opret en branch (`git checkout -b feature/FeatureName`)  
+3. Commit dine ændringer (`git commit -m 'Add FeatureName'`)  
+4. Push til branchen (`git push origin feature/FeatureName`)  
+5. Lav et Pull Request  
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
-## 🛠️ Development
-Vil du bidrage? Følg disse trin:
-```bash
-git clone https://github.com/DIT-BRUGERNAVN/Mythic-Mentor.git
-````
+## License
+Distribueres under **MIT License**. Se `LICENSE` for detaljer.  
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
-## 📌 Roadmap
+## Contact
+Dit navn – email@example.com  
 
-* [ ] Flere detaljerede boss notes
-* [ ] GUI forbedringer
-* [ ] Mythic+ route integration
-* [ ] Community-delte noter
+Projekt link: [https://github.com/DIT-BRUGERNAVN/Mythic-Mentor](https://github.com/DIT-BRUGERNAVN/Mythic-Mentor)  
 
----
-
-## 🤝 Contributing
-
-Feedback og pull requests er meget velkomne!
-Du kan også åbne et [Issue](https://github.com/DIT-BRUGERNAVN/Mythic-Mentor/issues), hvis du finder en bug eller har et forslag.
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
-## 📜 License
-
-Mythic Mentor er udgivet under **MIT License**.
-Du er velkommen til at bruge, ændre og dele addon’et frit.
-
-```
-
----
-
-Vil du have, at jeg gør den lidt mere **grafisk flot** med GitHub-badges (downloads, version, osv.), eller skal den bare holdes **ren og enkel**?
-```
+<!-- MARKDOWN LINKS & IMAGES -->
+[contributors-shield]: https://img.shields.io/github/contributors/DIT-BRUGERNAVN/Mythic-Mentor.svg?style=for-the-badge
+[contributors-url]: https://github.com/DIT-BRUGERNAVN/Mythic-Mentor/graphs/contributors
+[forks-shield]: https://img.shields.io/github/forks/DIT-BRUGERNAVN/Mythic-Mentor.svg?style=for-the-badge
+[forks-url]: https://github.com/DIT-BRUGERNAVN/Mythic-Mentor/network/members
+[stars-shield]: https://img.shields.io/github/stars/DIT-BRUGERNAVN/Mythic-Mentor.svg?style=for-the-badge
+[stars-url]: https://github.com/DIT-BRUGERNAVN/Mythic-Mentor/stargazers
+[issues-shield]: https://img.shields.io/github/issues/DIT-BRUGERNAVN/Mythic-Mentor.svg?style=for-the-badge
+[issues-url]: https://github.com/DIT-BRUGERNAVN/Mythic-Mentor/issues
+[license-shield]: https://img.shields.io/github/license/DIT-BRUGERNAVN/Mythic-Mentor.svg?style=for-the-badge
+[license-url]: https://github.com/DIT-BRUGERNAVN/Mythic-Mentor/blob/master/LICENSE
+[release-shield]: https://img.shields.io/github/v/release/DIT-BRUGERNAVN/Mythic-Mentor?style=for-the-badge
+[release-url]: https://github.com/DIT-BRUGERNAVN/Mythic-Mentor/releases
+[downloads-shield]: https://img.shields.io/github/downloads/DIT-BRUGERNAVN/Mythic-Mentor/total?style=for-the-badge
+[downloads-url]: https://github.com/DIT-BRUGERNAVN/Mythic-Mentor/releases
+[product-screenshot]: images/screenshot.png
