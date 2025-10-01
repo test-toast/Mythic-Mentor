@@ -1,70 +1,95 @@
-4. Start WoW og aktiver addon’et på login-skærmen.  
+4. Start eller genstart spillet, og aktiver `MythicMentor` i AddOns-menuen.  
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
----
 
+
+<!-- USAGE EXAMPLES -->
 ## Usage
-Når addon’et er installeret, vil du automatisk se dine boss notes og dungeon værktøjer i spillet.  
-Du kan justere indstillingerne via `/mythicmentor` i chatten.  
+
+- Åbn addon panelet i spillet via **/mythicmentor** eller gennem Interface-menuen.  
+- Se strategier og noter for hver boss i en dungeon.  
+- Tilføj eller redigér dine egne noter.  
+- Del taktik med andre i gruppen (kommende feature).  
+
+_For flere eksempler og guides, se [Wiki](https://github.com/github_username/MythicMentor/wiki)._  
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
----
 
+
+<!-- ROADMAP -->
 ## Roadmap
-- [ ] Flere detaljerede boss notes  
-- [ ] GUI forbedringer  
-- [ ] Route integration  
-- [ ] Community notes system  
 
-Se alle åbne issues [her](https://github.com/DIT-BRUGERNAVN/Mythic-Mentor/issues).  
+- [x] Grundlæggende UI paneler
+- [x] Boss notes system
+- [ ] Dungeon oversigt
+- [ ] Deling af noter i gruppen
+- [ ] Integration med Keystone API
+- [ ] Automatisk taktiske forslag baseret på dungeon & affixes  
+
+Se [open issues](https://github.com/github_username/MythicMentor/issues) for en fuld liste.  
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
----
 
+
+<!-- CONTRIBUTING -->
 ## Contributing
+
 Bidrag er meget velkomne!  
+Hvis du har forslag, kan du enten lave et issue eller en pull request.  
+
 1. Fork projektet  
-2. Opret en branch (`git checkout -b feature/FeatureName`)  
-3. Commit dine ændringer (`git commit -m 'Add FeatureName'`)  
-4. Push til branchen (`git push origin feature/FeatureName`)  
-5. Lav et Pull Request  
+2. Lav en feature branch (`git checkout -b feature/NyFeature`)  
+3. Commit ændringer (`git commit -m 'Tilføjede en ny feature'`)  
+4. Push til branchen (`git push origin feature/NyFeature`)  
+5. Lav en Pull Request  
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
----
 
+
+<!-- LICENSE -->
 ## License
-Distribueres under **MIT License**. Se `LICENSE` for detaljer.  
+
+Distribueret under MIT-licensen. Se `LICENSE.txt` for detaljer.  
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
----
 
+
+<!-- CONTACT -->
 ## Contact
-Dit navn – email@example.com  
 
-Projekt link: [https://github.com/DIT-BRUGERNAVN/Mythic-Mentor](https://github.com/DIT-BRUGERNAVN/Mythic-Mentor)  
+Dit navn - email@email.com  
+
+Projekt link: [https://github.com/github_username/MythicMentor](https://github.com/github_username/MythicMentor)  
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
----
+
+
+<!-- ACKNOWLEDGMENTS -->
+## Acknowledgments
+
+* [Wowpedia](https://wowpedia.fandom.com/) for API-dokumentation  
+* [Shields.io](https://shields.io) for badges  
+* WoW community for feedback og inspiration  
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
 
 <!-- MARKDOWN LINKS & IMAGES -->
-[contributors-shield]: https://img.shields.io/github/contributors/DIT-BRUGERNAVN/Mythic-Mentor.svg?style=for-the-badge
-[contributors-url]: https://github.com/DIT-BRUGERNAVN/Mythic-Mentor/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/DIT-BRUGERNAVN/Mythic-Mentor.svg?style=for-the-badge
-[forks-url]: https://github.com/DIT-BRUGERNAVN/Mythic-Mentor/network/members
-[stars-shield]: https://img.shields.io/github/stars/DIT-BRUGERNAVN/Mythic-Mentor.svg?style=for-the-badge
-[stars-url]: https://github.com/DIT-BRUGERNAVN/Mythic-Mentor/stargazers
-[issues-shield]: https://img.shields.io/github/issues/DIT-BRUGERNAVN/Mythic-Mentor.svg?style=for-the-badge
-[issues-url]: https://github.com/DIT-BRUGERNAVN/Mythic-Mentor/issues
-[license-shield]: https://img.shields.io/github/license/DIT-BRUGERNAVN/Mythic-Mentor.svg?style=for-the-badge
-[license-url]: https://github.com/DIT-BRUGERNAVN/Mythic-Mentor/blob/master/LICENSE
-[release-shield]: https://img.shields.io/github/v/release/DIT-BRUGERNAVN/Mythic-Mentor?style=for-the-badge
-[release-url]: https://github.com/DIT-BRUGERNAVN/Mythic-Mentor/releases
-[downloads-shield]: https://img.shields.io/github/downloads/DIT-BRUGERNAVN/Mythic-Mentor/total?style=for-the-badge
-[downloads-url]: https://github.com/DIT-BRUGERNAVN/Mythic-Mentor/releases
+[contributors-shield]: https://img.shields.io/github/contributors/github_username/MythicMentor.svg?style=for-the-badge
+[contributors-url]: https://github.com/github_username/MythicMentor/graphs/contributors
+[forks-shield]: https://img.shields.io/github/forks/github_username/MythicMentor.svg?style=for-the-badge
+[forks-url]: https://github.com/github_username/MythicMentor/network/members
+[stars-shield]: https://img.shields.io/github/stars/github_username/MythicMentor.svg?style=for-the-badge
+[stars-url]: https://github.com/github_username/MythicMentor/stargazers
+[issues-shield]: https://img.shields.io/github/issues/github_username/MythicMentor.svg?style=for-the-badge
+[issues-url]: https://github.com/github_username/MythicMentor/issues
+[license-shield]: https://img.shields.io/github/license/github_username/MythicMentor.svg?style=for-the-badge
+[license-url]: https://github.com/github_username/MythicMentor/blob/master/LICENSE.txt
 [product-screenshot]: images/screenshot.png
