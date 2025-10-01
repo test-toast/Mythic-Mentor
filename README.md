@@ -1,12 +1,9 @@
-<!-- Improved compatibility of back to top link: See: https://github.com/othneildrew/Best-README-Template/pull/73 -->
 <a id="readme-top"></a>
 <!--
 *** Mythic Mentor - WoW Addon
-*** Hvis du har forslag, så lav gerne et issue eller en pull request!
-*** Og giv projektet en stjerne hvis du kan lide det :)
+*** If you have suggestions, feel free to open an issue or pull request!
+*** And give the project a star if you like it :)
 -->
-
-
 
 <!-- PROJECT SHIELDS -->
 [![Contributors][contributors-shield]][contributors-url]
@@ -15,165 +12,142 @@
 [![Issues][issues-shield]][issues-url]
 [![License][license-shield]][license-url]
 
-
-
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <a href="https://github.com/github_username/MythicMentor">
-    <img src="images/logo.png" alt="Logo" width="80" height="80">
+  <a href="https://github.com/test-toast/Mythic-Mentor">
+    <img src="Media/Mythic Mentor 512x512.png" alt="Logo" width="300" height="300">
   </a>
 
 <h3 align="center">Mythic Mentor</h3>
 
   <p align="center">
-    Et World of Warcraft addon designet til at hjælpe spillere med at organisere, lære og optimere deres Mythic+ oplevelse.
+    A World of Warcraft addon designed to help players organize, learn, and optimize their Mythic+ experience.
     <br />
-    <a href="https://github.com/github_username/MythicMentor"><strong>Udforsk dokumentationen »</strong></a>
+    <a href="https://github.com/test-toast/Mythic-Mentor"><strong>Explore the documentation »</strong></a>
     <br />
     <br />
-    <a href="https://github.com/github_username/MythicMentor/issues">Rapportér fejl</a>
+    <a href="https://github.com/test-toast/Mythic-Mentor/issues">Report a bug</a>
     &middot;
-    <a href="https://github.com/github_username/MythicMentor/issues">Foreslå en feature</a>
+    <a href="https://github.com/test-toast/Mythic-Mentor/issues">Request a feature</a>
+    &middot;
+    <a href="https://www.curseforge.com/wow/addons/mythic-mentor">View on CurseForge</a>
   </p>
 </div>
 
-
-
 <!-- TABLE OF CONTENTS -->
 <details>
-  <summary>Indholdsfortegnelse</summary>
+  <summary>Table of Contents</summary>
   <ol>
-    <li><a href="#about-the-project">Om projektet</a></li>
-    <li><a href="#getting-started">Kom godt i gang</a></li>
-    <li><a href="#usage">Brug</a></li>
+    <li><a href="#about-the-project">About the Project</a></li>
+    <li><a href="#getting-started">Getting Started</a></li>
+    <li><a href="#usage">Usage</a></li>
     <li><a href="#roadmap">Roadmap</a></li>
-    <li><a href="#contributing">Bidrag</a></li>
-    <li><a href="#license">Licens</a></li>
-    <li><a href="#contact">Kontakt</a></li>
-    <li><a href="#acknowledgments">Tak</a></li>
+    <li><a href="#contributing">Contributing</a></li>
+    <li><a href="#license">License</a></li>
+    <li><a href="#contact">Contact</a></li>
+    <li><a href="#acknowledgments">Acknowledgments</a></li>
   </ol>
 </details>
 
-
-
 <!-- ABOUT THE PROJECT -->
-## About The Project
+## About the Project
 
-[![Mythic Mentor Screenshot][product-screenshot]](images/screenshot.png)
+**Mythic Mentor** is a World of Warcraft addon that helps players in Mythic+ dungeons to:  
+- Track boss mechanics.  
+- Share strategies with the group.  
+- Save personal tips and tricks for each dungeon.  
+- Quickly look up information in a clean interface without leaving the game.  
 
-**Mythic Mentor** er et addon til World of Warcraft, der hjælper spillere i Mythic+ dungeons med:  
-- At holde styr på boss mechanics via noter.  
-- At dele strategier med gruppen.  
-- At gemme personlige tips og tricks til hver dungeon.  
-- Hurtigt at slå op i et overskueligt interface uden at forlade spillet.  
-
-Målet er at gøre det nemmere for både nye og erfarne spillere at lære og forbedre sig i Mythic+.  
+The goal is to make it easier for both new and experienced players to learn and improve in Mythic+.  
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
 
 <!-- GETTING STARTED -->
 ## Getting Started
 
 ### Installation
 
-1. Download den nyeste release fra [Releases](https://github.com/github_username/MythicMentor/releases).  
-2. Udpak `.zip` filen.  
-3. Kopiér mappen `MythicMentor` til din WoW AddOns mappe:  
-4. Start eller genstart spillet, og aktiver `MythicMentor` i AddOns-menuen.  
+1. Download the latest release from [Releases](https://github.com/test-toast/Mythic-Mentor/releases).  
+2. Extract the `.zip` file.  
+3. Copy the `BossHelper` folder to:  
+4. Start or reload the game (`/reload`), and make sure `MythicMentor` is enabled in the AddOns menu.  
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
 
 <!-- USAGE EXAMPLES -->
 ## Usage
 
-- Åbn addon panelet i spillet via **/mythicmentor** eller gennem Interface-menuen.  
-- Se strategier og noter for hver boss i en dungeon.  
-- Tilføj eller redigér dine egne noter.  
-- Del taktik med andre i gruppen (kommende feature).  
-
-_For flere eksempler og guides, se [Wiki](https://github.com/github_username/MythicMentor/wiki)._  
+- Open the addon panel in-game via **/MM**, **/mythicmentor**, the minimap button, or the title panel.  
+- View strategies and notes (coming soon) for each boss in a dungeon.  
+- Share strategies in chat with other group members.  
+- Add or edit your own notes (coming soon).  
+- Players can whisper a keyword (e.g., “invite!”) to receive an automatic group invite.  
+- Multi-language support: English (default), Danish, Russian, German.  
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
 
 <!-- ROADMAP -->
 ## Roadmap
 
-- [x] Grundlæggende UI paneler
-- [x] Boss notes system
-- [ ] Dungeon oversigt
-- [ ] Deling af noter i gruppen
-- [ ] Integration med Keystone API
-- [ ] Automatisk taktiske forslag baseret på dungeon & affixes  
+- [ ] Detailed boss strategies  
+- [ ] Boss notes system  
+- [ ] View other players' key levels  
+- [ ] Affixes guide  
 
-Se [open issues](https://github.com/github_username/MythicMentor/issues) for en fuld liste.  
+See [open issues](https://github.com/test-toast/Mythic-Mentor/issues) for a full list.  
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
 
 <!-- CONTRIBUTING -->
 ## Contributing
 
-Bidrag er meget velkomne!  
-Hvis du har forslag, kan du enten lave et issue eller en pull request.  
+Contributions are very welcome!  
+If you have suggestions, translations, or improvements, you can create an issue or a pull request.  
 
-1. Fork projektet  
-2. Lav en feature branch (`git checkout -b feature/NyFeature`)  
-3. Commit ændringer (`git commit -m 'Tilføjede en ny feature'`)  
-4. Push til branchen (`git push origin feature/NyFeature`)  
-5. Lav en Pull Request  
+1. Fork the project  
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)  
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)  
+4. Push to the branch (`git push origin feature/AmazingFeature`)  
+5. Open a Pull Request  
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
 
 <!-- LICENSE -->
 ## License
 
-Distribueret under MIT-licensen. Se `LICENSE.txt` for detaljer.  
+Distributed under the MIT License. See `LICENSE.txt` for more information.  
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
 
 <!-- CONTACT -->
 ## Contact
 
-Dit navn - email@email.com  
+**Discord:** [Join our server](https://discord.gg/DIT-DISCORD-LINK)  
+**Discord users:** test_toast, hypnoquest  
 
-Projekt link: [https://github.com/github_username/MythicMentor](https://github.com/github_username/MythicMentor)  
+Project link: [https://github.com/test-toast/Mythic-Mentor](https://github.com/test-toast/Mythic-Mentor)  
+CurseForge: [https://www.curseforge.com/wow/addons/mythic-mentor](https://www.curseforge.com/wow/addons/mythic-mentor)  
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
 
 <!-- ACKNOWLEDGMENTS -->
 ## Acknowledgments
 
-* [Wowpedia](https://wowpedia.fandom.com/) for API-dokumentation  
-* [Shields.io](https://shields.io) for badges  
-* WoW community for feedback og inspiration  
+* [Shields.io](https://shields.io)  
+* [method.gg](https://www.method.gg/guides)  
+* WoW community for feedback and inspiration  
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-
-
 <!-- MARKDOWN LINKS & IMAGES -->
-[contributors-shield]: https://img.shields.io/github/contributors/github_username/MythicMentor.svg?style=for-the-badge
-[contributors-url]: https://github.com/github_username/MythicMentor/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/github_username/MythicMentor.svg?style=for-the-badge
-[forks-url]: https://github.com/github_username/MythicMentor/network/members
-[stars-shield]: https://img.shields.io/github/stars/github_username/MythicMentor.svg?style=for-the-badge
-[stars-url]: https://github.com/github_username/MythicMentor/stargazers
-[issues-shield]: https://img.shields.io/github/issues/github_username/MythicMentor.svg?style=for-the-badge
-[issues-url]: https://github.com/github_username/MythicMentor/issues
-[license-shield]: https://img.shields.io/github/license/github_username/MythicMentor.svg?style=for-the-badge
-[license-url]: https://github.com/github_username/MythicMentor/blob/master/LICENSE.txt
-[product-screenshot]: images/screenshot.png
+[contributors-shield]: https://img.shields.io/github/contributors/test-toast/Mythic-Mentor.svg?style=for-the-badge
+[contributors-url]: https://github.com/test-toast/Mythic-Mentor/graphs/contributors
+[forks-shield]: https://img.shields.io/github/forks/test-toast/Mythic-Mentor.svg?style=for-the-badge
+[forks-url]: https://github.com/test-toast/Mythic-Mentor/network/members
+[stars-shield]: https://img.shields.io/github/stars/test-toast/Mythic-Mentor.svg?style=for-the-badge
+[stars-url]: https://github.com/test-toast/Mythic-Mentor/stargazers
+[issues-shield]: https://img.shields.io/github/issues/test-toast/Mythic-Mentor.svg?style=for-the-badge
+[issues-url]: https://github.com/test-toast/Mythic-Mentor/issues
+[license-shield]: https://img.shields.io/github/license/test-toast/Mythic-Mentor.svg?style=for-the-badge
+[license-url]: https://github.com/test-toast/Mythic-Mentor/blob/master/LICENSE.txt
