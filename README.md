@@ -53,6 +53,8 @@
 <!-- ABOUT THE PROJECT -->
 ## About the Project
 
+⚠️ Note: Due to recent changes in the game, sending tactics/tips directly to chat during an active instance (e.g. Mythic+) is currently restricted by Blizzard’s chat lockdown system. We are actively looking into alternative solutions to make this Work
+
 **Mythic Mentor** is a World of Warcraft addon that helps players in Mythic+ dungeons to:  
 - Track boss mechanics.  
 - Share strategies with the group.  
@@ -78,10 +80,10 @@ The goal is to make it easier for both new and experienced players to learn and 
 <!-- USAGE EXAMPLES -->
 ## Usage
 
-- Open the addon panel in-game via **/MM**, **/mythicmentor**, the minimap button, or the title panel.  
-- View strategies and notes (coming soon) for each boss in a dungeon.  
+- Open the addon panel in-game via **/MM**, **/mythicmentor**, the minimap button, or the titan panel.  
+- View strategies and notes for each boss in a dungeon.  
 - Share strategies in chat with other group members.  
-- Add or edit your own notes (coming soon).  
+- Add or edit your own notes.  
 - Players can whisper a keyword (e.g., “invite!”) to receive an automatic group invite.  
 - Multi-language support: English (default), Danish, Russian, German.  
 
@@ -90,10 +92,7 @@ The goal is to make it easier for both new and experienced players to learn and 
 <!-- ROADMAP -->
 ## Roadmap
 
-- [ ] Detailed boss strategies  
-- [ ] Boss notes system  
-- [ ] View other players' key levels  
-- [ ] Affixes guide  
+- [ ] 
 
 See [open issues](https://github.com/test-toast/Mythic-Mentor/issues) for a full list.  
 
