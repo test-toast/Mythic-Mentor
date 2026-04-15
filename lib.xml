@@ -1,0 +1,36 @@
+﻿Dungeon6_ruRU = {
+    instanceID = 278,
+    bosses = {
+        {
+            encounterID = 608,
+            short = [[
+1. Прячься за Saronite Ores во время Glacial Overload.
+
+Healer. Dispel ASAP.
+Tank. Cryostomp → стой рядом с ore.
+]],
+            details = [[Скоро]]
+        },
+        {
+            encounterID = 609,
+            short = [[
+1. Prio kick Death Bolt.
+2. Interrupt & kill adds.
+3. Run при fixate.
+
+Tank. Не клади puddles на purple swirlies.
+]],
+            details = [[Скоро]]
+        },
+        {
+            encounterID = 610,
+            short = [[
+1. Blue circles на green corpse piles.
+2. Kick & kill adds.
+
+Tank. Перемести босса на corpse pile при cast Army of the Dead.
+]],
+            details = [[Скоро]]
+        },
+    }
+}
