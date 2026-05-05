@@ -24,8 +24,6 @@
   <p align="center">
     A World of Warcraft addon designed to help players organize, learn, and optimize their Mythic+ experience.
     <br />
-    <a href="https://github.com/test-toast/Mythic-Mentor"><strong>Explore the documentation »</strong></a>
-    <br />
     <br />
     <a href="https://github.com/test-toast/Mythic-Mentor/issues">Report a bug</a>
     &middot;
