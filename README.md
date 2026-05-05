@@ -16,7 +16,7 @@
 <br />
 <div align="center">
   <a href="https://github.com/test-toast/Mythic-Mentor">
-    <img src="Media/Mythic Mentor 512x512.png" alt="Logo" width="300" height="300">
+    <img src="BossHelper/Media/Mythic Mentor 512x512.png" alt="Logo" width="300" height="300">
   </a>
 
 <h3 align="center">Mythic Mentor</h3>
@@ -51,17 +51,27 @@
 </details>
 
 <!-- ABOUT THE PROJECT -->
-## About the Project
+## About Mythic Mentor
+**Your in‑game guide to Mythic+ dungeons.**
+**No more alt‑tabbing or scrolling through walls of text everything you need is right at your fingertips inside World of Warcraft.**
 
-⚠️ Note: Due to recent changes in the game, sending tactics/tips directly to chat during an active instance (e.g. Mythic+) is currently restricted by Blizzard’s chat lockdown system. We are actively looking into alternative solutions to make this Work
+**With Mythic Mentor, you can:**
 
-**Mythic Mentor** is a World of Warcraft addon that helps players in Mythic+ dungeons to:  
-- Track boss mechanics.  
-- Share strategies with the group.  
-- Save personal tips and tricks for each dungeon.  
-- Quickly look up information in a clean interface without leaving the game.  
+- 📖 Read simple boss tactics for every encounter get the essentials at a glance so your group knows exactly what to do.
 
-The goal is to make it easier for both new and experienced players to learn and improve in Mythic+.  
+- 💬 Share tactics instantly in party chat ideal when someone in your group doesn’t have the addon or needs a quick reminder.
+
+- 📝 Edit & Create your own tactics You can fully edit existing boss tactics or create your own custom ones.
+
+- 📝 Custom notes Write your own boss-specific or general notes and highlight important information so nothing gets missed.
+
+- 🤖 Built‑in Auto‑Invite system players can whisper a keyword (e.g., invite!) and receive an automatic group invite, making group formation fast and effortless.
+
+- 🌐 Multi-language support currently includes English (default), German, French, Danish, and Russian.
+
+- And More
+
+Whether you’re a first‑timer or a seasoned Mythic+ runner, Mythic Mentor helps you stay prepared, support your group, and focus on what really matters: getting that loot!
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -72,7 +82,7 @@ The goal is to make it easier for both new and experienced players to learn and 
 
 1. Download the latest release from [Releases](https://github.com/test-toast/Mythic-Mentor/releases).  
 2. Extract the `.zip` file.  
-3. Copy the `BossHelper` folder to:  
+3. Copy the `BossHelper` folder to `World of Warcraft\_retail_\Interface\AddOns`
 4. Start or reload the game (`/reload`), and make sure `MythicMentor` is enabled in the AddOns menu.  
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -80,35 +90,9 @@ The goal is to make it easier for both new and experienced players to learn and 
 <!-- USAGE EXAMPLES -->
 ## Usage
 
-- Open the addon panel in-game via **/MM**, **/mythicmentor**, the minimap button, or the titan panel.  
-- View strategies and notes for each boss in a dungeon.  
-- Share strategies in chat with other group members.  
-- Add or edit your own notes.  
-- Players can whisper a keyword (e.g., “invite!”) to receive an automatic group invite.  
-- Multi-language support: English (default), Danish, Russian, German.  
+Slash Commands:
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-<!-- ROADMAP -->
-## Roadmap
-
-- [ ] 
-
-See [open issues](https://github.com/test-toast/Mythic-Mentor/issues) for a full list.  
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-<!-- CONTRIBUTING -->
-## Contributing
-
-Contributions are very welcome!  
-If you have suggestions, translations, or improvements, you can create an issue or a pull request.  
-
-1. Fork the project  
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)  
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)  
-4. Push to the branch (`git push origin feature/AmazingFeature`)  
-5. Open a Pull Request  
+`/MM` or `/mythicmentor` — Toggle addon panel
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -122,8 +106,8 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
 <!-- CONTACT -->
 ## Contact
 
-**Discord:** [Join our server](https://discord.gg/DIT-DISCORD-LINK)  
-**Discord users:** test_toast, hypnoquest  
+**Discord:** [Join our server]([https://discord.gg/DIT-DISCORD-LINK](https://discord.gg/xN6g6PPdcz))
+**Discord users:** test_toast, hypnoquest.  
 
 Project link: [https://github.com/test-toast/Mythic-Mentor](https://github.com/test-toast/Mythic-Mentor)  
 CurseForge: [https://www.curseforge.com/wow/addons/mythic-mentor](https://www.curseforge.com/wow/addons/mythic-mentor)  
@@ -131,10 +115,11 @@ CurseForge: [https://www.curseforge.com/wow/addons/mythic-mentor](https://www.cu
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- ACKNOWLEDGMENTS -->
-## Acknowledgments
+## Credit
 
 * [Shields.io](https://shields.io)  
-* [method.gg](https://www.method.gg/guides)  
+* [method.gg](https://www.method.gg/guides)
+* [World of Duck Craft]([https://www.method.gg/guides](https://www.patreon.com/WorldofDuckCraft/about))
 * WoW community for feedback and inspiration  
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
