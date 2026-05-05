@@ -33,6 +33,18 @@ local allEntries         = {}   -- alle taktik-entries på tværs af faser
 local currentFilterPhase = PHASE_NONE  -- hvilken fase der vises i scrollet
 
 -- =====================================================================
+-- Shared helpers
+-- =====================================================================
+local function SafePlay(sound)
+    if BossHelper and BossHelper.SafePlaySound then BossHelper:SafePlaySound(sound) end
+end
+local function trim(s) return (s or ""):gsub("^%s+",""):gsub("%s+$","") end
+local function SetColors(frame, bg, border)
+    if bg     then frame:SetBackdropColor(bg[1], bg[2], bg[3], bg[4]) end
+    if border then frame:SetBackdropBorderColor(border[1], border[2], border[3], border[4]) end
+end
+
+-- =====================================================================
 -- GetCustomEntries / SaveCustomEntries
 -- =====================================================================
 local function GetCustomEntries(dungeon, bossName)
@@ -44,7 +56,7 @@ local function GetCustomEntries(dungeon, bossName)
     if type(raw) == "string" then
         local entries = {}
         for line in raw:gmatch("([^\n]+)") do
-            line = line:gsub("^%s+",""):gsub("%s+$","")
+            line = trim(line)
             if line ~= "" then table.insert(entries, {phase=PHASE_NONE, text=line}) end
         end
         BossHelperDB.customTactics[dungeon][bossName] = entries
@@ -71,6 +83,8 @@ local function RefreshLayout()
     if not editContent then return end
     local y = 0
     for i, row in ipairs(tacticRows) do
+        -- Annuller evt. igangværende slide-tween før vi sætter ny anchor
+        if row._slideTween then row._slideTween.running = false end
         row:ClearAllPoints()
         row:SetPoint("TOPLEFT", editContent, "TOPLEFT", BOX_LEFT, -y)
         row:Show()
@@ -108,14 +122,7 @@ local function CreatePhaseDropdownWidget(parent, boss, initialPhase)
 
     local mainBtn = CreateFrame("Button", nil, parent, "BackdropTemplate")
     mainBtn:SetSize(200, 24)
-    mainBtn:SetBackdrop({
-        bgFile="Interface/ChatFrame/ChatFrameBackground",
-        edgeFile="Interface/Tooltips/UI-Tooltip-Border",
-        tile=true, tileSize=16, edgeSize=10,
-        insets={left=3,right=3,top=3,bottom=3},
-    })
-    mainBtn:SetBackdropColor(0.06, 0.07, 0.11, 0.95)
-    mainBtn:SetBackdropBorderColor(0.3, 0.3, 0.3, 0.8)
+    _BD(mainBtn, "NORMAL", _C.BG_DARK, _C.BORDER_GREY)
 
     local mainLabel = mainBtn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     mainLabel:SetPoint("LEFT", mainBtn, "LEFT", 6, 0)
@@ -130,14 +137,7 @@ local function CreatePhaseDropdownWidget(parent, boss, initialPhase)
     arrow:SetTextColor(0.7, 0.7, 0.7)
 
     local dropPanel = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
-    dropPanel:SetBackdrop({
-        bgFile="Interface/ChatFrame/ChatFrameBackground",
-        edgeFile="Interface/Tooltips/UI-Tooltip-Border",
-        tile=true, tileSize=16, edgeSize=16,
-        insets={left=5,right=5,top=5,bottom=5},
-    })
-    dropPanel:SetBackdropColor(0.06, 0.07, 0.11, 0.98)
-    dropPanel:SetBackdropBorderColor(1, 0.6, 0.2, 0.9)
+    _BD(dropPanel, "FRAME", _C.BG_DARK_OPAQUE, _C.BORDER_ORANGE_BRIGHT)
     dropPanel:SetFrameStrata("TOOLTIP")
     dropPanel:SetFrameLevel(3000)
     dropPanel:Hide()
@@ -245,7 +245,7 @@ local function CreatePhaseDropdownWidget(parent, boss, initialPhase)
         newBox:SetAutoFocus(false)
         newBox:SetText("")
         newBox:SetScript("OnEnterPressed", function(self)
-            local txt = self:GetText():gsub("^%s+",""):gsub("%s+$","")
+            local txt = trim(self:GetText())
             if txt ~= "" then
                 selectedPhase = txt
                 mainLabel:SetText(txt)
@@ -293,32 +293,18 @@ local function CreateTacticRow(entry)
 
     local row = CreateFrame("Frame", nil, editContent, "BackdropTemplate")
     row:SetSize(ROW_W, MIN_BOX_H + FOOTER_H + 12)
-    row:SetBackdrop({
-        bgFile="Interface/ChatFrame/ChatFrameBackground",
-        edgeFile="Interface/Tooltips/UI-Tooltip-Border",
-        tile=true, tileSize=16, edgeSize=16,
-        insets={left=5,right=5,top=5,bottom=5},
-    })
-    row:SetBackdropColor(0.06, 0.07, 0.11, 0.95)
-    row:SetBackdropBorderColor(1, 0.6, 0.2, 0.6)
+    _BD(row, "FRAME", _C.BG_DARK, _C.BORDER_ORANGE)
 
     -- Synlig editbox-baggrund (viser tydeligt at man kan skrive her)
     local boxBg = CreateFrame("Frame", nil, row, "BackdropTemplate")
     boxBg:SetPoint("TOPLEFT",     row, "TOPLEFT",     6, -6)
     boxBg:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", -6,  FOOTER_H + 2)
-    boxBg:SetBackdrop({
-        bgFile="Interface/ChatFrame/ChatFrameBackground",
-        edgeFile="Interface/Tooltips/UI-Tooltip-Border",
-        tile=true, tileSize=16, edgeSize=14,
-        insets={left=4,right=4,top=4,bottom=4},
-    })
-    boxBg:SetBackdropColor(0.02, 0.03, 0.06, 1)
-    boxBg:SetBackdropBorderColor(0.12, 0.15, 0.26, 1)
+    _BD(boxBg, "EDITBOX", _C.BG_VERY_DARK, _C.BORDER_DARK_BLUE)
 
     -- Pladsholder tekst (vises når boksen er tom og ikke fokuseret)
     local placeholder = boxBg:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     placeholder:SetPoint("TOPLEFT", boxBg, "TOPLEFT", 8, -8)
-    placeholder:SetText(Translate and Translate("TACTIC_PLACEHOLDER") or "Write tactic here...")
+    placeholder:SetText(Translate("TACTIC_PLACEHOLDER"))
     placeholder:SetTextColor(0.4, 0.4, 0.5, 1)
 
     -- Multi-line EditBox
@@ -343,18 +329,12 @@ local function CreateTacticRow(entry)
     end
     UpdatePlaceholder()
 
-    box:SetScript("OnTextChanged", function(self)
-        UpdatePlaceholder()
-        ResizeRow()
-    end)
-    box:SetScript("OnEditFocusGained", function(self)
-        boxBg:SetBackdropBorderColor(1, 0.6, 0.2, 0.9)
-        boxBg:SetBackdropColor(0.08, 0.07, 0.05, 1)
+    box:SetScript("OnEditFocusGained", function()
+        SetColors(boxBg, _C.BG_FOCUSED, _C.BORDER_ORANGE_BRIGHT)
         UpdatePlaceholder()
     end)
-    box:SetScript("OnEditFocusLost", function(self)
-        boxBg:SetBackdropBorderColor(0.12, 0.15, 0.26, 1)
-        boxBg:SetBackdropColor(0.02, 0.03, 0.06, 1)
+    box:SetScript("OnEditFocusLost", function()
+        SetColors(boxBg, _C.BG_VERY_DARK, _C.BORDER_DARK_BLUE)
         UpdatePlaceholder()
     end)
     box:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
@@ -392,14 +372,7 @@ local function CreateTacticRow(entry)
         local btn = CreateFrame("Button", nil, row, "BackdropTemplate")
         btn:SetSize(BTN_SIZE, BTN_SIZE)
         btn:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", xOff, (FOOTER_H + 2 - BTN_SIZE) / 2 + 3)
-        btn:SetBackdrop({
-            bgFile="Interface/ChatFrame/ChatFrameBackground",
-            edgeFile="Interface/Tooltips/UI-Tooltip-Border",
-            tile=true, tileSize=16, edgeSize=8,
-            insets={left=2,right=2,top=2,bottom=2},
-        })
-        btn:SetBackdropColor(0.06, 0.07, 0.11, 0.9)
-        btn:SetBackdropBorderColor(0.3, 0.3, 0.3, 0.8)
+        _BD(btn, "SMALL", _C.BG_DARK_90, _C.BORDER_GREY)
         local icon = btn:CreateTexture(nil, "OVERLAY")
         icon:SetSize(16, 16)
         icon:SetPoint("CENTER", btn, "CENTER", 0, 0)
@@ -415,8 +388,7 @@ local function CreateTacticRow(entry)
             GameTooltip:Show()
         end)
         btn:SetScript("OnLeave", function(self)
-            self:SetBackdropColor(0.06, 0.07, 0.11, 0.9)
-            self:SetBackdropBorderColor(0.3, 0.3, 0.3, 0.8)
+            SetColors(self, _C.BG_DARK_90, _C.BORDER_GREY)
             GameTooltip:Hide()
         end)
         -- Insert role keyword into the row's editbox at the cursor position
@@ -437,30 +409,21 @@ local function CreateTacticRow(entry)
     local delBtn = CreateFrame("Button", nil, row, "BackdropTemplate")
     delBtn:SetSize(60, 22)
     delBtn:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", -6, (FOOTER_H + 2 - 22) / 2 + 3)
-    delBtn:SetBackdrop({
-        bgFile="Interface/ChatFrame/ChatFrameBackground",
-        edgeFile="Interface/Tooltips/UI-Tooltip-Border",
-        tile=true, tileSize=16, edgeSize=8,
-        insets={left=2,right=2,top=2,bottom=2},
-    })
-    delBtn:SetBackdropColor(0.35, 0.07, 0.07, 0.9)
-    delBtn:SetBackdropBorderColor(0.6, 0.18, 0.18, 0.8)
+    _BD(delBtn, "SMALL", _C.BG_RED, _C.BORDER_RED)
     local delTxt = delBtn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     delTxt:SetPoint("CENTER")
-    delTxt:SetText(Translate and Translate("DELETE") or "Delete")
+    delTxt:SetText(Translate("DELETE"))
     delTxt:SetTextColor(1, 0.4, 0.4)
     delBtn:SetScript("OnEnter", function(self)
-        self:SetBackdropColor(0.55, 0.1, 0.1, 1)
-        self:SetBackdropBorderColor(1, 0.3, 0.3, 1)
+        SetColors(self, {0.55, 0.1, 0.1, 1}, {1, 0.3, 0.3, 1})
         delTxt:SetTextColor(1, 0.8, 0.8)
     end)
     delBtn:SetScript("OnLeave", function(self)
-        self:SetBackdropColor(0.35, 0.07, 0.07, 0.9)
-        self:SetBackdropBorderColor(0.6, 0.18, 0.18, 0.8)
+        SetColors(self, _C.BG_RED, _C.BORDER_RED)
         delTxt:SetTextColor(1, 0.4, 0.4)
     end)
     delBtn:SetScript("OnClick", function()
-        if BossHelper and BossHelper.SafePlaySound then BossHelper:SafePlaySound(BossHelper.Sounds.NORMAL_BUTTON) end
+        SafePlay(BossHelper.Sounds.NORMAL_BUTTON)
         RemoveRow(row)
     end)
 
@@ -482,8 +445,20 @@ local function CreateTacticRow(entry)
     arrowUp:SetScript("OnClick", function()
         for i, r in ipairs(tacticRows) do
             if r == row and i > 1 then
+                local prevRow = tacticRows[i-1]
+                -- Gem nuværende Y-ankre i parent-koordinater
+                local _, _, _, _, rowOldY  = row:GetPoint(1)
+                local _, _, _, _, prevOldY = prevRow:GetPoint(1)
+                -- Flash pil
+                BossHelper.Anim.FlashArrow(upTxt)
+                -- Byt og opdater layout
                 tacticRows[i], tacticRows[i-1] = tacticRows[i-1], tacticRows[i]
                 RefreshLayout()
+                -- Glæd begge rækker fra deres gamle positioner
+                local _, _, _, _, rowNewY  = row:GetPoint(1)
+                local _, _, _, _, prevNewY = prevRow:GetPoint(1)
+                BossHelper.Anim.SlideRow(row,     rowOldY  - rowNewY)
+                BossHelper.Anim.SlideRow(prevRow, prevOldY - prevNewY)
                 break
             end
         end
@@ -511,8 +486,20 @@ local function CreateTacticRow(entry)
     arrowDown:SetScript("OnClick", function()
         for i, r in ipairs(tacticRows) do
             if r == row and i < #tacticRows then
+                local nextRow = tacticRows[i+1]
+                -- Gem nuværende Y-ankre i parent-koordinater
+                local _, _, _, _, rowOldY  = row:GetPoint(1)
+                local _, _, _, _, nextOldY = nextRow:GetPoint(1)
+                -- Flash pil
+                BossHelper.Anim.FlashArrow(downTxt)
+                -- Byt og opdater layout
                 tacticRows[i], tacticRows[i+1] = tacticRows[i+1], tacticRows[i]
                 RefreshLayout()
+                -- Glæd begge rækker fra deres gamle positioner
+                local _, _, _, _, rowNewY  = row:GetPoint(1)
+                local _, _, _, _, nextNewY = nextRow:GetPoint(1)
+                BossHelper.Anim.SlideRow(row,     rowOldY  - rowNewY)
+                BossHelper.Anim.SlideRow(nextRow, nextOldY - nextNewY)
                 break
             end
         end
@@ -545,8 +532,7 @@ local function SyncVisibleRowsToAllEntries()
     end
     for _, row in ipairs(tacticRows) do
         if row.editBox then
-            local t = row.editBox:GetText() or ""
-            t = t:gsub("^%s+",""):gsub("%s+$","")
+            local t = trim(row.editBox:GetText())
             if t ~= "" then
                 table.insert(remaining, {phase=currentFilterPhase, text=t})
             end
@@ -576,12 +562,9 @@ end
 function BossUI:HideEditModeUI()
     local rPanel = BossUI.GetRightPanel()
     if not rPanel then return end
-    if rPanel.editTacticsPanel  then rPanel.editTacticsPanel:Hide()  end
-    if rPanel.editFilterBtn      then rPanel.editFilterBtn:Hide()      end
-    if rPanel.saveTacticsBtn     then rPanel.saveTacticsBtn:Hide()     end
-    if rPanel.resetTacticsBtn    then rPanel.resetTacticsBtn:Hide()    end
-    if rPanel.cancelTacticsBtn   then rPanel.cancelTacticsBtn:Hide()   end
-    if rPanel.editTacticsBtn     then rPanel.editTacticsBtn:Hide()     end
+    for _, key in ipairs({"editTacticsPanel","editFilterBtn","saveTacticsBtn","resetTacticsBtn","cancelTacticsBtn","editTacticsBtn"}) do
+        BossHelper.UI.hide(rPanel[key])
+    end
 end
 
 -- =====================================================================
@@ -607,11 +590,10 @@ function BossUI:EnterEditMode()
     if #entries == 0 then
         if boss.phases and #boss.phases > 0 and boss.phaseText then
             for _, phaseName in ipairs(boss.phases) do
-                local txt = boss.phaseText[phaseName] or ""
-                txt = txt:gsub("^%s+",""):gsub("%s+$","")
+                local txt = trim(boss.phaseText[phaseName] or "")
                 if txt ~= "" then
                     for line in txt:gmatch("([^\n]+)") do
-                        line = line:gsub("^%s+",""):gsub("%s+$","")
+                        line = trim(line)
                         if line ~= "" then
                             table.insert(entries, {phase=phaseName, text=line})
                         end
@@ -621,7 +603,7 @@ function BossUI:EnterEditMode()
         else
             local txt = (boss.short or ""):gsub("\r\n","\n")
             for line in txt:gmatch("([^\n]+)") do
-                line = line:gsub("^%s+",""):gsub("%s+$","")
+                line = trim(line)
                 if line ~= "" then
                     table.insert(entries, {phase=PHASE_NONE, text=line})
                 end
@@ -644,19 +626,12 @@ function BossUI:EnterEditMode()
         rPanel.editFilterPhaseWidget.SetFilterPhase(currentFilterPhase)
     end
 
-    if rPanel.shortBtnScroll            then rPanel.shortBtnScroll:Hide()            end
-    if rPanel.phaseDropdown             then rPanel.phaseDropdown:Hide()             end
-    if rPanel.phaseDropdownClickCatcher then rPanel.phaseDropdownClickCatcher:Hide() end
-    if rPanel.detailToggle              then rPanel.detailToggle:Hide()              end
-    if rPanel.postButton                then rPanel.postButton:Hide()                end
-    if rPanel.bossNoteButton            then rPanel.bossNoteButton:Hide()            end
-    if rPanel.editTacticsBtn            then rPanel.editTacticsBtn:Hide()            end
-
-    if rPanel.editTacticsPanel then rPanel.editTacticsPanel:Show() end
-    if rPanel.editFilterBtn     then rPanel.editFilterBtn:Show()     end
-    if rPanel.saveTacticsBtn    then rPanel.saveTacticsBtn:Show()    end
-    if rPanel.resetTacticsBtn   then rPanel.resetTacticsBtn:Show()   end
-    if rPanel.cancelTacticsBtn  then rPanel.cancelTacticsBtn:Show()  end
+    for _, key in ipairs({"shortBtnScroll","phaseDropdown","phaseDropdownClickCatcher","detailToggle","postButton","bossNoteButton","editTacticsBtn"}) do
+        BossHelper.UI.hide(rPanel[key])
+    end
+    for _, key in ipairs({"editTacticsPanel","editFilterBtn","saveTacticsBtn","resetTacticsBtn","cancelTacticsBtn"}) do
+        if rPanel[key] then rPanel[key]:Show() end
+    end
 end
 
 -- =====================================================================
@@ -679,11 +654,9 @@ function BossUI:ExitEditMode(saveChanges)
     allEntries = {}
     currentFilterPhase = PHASE_NONE
 
-    if rPanel.editTacticsPanel then rPanel.editTacticsPanel:Hide() end
-    if rPanel.editFilterBtn     then rPanel.editFilterBtn:Hide()     end
-    if rPanel.saveTacticsBtn    then rPanel.saveTacticsBtn:Hide()    end
-    if rPanel.resetTacticsBtn   then rPanel.resetTacticsBtn:Hide()   end
-    if rPanel.cancelTacticsBtn  then rPanel.cancelTacticsBtn:Hide()  end
+    for _, key in ipairs({"editTacticsPanel","editFilterBtn","saveTacticsBtn","resetTacticsBtn","cancelTacticsBtn"}) do
+        BossHelper.UI.hide(rPanel[key])
+    end
 
     if f and f.selectedBoss and dungeon then
         local dungeonData = BossData[dungeon]
@@ -779,22 +752,22 @@ function BossUI:BuildEditModeUI(rPanel)
     editTacticsBtn.pencilIcon:SetPoint("CENTER", editTacticsBtn, "CENTER", 0, 1)
     editTacticsBtn.pencilIcon:SetVertexColor(0.98, 0.82, 0.55, 1)
     editTacticsBtn:SetScript("OnEnter", function(self)
-        self.bg:SetColorTexture(0.15, 0.15, 0.25, 1)
+        self:SetBackdropColor(0.15, 0.15, 0.25, 1)
         self:SetBackdropBorderColor(1, 0.6, 0.2, 1)
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        GameTooltip:SetText(Translate and Translate("EDIT_TACTICS_TOOLTIP") or "Edit Tactics", 1, 0.82, 0.3)
+        GameTooltip:SetText(Translate("EDIT_TACTICS_TOOLTIP"), 1, 0.82, 0.3)
         GameTooltip:Show()
     end)
     editTacticsBtn:SetScript("OnLeave", function(self)
-        self.bg:SetColorTexture(0.06, 0.07, 0.11, 1)
+        self:SetBackdropColor(0.06, 0.07, 0.11, 1)
         self:SetBackdropBorderColor(0.3, 0.3, 0.3, 0.8)
         GameTooltip:Hide()
     end)
     editTacticsBtn:SetScript("OnClick", function()
-        if BossHelper and BossHelper.SafePlaySound then BossHelper:SafePlaySound(BossHelper.Sounds.NORMAL_BUTTON) end
+        SafePlay(BossHelper.Sounds.NORMAL_BUTTON)
         ConfirmDialog.Show({
-            title   = (Translate and Translate("EDIT_TACTICS_BETA_TITLE")) or "Edit Tactics \u2013 Beta",
-            message = (Translate and Translate("EDIT_TACTICS_BETA_MSG")) or "Editing boss tactics is a new feature.\n\nBugs may occur. Your changes are saved locally and do not affect other players.\n\nDo you want to continue?",
+            title   = Translate("EDIT_TACTICS_BETA_TITLE"),
+            message = Translate("EDIT_TACTICS_BETA_MSG"),
             onOk    = function() BossUI:EnterEditMode() end,
         })
     end)
@@ -805,14 +778,7 @@ function BossUI:BuildEditModeUI(rPanel)
     local editTacticsPanel = CreateFrame("Frame", nil, rPanel, "BackdropTemplate")
     editTacticsPanel:SetPoint("TOPLEFT",     rPanel, "TOPLEFT",     8,  -40)
     editTacticsPanel:SetPoint("BOTTOMRIGHT", rPanel, "BOTTOMRIGHT", -8,  46)
-    editTacticsPanel:SetBackdrop({
-        bgFile="Interface/ChatFrame/ChatFrameBackground",
-        edgeFile="Interface/Tooltips/UI-Tooltip-Border",
-        tile=true, tileSize=16, edgeSize=16,
-        insets={left=5,right=5,top=5,bottom=5},
-    })
-    editTacticsPanel:SetBackdropColor(0.08, 0.08, 0.15, 0.9)
-    editTacticsPanel:SetBackdropBorderColor(1, 0.6, 0.2, 0.8)
+    _BD(editTacticsPanel, "FRAME", _C.BG_PANEL, _C.BORDER_ORANGE_MED)
     editTacticsPanel:Hide()
     rPanel.editTacticsPanel = editTacticsPanel
 
@@ -822,14 +788,7 @@ function BossUI:BuildEditModeUI(rPanel)
     local filterBtn = CreateFrame("Button", nil, rPanel, "BackdropTemplate")
     filterBtn:SetSize(140, 26)
     filterBtn:SetPoint("TOPLEFT", rPanel, "TOPLEFT", 8, -8)
-    filterBtn:SetBackdrop({
-        bgFile="Interface/ChatFrame/ChatFrameBackground",
-        edgeFile="Interface/Tooltips/UI-Tooltip-Border",
-        tile=true, tileSize=16, edgeSize=10,
-        insets={left=3,right=3,top=3,bottom=3},
-    })
-    filterBtn:SetBackdropColor(0.06, 0.07, 0.11, 0.95)
-    filterBtn:SetBackdropBorderColor(0.3, 0.3, 0.3, 0.8)
+    _BD(filterBtn, "NORMAL", _C.BG_DARK, _C.BORDER_GREY)
 
     local filterBtnLabel = filterBtn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     filterBtnLabel:SetPoint("CENTER", filterBtn, "CENTER", 0, 0)
@@ -849,26 +808,18 @@ function BossUI:BuildEditModeUI(rPanel)
         filterBtnLabel:SetTextColor(1, 0.9, 0.4)
         if self.arrow then self.arrow:SetVertexColor(1, 0.9, 0.4, 1) end
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        GameTooltip:SetText(Translate and Translate("FILTER_PHASE_TOOLTIP") or "Filter Phase", 1, 0.82, 0.3)
+        GameTooltip:SetText(Translate("FILTER_PHASE_TOOLTIP"), 1, 0.82, 0.3)
         GameTooltip:Show()
     end)
     filterBtn:SetScript("OnLeave", function(self)
-        self:SetBackdropColor(0.06, 0.07, 0.11, 0.95)
-        self:SetBackdropBorderColor(0.3, 0.3, 0.3, 0.8)
-        filterBtnLabel:SetTextColor(0.95, 0.85, 0.6)
+        SetColors(self, _C.BG_DARK, _C.BORDER_GREY)
+        filterBtnLabel:SetTextColor(_C.TEXT_GOLD[1], _C.TEXT_GOLD[2], _C.TEXT_GOLD[3])
         if self.arrow then self.arrow:SetVertexColor(0.98, 0.82, 0.55, 0.8) end
         GameTooltip:Hide()
     end)
 
     local filterDropPanel = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
-    filterDropPanel:SetBackdrop({
-        bgFile="Interface/ChatFrame/ChatFrameBackground",
-        edgeFile="Interface/Tooltips/UI-Tooltip-Border",
-        tile=true, tileSize=16, edgeSize=16,
-        insets={left=5,right=5,top=5,bottom=5},
-    })
-    filterDropPanel:SetBackdropColor(0.06, 0.07, 0.11, 0.98)
-    filterDropPanel:SetBackdropBorderColor(1, 0.6, 0.2, 0.9)
+    _BD(filterDropPanel, "FRAME", _C.BG_DARK_OPAQUE, _C.BORDER_ORANGE_BRIGHT)
     filterDropPanel:SetFrameStrata("TOOLTIP")
     filterDropPanel:SetFrameLevel(3000)
     filterDropPanel:Hide()
@@ -1002,15 +953,14 @@ function BossUI:BuildEditModeUI(rPanel)
                     end
                 end)
 
-                -- show/hide delete icon when hovering the whole item
                 local prevEnter = item:GetScript("OnEnter")
                 item:SetScript("OnEnter", function(self)
-                    if prevEnter then pcall(prevEnter, self) end
+                    if prevEnter then prevEnter(self) end
                     delIcon:Show()
                 end)
                 local prevLeave = item:GetScript("OnLeave")
                 item:SetScript("OnLeave", function(self)
-                    if prevLeave then pcall(prevLeave, self) end
+                    if prevLeave then prevLeave(self) end
                     delIcon:Hide()
                 end)
                 delBtn:SetScript("OnClick", function()
@@ -1018,8 +968,8 @@ function BossUI:BuildEditModeUI(rPanel)
                     filterCatcher:Hide()
                     if filterBtn.arrow then filterBtn.arrow:SetRotation(0) end
                     ConfirmDialog.Show({
-                        title   = (Translate and Translate("DELETE_PHASE_TITLE")) or "Delete Phase",
-                        message = string.format((Translate and Translate("DELETE_PHASE_MSG")) or "Are you sure you want to delete the phase '%s' and all its tactics?\n\nThis cannot be undone.", pCopy),
+                        title   = Translate("DELETE_PHASE_TITLE"),
+                        message = string.format(Translate("DELETE_PHASE_MSG"), pCopy),
                         onOk    = function()
                         SyncVisibleRowsToAllEntries()
                         local remaining = {}
@@ -1080,7 +1030,7 @@ function BossUI:BuildEditModeUI(rPanel)
         newBox:SetAutoFocus(false)
         newBox:SetText("")
             local function CommitNewPhase(self)
-            local txt = self:GetText():gsub("^%s+",""):gsub("%s+$","")
+            local txt = trim(self:GetText())
             if txt ~= "" then
                 SyncVisibleRowsToAllEntries()
                 -- Flyt PHASE_NONE entries over i den nye fase (første rigtige fase)
@@ -1147,9 +1097,9 @@ function BossUI:BuildEditModeUI(rPanel)
     scroll:SetScrollChild(content)
     editContent = content
 
-    local plusBtn = createBtn(content, ROW_W, PLUS_H, (Translate and Translate("ADD_TACTIC_BTN")) or "+ Add Tactic")
+    local plusBtn = createBtn(content, ROW_W, PLUS_H, Translate("ADD_TACTIC_BTN"))
     plusBtn:SetScript("OnClick", function()
-        if BossHelper and BossHelper.SafePlaySound then BossHelper:SafePlaySound(BossHelper.Sounds.NORMAL_BUTTON) end
+        SafePlay(BossHelper.Sounds.NORMAL_BUTTON)
         CreateTacticRow({phase=currentFilterPhase, text=""})
         RefreshLayout()
         local last = tacticRows[#tacticRows]
@@ -1162,21 +1112,21 @@ function BossUI:BuildEditModeUI(rPanel)
     addRowBtn = plusBtn
 
     -- Gem
-    local saveTacticsBtn = createBtn(rPanel, 100, 34, (Translate and Translate("SAVE")) or "Save")
+    local saveTacticsBtn = createBtn(rPanel, 100, 34, Translate("SAVE"))
     saveTacticsBtn:SetPoint("BOTTOMRIGHT", rPanel, "BOTTOMRIGHT", -10, 10)
     saveTacticsBtn:SetScript("OnClick", function()
-        if BossHelper and BossHelper.SafePlaySound then BossHelper:SafePlaySound(BossHelper.Sounds.NORMAL_BUTTON) end
+        SafePlay(BossHelper.Sounds.NORMAL_BUTTON)
         BossUI:ExitEditMode(true)
     end)
     saveTacticsBtn:Hide()
     rPanel.saveTacticsBtn = saveTacticsBtn
 
     -- Nulstil
-    local resetTacticsBtn = createBtn(rPanel, 100, 34, (Translate and Translate("RESET")) or "Reset")
+    local resetTacticsBtn = createBtn(rPanel, 100, 34, Translate("RESET"))
     resetTacticsBtn:SetPoint("BOTTOMLEFT", rPanel, "BOTTOMLEFT", 10, 10)
     -- Use HookScript so we keep CreateCustomButton's hover animations
     resetTacticsBtn:HookScript("OnEnter", function(self)
-        self.bg:SetColorTexture(0.6, 0.15, 0.15, 1)
+        self:SetBackdropColor(0.6, 0.15, 0.15, 1)
         self:SetBackdropBorderColor(1, 0.3, 0.3, 1)
         self.text:SetTextColor(1, 1, 1)
     end)
@@ -1185,11 +1135,11 @@ function BossUI:BuildEditModeUI(rPanel)
         local dungeon = BossUI:GetCurrentDungeon()
         if not f or not f.selectedBoss or not dungeon then return end
         ConfirmDialog.Show({
-            title   = (Translate and Translate("RESET_TACTICS_TITLE")) or "Reset Tactics",
-            message = (Translate and Translate("RESET_TACTICS_MSG")) or "Are you sure you want to reset all tactics for this boss?\n\nThis cannot be undone.",
+            title   = Translate("RESET_TACTICS_TITLE"),
+            message = Translate("RESET_TACTICS_MSG"),
             onOk    = function()
-                SaveCustomEntries(dungeon, f.selectedBoss, {})
-                if BossHelper and BossHelper.SafePlaySound then BossHelper:SafePlaySound(BossHelper.Sounds.NORMAL_BUTTON) end
+                SaveCustomEntries(dungeon, f.selectedBoss.encounterID, {})
+                SafePlay(BossHelper.Sounds.NORMAL_BUTTON)
                 BossUI:ExitEditMode(false)
             end,
         })
@@ -1198,7 +1148,7 @@ function BossUI:BuildEditModeUI(rPanel)
     rPanel.resetTacticsBtn = resetTacticsBtn
 
     -- Annuller
-    local cancelTacticsBtn = createBtn(rPanel, 100, 34, (Translate and Translate("CANCEL")) or "Cancel")
+    local cancelTacticsBtn = createBtn(rPanel, 100, 34, Translate("CANCEL"))
     cancelTacticsBtn:SetPoint("BOTTOMRIGHT", rPanel.saveTacticsBtn, "BOTTOMLEFT", -6, 0)
     cancelTacticsBtn:SetScript("OnClick", function()
         -- Tjek om der er ændringer ved at sammenligne nuværende rækker med gemt state
@@ -1221,15 +1171,15 @@ function BossUI:BuildEditModeUI(rPanel)
         end
         if hasChanges then
             ConfirmDialog.Show({
-                title   = (Translate and Translate("UNSAVED_CHANGES_TITLE")) or "Unsaved Changes",
-                message = (Translate and Translate("UNSAVED_CHANGES_MSG")) or "You have unsaved changes.\n\nAre you sure you want to cancel without saving?",
+                title   = Translate("UNSAVED_CHANGES_TITLE"),
+                message = Translate("UNSAVED_CHANGES_MSG"),
                 onOk    = function()
-                    if BossHelper and BossHelper.SafePlaySound then BossHelper:SafePlaySound(BossHelper.Sounds.NORMAL_BUTTON) end
+                    SafePlay(BossHelper.Sounds.NORMAL_BUTTON)
                     BossUI:ExitEditMode(false)
                 end,
             })
         else
-            if BossHelper and BossHelper.SafePlaySound then BossHelper:SafePlaySound(BossHelper.Sounds.NORMAL_BUTTON) end
+            SafePlay(BossHelper.Sounds.NORMAL_BUTTON)
             BossUI:ExitEditMode(false)
         end
     end)
