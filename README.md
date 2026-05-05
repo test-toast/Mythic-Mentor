@@ -117,7 +117,7 @@ CurseForge: [https://www.curseforge.com/wow/addons/mythic-mentor](https://www.cu
 
 * [Shields.io](https://shields.io)  
 * [method.gg](https://www.method.gg/guides)
-* [World of Duck Craft]([https://www.method.gg/guides](https://www.patreon.com/WorldofDuckCraft/about))
+* [World of Duck Craft](https://www.patreon.com/worldofduckcraft)
 * WoW community for feedback and inspiration  
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
