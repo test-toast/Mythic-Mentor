@@ -1,8 +1,8 @@
 ﻿Dungeon7 = {
-    instanceID = 945,
+    instanceID = 945, -- Seat of the Triumvirate
     bosses = {
         {
-            encounterID = 1979,
+            encounterID = 1979, -- Zuraal the Ascended
             short       = [[
 1. Avoid frontal.
 2. Move out with circle.
@@ -13,7 +13,7 @@
         },
 
         {
-            encounterID = 1980,
+            encounterID = 1980, -- Saprish
             short       = [[
 1. Clear void bombs with circles.
 2. Interrupt the Shadewing pet.
@@ -23,7 +23,7 @@
         },
 
         {
-            encounterID = 1981,
+            encounterID = 1981, -- Viceroy Nezhar
             short       = [[
 1. Kick Mind Blast, and nuke tentacle adds ASAP.
 2. At 100 energy, stack on boss.
@@ -33,9 +33,9 @@
         },
         
         {
-            encounterID = 1982,
+            encounterID = 1982, -- L'ura
             short       = [[
-1. Point Discordant Beam at the notes around the them.
+1. Point Discordant Beam at the notes around the room.
 2. the rotating beams of evil.
 3. Avoid big circle explosions.
 ]],

@@ -1,8 +1,8 @@
 ﻿Dungeon4 = {
-    instanceID = 1299,
+    instanceID = 1299, --Windrunner Spire
     bosses = {
         {
-            encounterID = 2656,
+            encounterID = 2656, -- Derelict Duo
             short       = [[
 1. Interrupt boss, and move out with circles.
 2. CC adds (or curse dispel to despawn)
@@ -15,7 +15,7 @@ Tank Move boss when ground gets too cluttered.
         },
 
         {
-            encounterID = 2655,
+            encounterID = 2655, -- Emberdawn
             short       = [[
 1. Fire = bad
 ]],
@@ -24,7 +24,7 @@ Tank Move boss when ground gets too cluttered.
         },
 
         {
-            encounterID = 2657,
+            encounterID = 2657, -- Commander Kroluk
             short       = [[
 1. Brown circles = bad.
 2. Overlap purple circles.
@@ -36,7 +36,7 @@ Tank Move boss when ground gets too cluttered.
         },
 
         {
-            encounterID = 2658,
+            encounterID = 2658, -- The Restless Heart
             short       = [[
 1. Step on small windy arrows to remove Squall Leap DoT AND to jump over expanding shockwave.
 2. Move out of frontal if not targeted.

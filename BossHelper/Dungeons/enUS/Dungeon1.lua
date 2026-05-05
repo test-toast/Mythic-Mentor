@@ -1,8 +1,8 @@
 ﻿Dungeon1 = {
-    instanceID = 1315,
+    instanceID = 1315, -- Maisara Canerns
     bosses = {
         {
-            encounterID = 2810,
+            encounterID = 2810, -- Muro'jin and Nekraxx
             short       = [[
 1. Ice traps, green circles & frontal barrage = bad.
 2. If targeted by Carrion Swoop, move INTO an ice trap.
@@ -12,7 +12,7 @@
         },
 
         {
-            encounterID = 2811,
+            encounterID = 2811, -- Vordaza
             short       = [[
 1. Boss spawns 4 phantoms fixating the tank & the DPS. Overlap phantoms to despawn them - but stagger this!.
 2. Avoid rotating frontal beam, and floating orbs.
@@ -24,7 +24,7 @@ Healer. Phantoms despawning = big group damage.
         },
 
         {
-            encounterID = 2812,
+            encounterID = 2812, -- Rak'tul, Vessel of Souls
             short       = [[
 1. Boss leaps to 3 players & leaves totems behind. Don't get crushed, and destroy totems asap.
 2. During soul phase, CC & kick big adds as you run to boss.

@@ -25,9 +25,15 @@ L_daDK = {
     -- category names
     ["GENERAL_CATE"] = "Generelt",
     ["AUTO_INVITE_CATE"] = "Auto-inviter",
+    ["MINI_WINDOW_CATE"] = "Mini-vindue",
 
     -- text
     ["/RELOAD_TEXT"] = "Taktikker opdateret. Brug /reload for UI oversættelse.",
+
+    -- Section headers
+    ["SETTINGS_DISPLAY_SECTION"] = "Visning",
+    ["SETTINGS_BEHAVIOR_SECTION"] = "Adfærd",
+    ["SETTINGS_APPEARANCE_SECTION"] = "Udseende",
 
     -- Setting Main
     ["SELECT_LANGUAGE_TITLE"] = "Vælg sprog",
@@ -39,6 +45,10 @@ L_daDK = {
 
     ["AUTO_INVITE_TITLE"] = "Aktiver Auto-Invite",
     ["TRIGGER_WORD_TITLE"] = "AutoInvite Trigger-ord",
+
+    -- Mini-vindue indstillinger
+    ["MINI_WINDOW_TRANSPARENT_TITLE"] = "Gennemsigtig baggrund",
+    ["MINI_WINDOW_NO_BORDER_TITLE"] = "Skjul kant",
 
     -- ToolTip settings
     ["LANGUAGE_TOOLTIP_1"] = "Vælg sproget brugt i Mythic Mentor.",
@@ -52,6 +62,33 @@ L_daDK = {
 
     ["AUTO_INVITE_TOOLTIP"] = "Aktiver Auto-Invite (inviter ved trigger).",
     ["TRIGGER_WORD_TOOLTIP"] = "Trigger-ord for Auto-Invite (f.eks. invite!).",
+
+    ["MINI_WINDOW_TRANSPARENT_TOOLTIP"] = "Juster Mini-vinduets baggrundsgennemsigtighed (0% = helt gennemsigtigt, 100% = uigennemsigtigt).",
+    ["MINI_WINDOW_NO_BORDER_TOOLTIP"] = "Fjerner kanten fra Mini-vinduet.",
+    ["MINI_WINDOW_HIDE_SEP_TITLE"] = "Skjul separator",
+    ["MINI_WINDOW_HIDE_SEP_TOOLTIP"] = "Skjul den tynde separator-linje under Mini-vinduets header.",
+    ["MINI_WINDOW_ICONS_ONLY_TITLE"] = "Kun ikoner (skjul knap-baggrund)",
+    ["MINI_WINDOW_ICONS_ONLY_TOOLTIP"] = "Fjerner baggrund og kant fra vindue-knapperne, så kun ikonerne er synlige.",
+    ["MINI_WINDOW_AUTO_EXPAND_TITLE"] = "Udvid automatisk ved boss-pull",
+    ["MINI_WINDOW_AUTO_EXPAND_TOOLTIP"] = "Udvider automatisk Mini-vinduet når et boss-encounter starter, og minimerer det igen når bossen er død.",
+
+    -- Key Tracker kategori
+    ["KEY_TRACKER_CATE"] = "Key Tracker",
+    ["KEY_TRACKER_SECTION"] = "Visning",
+    ["KEY_TRACKER_STARTPAGE_TITLE"] = "Vis keys på startsiden",
+    ["KEY_TRACKER_STARTPAGE_TOOLTIP"] = "Vis keystone-widget i bunden af startsiden.",
+    ["KEY_TRACKER_GROUPFINDER_TITLE"] = "Vis keys i Group Finder",
+    ["KEY_TRACKER_GROUPFINDER_TOOLTIP"] = "Vis keystone-panelet ved Group Finder-vinduet.",
+
+    -- Group Finder panel udseende
+    ["KEY_TRACKER_GF_APPEARANCE"] = "Group Finder Panel",
+    ["KEY_TRACKER_GF_TRANSPARENT_TITLE"] = "Gennemsigtig baggrund",
+    ["KEY_TRACKER_GF_TRANSPARENT_TOOLTIP"] = "Juster panelets baggrundsgennemsigtighed (0% = fuldt gennemsigtig, 100% = uigennemsigtig).",
+    ["KEY_TRACKER_GF_NO_BORDER_TITLE"] = "Skjul kant",
+    ["KEY_TRACKER_GF_NO_BORDER_TOOLTIP"] = "Fjerner kanten fra Group Finder-panelet.",
+    ["KEY_TRACKER_GF_HIDE_TITLE_TITLE"] = "Skjul 'Keys' overskrift",
+    ["KEY_TRACKER_GF_HIDE_TITLE_TOOLTIP"] = "Skjuler 'Keys'-teksten øverst i Group Finder-panelet.",
+    ["NO_KEY"] = "Ingen key",
 
 
     -----------------------------------------------
@@ -130,6 +167,12 @@ L_daDK = {
     ["RESET_TACTICS_MSG"] = "Er du sikker på, at du vil nulstille alle taktikker for denne boss?\n\nDette kan ikke fortrydes.",
     ["UNSAVED_CHANGES_TITLE"] = "Ugemte ændringer",
     ["UNSAVED_CHANGES_MSG"] = "Du har ugemte ændringer.\n\nEr du sikker på, at du vil annullere uden at gemme?",
+
+    -----------------------------------------------
+    -- Update popup
+    -----------------------------------------------
+    ["UPDATE_POPUP_TEXT"] = "Der er en ny version af Mythic Mentor tilgængelig!\n\nDin: %s\nNy: %s\n\nÅbn GitHub for at opdatere?",
+    ["UPDATE_POPUP_BTN_GITHUB"] = "GitHub",
 }
 
 return L_daDK

@@ -25,9 +25,15 @@ L_enUS = {
     -- category names
     ["GENERAL_CATE"] = "General",
     ["AUTO_INVITE_CATE"] = "Auto-Invite",
+    ["MINI_WINDOW_CATE"] = "Mini Window",
 
     -- text
     ["/RELOAD_TEXT"] = "Tactics updated. Use /reload for UI translation.",
+
+    -- Section headers
+    ["SETTINGS_DISPLAY_SECTION"] = "Display",
+    ["SETTINGS_BEHAVIOR_SECTION"] = "Behavior",
+    ["SETTINGS_APPEARANCE_SECTION"] = "Appearance",
 
     -- Setting Main
     ["SELECT_LANGUAGE_TITLE"] = "Select Language",
@@ -39,6 +45,10 @@ L_enUS = {
 
     ["AUTO_INVITE_TITLE"] = "Enable Auto-Invite",
     ["TRIGGER_WORD_TITLE"] = "AutoInvite Trigger Word",
+
+    -- Mini Window settings
+    ["MINI_WINDOW_TRANSPARENT_TITLE"] = "Transparent background",
+    ["MINI_WINDOW_NO_BORDER_TITLE"] = "Hide border",
 
     -- ToolTip settings
     ["LANGUAGE_TOOLTIP_1"] = "Choose the language used in Mythic Mentor.",
@@ -52,6 +62,33 @@ L_enUS = {
 
     ["AUTO_INVITE_TOOLTIP"] = "Enable Auto-Invite (invites on trigger).",
     ["TRIGGER_WORD_TOOLTIP"] = "Trigger word for Auto-Invite (e.g. invite!).",
+
+    ["MINI_WINDOW_TRANSPARENT_TOOLTIP"] = "Adjust the Mini Window background transparency (0% = fully transparent, 100% = opaque).",
+    ["MINI_WINDOW_NO_BORDER_TOOLTIP"] = "Removes the border from the Mini Window.",
+    ["MINI_WINDOW_HIDE_SEP_TITLE"] = "Hide separator",
+    ["MINI_WINDOW_HIDE_SEP_TOOLTIP"] = "Hide the thin separator line under the Mini Window header.",
+    ["MINI_WINDOW_ICONS_ONLY_TITLE"] = "Icons only (hide button chrome)",
+    ["MINI_WINDOW_ICONS_ONLY_TOOLTIP"] = "Remove the background and border from the window buttons, showing only the icons.",
+    ["MINI_WINDOW_AUTO_EXPAND_TITLE"] = "Auto-expand on boss pull",
+    ["MINI_WINDOW_AUTO_EXPAND_TOOLTIP"] = "Automatically expand the Mini Window when a boss encounter starts, and minimize it again when the boss dies.",
+
+    -- Key Tracker category
+    ["KEY_TRACKER_CATE"] = "Key Tracker",
+    ["KEY_TRACKER_SECTION"] = "Display",
+    ["KEY_TRACKER_STARTPAGE_TITLE"] = "Show keys on Start Page",
+    ["KEY_TRACKER_STARTPAGE_TOOLTIP"] = "Show the keystone tracker widget at the bottom of the Start Page.",
+    ["KEY_TRACKER_GROUPFINDER_TITLE"] = "Show keys in Group Finder",
+    ["KEY_TRACKER_GROUPFINDER_TOOLTIP"] = "Show the keystone tracker panel attached to the Group Finder window.",
+
+    -- Group Finder panel appearance
+    ["KEY_TRACKER_GF_APPEARANCE"] = "Group Finder Panel",
+    ["KEY_TRACKER_GF_TRANSPARENT_TITLE"] = "Transparent background",
+    ["KEY_TRACKER_GF_TRANSPARENT_TOOLTIP"] = "Adjust the panel background transparency (0% = fully transparent, 100% = opaque).",
+    ["KEY_TRACKER_GF_NO_BORDER_TITLE"] = "Hide border",
+    ["KEY_TRACKER_GF_NO_BORDER_TOOLTIP"] = "Removes the border from the Group Finder panel.",
+    ["KEY_TRACKER_GF_HIDE_TITLE_TITLE"] = "Hide 'Keys' header",
+    ["KEY_TRACKER_GF_HIDE_TITLE_TOOLTIP"] = "Hides the 'Keys' label at the top of the Group Finder panel.",
+    ["NO_KEY"] = "No key",
 
     -----------------------------------------------
     -- Start Side
@@ -130,6 +167,12 @@ L_enUS = {
     ["RESET_TACTICS_MSG"] = "Are you sure you want to reset all tactics for this boss?\n\nThis cannot be undone.",
     ["UNSAVED_CHANGES_TITLE"] = "Unsaved Changes",
     ["UNSAVED_CHANGES_MSG"] = "You have unsaved changes.\n\nAre you sure you want to cancel without saving?",
+
+    -----------------------------------------------
+    -- Update popup
+    -----------------------------------------------
+    ["UPDATE_POPUP_TEXT"] = "A new version of Mythic Mentor is available!\n\nYours: %s\nNew: %s\n\nOpen GitHub to update?",
+    ["UPDATE_POPUP_BTN_GITHUB"] = "GitHub",
 }
 
 return L_enUS

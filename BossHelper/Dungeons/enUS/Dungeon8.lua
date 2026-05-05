@@ -1,8 +1,8 @@
 ﻿Dungeon8 = {
-    instanceID = 1201,
+    instanceID = 1201, -- Algeth'ar Academy
     bosses = {
         {
-            encounterID = 2509,
+            encounterID = 2509, -- Vexamus
             short       = [[
 1. Soak orbs (1 each).
 2. Move out with circle.
@@ -14,7 +14,7 @@ Tank. Point frontal away from group.
         },
 
         {
-            encounterID = 2512,
+            encounterID = 2512, -- Overgrown Ancient
             short       = [[
 1. Spawn Germinate adds close together; nuke ASAP.
 2. Clense debuffs in green circle.
@@ -25,7 +25,7 @@ Tank. Point frontal away from group.
         },
 
         {
-            encounterID = 2495,
+            encounterID = 2495, -- Crawth
             phases = {"Phase 1", "Wind Phase", "Fire Phase"},
             phaseText = {
                 ["Phase 1"] = [[
@@ -43,7 +43,7 @@ Tank. Point frontal away from group.
         },
         
         {
-            encounterID = 2514,
+            encounterID = 2514, -- Echo of Doragosa
             short       = [[
 1. All attacks apply a debuff. Move out right before you get 3 stacks.
 2. Avoid orbs & run when sucked.

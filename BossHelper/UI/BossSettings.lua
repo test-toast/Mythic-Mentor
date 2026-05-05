@@ -14,28 +14,18 @@
 if not BossSettings then BossSettings = {} end
 
 local deps = {} -- internal deps (populated fra Init eller ShowSettings args)
+local function trim(s) return (s or ""):gsub("^%s+", ""):gsub("%s+$", "") end
 
 function BossSettings.Init(d)
     if not d then return end
     for k,v in pairs(d) do deps[k] = v end
 end
 
-local function phide(obj)
-    if not obj then return end
-    pcall(function() if obj.Hide then obj:Hide() end end)
-end
-local function psetparent(obj, p)
-    if not obj then return end
-    pcall(function() if obj.SetParent then obj:SetParent(p) end end)
-end
-local function pclearpoints(obj)
-    if not obj then return end
-    pcall(function() if obj.ClearAllPoints then obj:ClearAllPoints() end end)
-end
-local function psettext(obj, txt)
-    if not obj then return end
-    pcall(function() if obj.SetText then obj:SetText(txt) end end)
-end
+-- Delegate to the shared UI utilities in BossHelper.UI
+local phide        = function(o)      BossHelper.UI.hide(o)         end
+local psetparent   = function(o, p)   BossHelper.UI.setParent(o, p) end
+local pclearpoints = function(o)      BossHelper.UI.clearPoints(o)  end
+local psettext     = function(o, txt) BossHelper.UI.setText(o, txt) end
 local function psafesound(sid)
     pcall(function()
         if deps.BossHelper and deps.BossHelper.SafePlaySound then deps.BossHelper:SafePlaySound(sid) end
@@ -46,59 +36,39 @@ end
 local function CleanupSettingsWidgets(rPanel)
     if not rPanel or not rPanel.settingsWidgets then return end
     for _, w in ipairs(rPanel.settingsWidgets) do
-        if w then
-            phide(w)
-            psetparent(w, nil)
-            pclearpoints(w)
-        end
+        BossHelper.UI.destroyWidget(w)
     end
     rPanel.settingsWidgets = nil
 end
 
--- Tooltip helper: sæt obj.tooltip = "tekst" eller {"Title", "line1", "line2"}
+-- Tooltip helper: sæt obj.tooltip = "tekst" eller {"linje1", "linje2", ...}
+-- Ingen titel/beskrivelse-opdeling – alle linjer samme farve, fast max-bredde.
+local TOOLTIP_WIDTH = 280
+local _C = BossHelper.UI.C
 local function AttachTooltip(obj)
     if not obj then return end
-    -- sørg for at objektet kan modtage mouse events
     if obj.EnableMouse then obj:EnableMouse(true) end
 
-    -- brug HookScript så vi ikke overskriver andre scripts
     obj:HookScript("OnEnter", function(self)
         local tip = self.tooltip or self._tooltip
         if not tip then return end
-        GameTooltip:ClearLines()
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:SetWidth(TOOLTIP_WIDTH)
         if type(tip) == "table" then
-            -- Table format: treat first entry as title by default
-            -- If you want no title, pass tip.noTitle = true or tip[1] == false
-            local noTitle = tip.noTitle == true or tip[1] == false
-            if noTitle then
-                local startIndex = (tip[1] == false) and 2 or 1
-                for i = startIndex, #tip do
-                    GameTooltip:AddLine(tostring(tip[i]), 1, 1, 1, true)
-                end
-            else
-                GameTooltip:SetText(tostring(tip[1] or ""), 1, 0.82, 0)
-                for i = 2, #tip do
-                    GameTooltip:AddLine(tostring(tip[i]), 1, 1, 1, true)
-                end
+            for i = 1, #tip do
+                GameTooltip:AddLine(tostring(tip[i]), _C.TEXT_GOLD[1], _C.TEXT_GOLD[2], _C.TEXT_GOLD[3], true)
             end
         else
-            local s = tostring(tip)
-            if s:find("\n") then
-                -- Multiline string: render all lines as normal lines (no title)
-                for line in s:gmatch("([^\n]+)") do
-                    GameTooltip:AddLine(line, 1, 1, 1, true)
-                end
-            else
-                GameTooltip:SetText(s)
+            for line in (tostring(tip) .. "\n"):gmatch("([^\n]*)\n") do
+                GameTooltip:AddLine(line ~= "" and line or " ", _C.TEXT_GOLD[1], _C.TEXT_GOLD[2], _C.TEXT_GOLD[3], true)
             end
         end
-        -- if object has GetValue (e.g. slider), show current value
+        -- Slider: vis aktuel værdi
         if self.GetValue then
             local ok, val = pcall(self.GetValue, self)
             if ok and val ~= nil then
                 GameTooltip:AddLine(" ")
-                GameTooltip:AddLine(Translate("CURRENT_SCALE_TOOLTIP") .. " " .. tostring(val), 1, 1, 1)
+                GameTooltip:AddLine(Translate("CURRENT_SCALE_TOOLTIP") .. " " .. tostring(val), _C.TEXT_GOLD[1], _C.TEXT_GOLD[2], _C.TEXT_GOLD[3], true)
             end
         end
         GameTooltip:Show()
@@ -111,326 +81,231 @@ end
 
 
 
--- BuildSettingsCategoryUI (tilstræbt at matche tidligere logik)
+-- BuildSettingsCategoryUI
 function BossSettings.BuildSettingsCategoryUI(rPanel, category, ctx)
     local CreateCustomButton = ctx.CreateCustomButton or deps.CreateCustomButton
     local BossHelperDB = ctx.BossHelperDB or deps.BossHelperDB
 
-    local startX, startY = 20, -60
-    local last = nil
+    rPanel.settingsWidgets = rPanel.settingsWidgets or {}
 
-    local function AddCheck(name, tooltip, initial)
-        local cb = CreateFrame("CheckButton", nil, rPanel, "UICheckButtonTemplate")
-        cb.text = cb:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-        cb.text:SetPoint("LEFT", cb, "RIGHT", 4, 0)
-        cb.text:SetText(name)
+    -- -------------------------------------------------------------------------
+    -- Helpers
+    -- -------------------------------------------------------------------------
+    local function W(w)
+        table.insert(rPanel.settingsWidgets, w)
+        return w
+    end
+
+    -- Section header: gold title + horizontal rule
+    local function AddSectionHeader(text, anchorFrame, anchorPoint, offX, offY, width)
+        width = width or 240
+        local hdr = W(rPanel:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall"))
+        hdr:SetPoint(anchorPoint or "TOPLEFT", anchorFrame, anchorPoint or "TOPLEFT", offX or 0, offY or 0)
+        hdr:SetText(text:upper())
+        hdr:SetTextColor(1, 0.5, 0)
+        hdr:SetJustifyH("LEFT")
+
+        local rule = W(rPanel:CreateTexture(nil, "ARTWORK"))
+        rule:SetColorTexture(1, 0.5, 0, 0.25)
+        rule:SetHeight(1)
+        rule:SetWidth(width)
+        rule:SetPoint("TOPLEFT", hdr, "BOTTOMLEFT", 0, -3)
+        return hdr, rule
+    end
+
+    -- Compact checkbox: label to the right
+    local function AddCheck(anchorFrame, anchorPoint, offX, offY, label, tooltip, initial, onToggle)
+        local cb = W(CreateFrame("CheckButton", nil, rPanel, "UICheckButtonTemplate"))
+        cb:SetSize(26, 26)
+        cb:SetPoint(anchorPoint, anchorFrame, anchorPoint, offX, offY)
+        local fs = W(cb:CreateFontString(nil, "OVERLAY", "GameFontHighlight"))
+        fs:SetPoint("LEFT", cb, "RIGHT", 6, 0)
+        fs:SetText(label)
+        fs:SetWidth(200)
+        fs:SetWordWrap(false)
+        fs:SetJustifyH("LEFT")
+        fs:SetTextColor(0.98, 0.82, 0.55)
         cb.tooltip = tooltip
         AttachTooltip(cb)
         if initial ~= nil then pcall(cb.SetChecked, cb, initial) end
-
-        if last then
-            cb:SetPoint("TOPLEFT", rPanel, "TOPLEFT", startX, startY + last.offset)
-        else
-            cb:SetPoint("TOPLEFT", rPanel, "TOPLEFT", startX, startY)
+        if onToggle then
+            cb:SetScript("OnClick", function(self)
+                onToggle(self:GetChecked() and true or false)
+                if deps.BossHelper and deps.BossHelper.SafePlaySound then deps.BossHelper:SafePlaySound(856) end
+            end)
         end
-
-        rPanel.settingsWidgets = rPanel.settingsWidgets or {}
-        table.insert(rPanel.settingsWidgets, cb)
-        last = { offset = (last and last.offset or 0) - 30 }
+        return cb
     end
 
-    local function AddLabel(text)
-        local lbl = rPanel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-        lbl:SetPoint("TOPLEFT", rPanel, "TOPLEFT", startX, startY + (last and last.offset or 0))
-        lbl:SetText(text)
-        lbl:SetJustifyH("LEFT")
-        lbl:SetWidth(520)
-
-         -- overlay frame so label can get hover
-        local hit = CreateFrame("Frame", nil, rPanel)
-        hit:SetSize(520, lbl:GetStringHeight() or 16)
-        hit:SetPoint("TOPLEFT", lbl, "TOPLEFT", 0, 0)
-        hit.tooltip = nil -- set if you want a general tooltip for labels
-        -- if you want label text as tooltip automatically uncomment:
-        -- hit.tooltip = text
-        AttachTooltip(hit)
-        table.insert(rPanel.settingsWidgets, hit)   
-
-        rPanel.settingsWidgets = rPanel.settingsWidgets or {}
-        table.insert(rPanel.settingsWidgets, lbl)
-        last = { offset = (last and last.offset or 0) - 20 }
-    end
-
-
-        --------------------------------------------------------------------------------
-        -- category General
-        --------------------------------------------------------------------------------
+    --------------------------------------------------------------------------------
+    -- category General  — two-column layout
+    --   Left column  (x=20):  Display section  — Language dropdown + Scale slider
+    --   Right column (x=300): Behavior section — 4 checkboxes
+    --------------------------------------------------------------------------------
     if category == Translate("GENERAL_CATE") then
-        --------------------------------------------------------------------------------
-        -- Language selection (custom drop-down som PhaseDropdown)
-        --------------------------------------------------------------------------------
+
+        local COL_L = 20   -- left column x
+        local COL_R = 300  -- right column x
+        local TOP_Y = -50  -- top y for both columns
+
+        -- ==== LEFT COLUMN: Display ============================================
+        local dispHdr, dispRule = AddSectionHeader(
+            Translate("SETTINGS_DISPLAY_SECTION"), rPanel, "TOPLEFT", COL_L, TOP_Y, 240)
+
+        -- Language label + dropdown
+        local langLabel = W(rPanel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall"))
+        langLabel:SetPoint("TOPLEFT", dispRule, "BOTTOMLEFT", 0, -14)
+        langLabel:SetText(Translate("SELECT_LANGUAGE_TITLE"))
+        langLabel:SetTextColor(0.9, 0.9, 0.9)
+
+        -- ---- language dropdown (extracted from old code, anchor rewritten) ----
         do
-            local BossHelperDB = ctx.BossHelperDB or deps.BossHelperDB or {}
             local currentLang = BossHelperDB.language or "enUS"
+            local languages = BossHelper.LOCALES
 
-            local languages = {
-                { key = "enUS", label = "English" },
-                { key = "daDK", label = "Danish" },
-                { key = "ruRU", label = "Russian" },
-                { key = "deDE", label = "German" },
-                { key = "frFR", label = "French" },
-            }
+            local dropdown = W(CreateFrame("Frame", nil, rPanel, "BackdropTemplate"))
+            dropdown:SetSize(200, 26)
+            dropdown:SetPoint("TOPLEFT", langLabel, "BOTTOMLEFT", 0, -4)
 
-            local function CreateLanguageDropdown(parent, startX, startY, last)
-                local dropdown = CreateFrame("Frame", nil, parent, "BackdropTemplate")
-                dropdown:SetSize(200, 26)
-                dropdown:SetPoint("TOPLEFT", parent, "TOPLEFT", (startX or 10) + 5, (startY or -10) + (last and last.offset or 0))
+            local initialLabel = "English"
+            for _, lang in ipairs(languages) do
+                if lang.key == currentLang then initialLabel = lang.label; break end
+            end
+            local mainBtn = CreateCustomButton(dropdown, 200, 26, initialLabel)
+            mainBtn:SetPoint("TOPLEFT", dropdown, "TOPLEFT", 0, 0)
+            mainBtn.tooltip = { Translate("LANGUAGE_TOOLTIP_1"), Translate("LANGUAGE_TOOLTIP_2") }
+            AttachTooltip(mainBtn)
+            mainBtn.arrow = mainBtn:CreateTexture(nil, "OVERLAY")
+            mainBtn.arrow:SetTexture("Interface\\AddOns\\BossHelper\\Media\\icon\\Arrow_Down_icon.png")
+            mainBtn.arrow:SetVertexColor(0.98, 0.82, 0.55, 0.8)
+            mainBtn.arrow:SetSize(20, 10)
+            mainBtn.arrow:SetPoint("RIGHT", mainBtn, "RIGHT", -8, 0)
+            mainBtn.arrow:SetRotation(0)
 
-                -- Main-knap (viser aktuelt valgt sprog)
-                local initialLabel = "English"
-                for _, lang in ipairs(languages) do
-                    if lang.key == currentLang then initialLabel = lang.label; break end
-                end
-                local mainBtn = CreateCustomButton(dropdown, 200, 26, initialLabel)
-                mainBtn:SetPoint("TOPLEFT", dropdown, "TOPLEFT", 0, 0)
-                mainBtn.tooltip = {
-                    Translate("LANGUAGE_TOOLTIP_1"),
-                    Translate("LANGUAGE_TOOLTIP_2")
-                }
-                AttachTooltip(mainBtn)
-                -- Add arrow icon (custom sandglass)
-                mainBtn.arrow = mainBtn:CreateTexture(nil, "OVERLAY")
-                mainBtn.arrow:SetTexture("Interface\\AddOns\\BossHelper\\Media\\icon\\Arrow_Down_icon.png")
-                mainBtn.arrow:SetVertexColor(0.98, 0.82, 0.55, 0.8)
-                mainBtn.arrow:SetSize(20, 10)
-                mainBtn.arrow:SetPoint("RIGHT", mainBtn, "RIGHT", -8, 0)
-                mainBtn.arrow:SetAlpha(0.8)
-                mainBtn.arrow:SetRotation(0) -- arrow down
+            local panel = CreateFrame("Frame", nil, dropdown, "BackdropTemplate")
+            panel:SetSize(200, #languages * 26)
+            panel:SetPoint("TOPLEFT", mainBtn, "BOTTOMLEFT", 0, -2)
+            panel:Hide()
+            panel:SetBackdrop({
+                bgFile   = "Interface\\DialogFrame\\UI-DialogBox-Background",
+                edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
+                tile = true, tileSize = 16, edgeSize = 16,
+                insets = { left = 4, right = 4, top = 4, bottom = 4 }
+            })
+            panel:SetBackdropColor(0.08, 0.09, 0.13, 0.95)
+            panel:SetFrameStrata("FULLSCREEN_DIALOG")
+            panel:SetFrameLevel(2000)
+            dropdown:SetFrameStrata("FULLSCREEN_DIALOG")
+            dropdown:SetFrameLevel(1999)
 
-                -- Panel med sprog-knapper
-                local panel = CreateFrame("Frame", nil, dropdown, "BackdropTemplate")
-                panel:SetSize(200, #languages * 26)
-                panel:SetPoint("TOPLEFT", mainBtn, "BOTTOMLEFT", 0, -2)
-                panel:Hide()
-                panel:SetBackdrop({
-                    bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
-                    edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
-                    tile = true, tileSize = 16, edgeSize = 16,
-                    insets = { left = 4, right = 4, top = 4, bottom = 4 }
-                })
-                panel:SetBackdropColor(0.08, 0.09, 0.13, 0.95)
-                panel:SetFrameStrata("FULLSCREEN_DIALOG")
-                panel:SetFrameLevel(2000)
-                dropdown:SetFrameStrata("FULLSCREEN_DIALOG")
-                dropdown:SetFrameLevel(1999)
-
-                local buttons = {}
-
-                -- SelectLanguage: tager ansvar for at gemme, opdatere UI, spille lyd og genindlæse data
-                local function SelectLanguage(index, playSound, showNotice)
-                    local lang = languages[index]
-                    if not lang then return end
-
-                    -- Gem i SavedVariables
-                    BossHelperDB.language = lang.key
-                    currentLang = lang.key
-
-                    -- Opdater runtime locales hvis de findes
-                    if deps and deps.BossHelper then deps.BossHelper.selectedLocale = lang.key end
-                    if BossHelper then BossHelper.selectedLocale = lang.key end
-
-                    -- Marker korrekt knap (afhængigt af CreateCustomButton API)
-                    for i, btn in ipairs(buttons) do
-                        if btn.SetSelected then
-                            btn:SetSelected(i == index)
-                        else
-                            -- fallback: just change the text style if SetSelected isn't available
-                            if i == index then
-                                btn:SetText("|cff00ff00" .. btn:GetText() .. "|r")
-                            else
-                                btn:SetText(languages[i].label)
-                            end
-                        end
-                    end
-
-                    -- Opdater main-knap tekst
-                    mainBtn:SetText(lang.label)
-
-                    -- Opret reload-label én gang (skjult som standard)
-                    if not dropdown.reloadLabel then
-                        dropdown.reloadLabel = dropdown:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-                        dropdown.reloadLabel:SetPoint("LEFT", dropdown, "RIGHT", 10, 0)
-                        dropdown.reloadLabel:SetTextColor(1, 0.2, 0.2)
-                        dropdown.reloadLabel:Hide()
-                    end
-
-                    -- Vis notice hvis vi ønsker det (typisk ved brugerklik)
-                    if showNotice then
-                        dropdown.reloadLabel:SetText(Translate("/RELOAD_TEXT"))
-                        dropdown.reloadLabel:Show()
-                        -- Skjul automatisk efter 10 sekunder
-                        C_Timer.After(10, function()
-                            if dropdown.reloadLabel and dropdown.reloadLabel.Hide then
-                                dropdown.reloadLabel:Hide()
-                            end
-                        end)
-                    end
-
-                    -- Spil lyd hvis bedt om det
-                    if playSound and deps and deps.BossHelper and deps.BossHelper.SafePlaySound then
-                        deps.BossHelper:SafePlaySound(deps.BossHelper.Sounds and deps.BossHelper.Sounds.NORMAL_BUTTON or 856)
-                    end
-
-                    -- GENINDLÆS boss-data / taktik, så UI opdateres uden krævet /reload
-                    if BossData and BossData.Reload then
-                        pcall(function() BossData:Reload() end)
-                    elseif deps and deps.BossHelper and deps.BossHelper.Reload then
-                        pcall(function() deps.BossHelper:Reload() end)
-                    elseif BossHelper and BossHelper.Reload then
-                        pcall(function() BossHelper:Reload() end)
-                    end
-
-                    -- Ekstra: opdatér settings-panel hvis det har en Refresh/metode
-                    if parent and parent.Refresh then
-                        pcall(function() parent:Refresh() end)
-                    elseif rPanel and rPanel.Refresh then
-                        pcall(function() rPanel:Refresh() end)
-                    end
-                end
-
-                -- Opret knapper i dropdown-panelet
-                for i, lang in ipairs(languages) do
-                    local btn = CreateCustomButton(panel, 200, 26, lang.label)
-                    btn:SetPoint("TOPLEFT", panel, "TOPLEFT", 0, -((i - 1) * 26))
-                    btn:SetScript("OnClick", function()
-                        -- Vi lader SelectLanguage spille lyden og vise notice
-                        SelectLanguage(i, true, true)
-                        panel:Hide()
-                        if dropdown.clickCatcher then
-                            dropdown.clickCatcher:Hide()
-                            dropdown.activePanel = nil
-                        end
-                        -- Sprog-dropdown arrow
-                        if mainBtn.arrow then mainBtn.arrow:SetRotation(0) end -- arrow down
-                    end)
-                    table.insert(buttons, btn)
-                end
-
-                -- Start med korrekt valgt knap (init uden at vise /reload besked)
-                local startIndex = 1
-                for i, lang in ipairs(languages) do
-                    if lang.key == currentLang then
-                        startIndex = i
-                        break
-                    end
-                end
-                SelectLanguage(startIndex, false, false) -- init: no sound, no notice
-
-                -- Click-catcher, så vi kan lukke dropdown når man klikker udenfor
-                if not dropdown.clickCatcher then
-                    local catcher = CreateFrame("Frame", nil, UIParent)
-                    catcher:SetAllPoints(UIParent)
-                    catcher:EnableMouse(true)
-                    catcher:Hide()
-                    catcher:SetFrameStrata("FULLSCREEN_DIALOG")
-                    catcher:SetFrameLevel(1999)
-                    catcher:SetScript("OnMouseDown", function(self)
-                        if dropdown.activePanel and dropdown.activePanel:IsShown() then
-                            dropdown.activePanel:Hide()
-                            self:Hide()
-                            dropdown.activePanel = nil
-                            if mainBtn.arrow then mainBtn.arrow:SetRotation(0) end -- arrow down
-                        end
-                    end)
-                    dropdown.clickCatcher = catcher
-                end
-
-                -- Main-knap toggler panel
-                mainBtn:SetScript("OnClick", function()
-                    if deps and deps.BossHelper and deps.BossHelper.SafePlaySound then
-                        deps.BossHelper:SafePlaySound(deps.BossHelper.Sounds and deps.BossHelper.Sounds.NORMAL_BUTTON or 856)
-                    end
-                    if panel:IsShown() then
-                        panel:Hide()
-                        if dropdown.clickCatcher then
-                            dropdown.clickCatcher:Hide()
-                            dropdown.activePanel = nil
-                        end
-                        if mainBtn.arrow then mainBtn.arrow:SetRotation(0) end -- arrow down
+            local buttons = {}
+            local function SelectLanguage(index, playSound, showNotice)
+                local lang = languages[index]
+                if not lang then return end
+                BossHelperDB.language = lang.key
+                currentLang = lang.key
+                if deps and deps.BossHelper then deps.BossHelper.selectedLocale = lang.key end
+                if BossHelper then BossHelper.selectedLocale = lang.key end
+                for i, btn in ipairs(buttons) do
+                    if btn.SetSelected then
+                        btn:SetSelected(i == index)
                     else
-                        panel:Show()
-                        panel:SetFrameStrata("FULLSCREEN_DIALOG")
-                        panel:SetFrameLevel(2000)
-                        if dropdown.clickCatcher then
-                            dropdown.clickCatcher:SetFrameStrata("FULLSCREEN_DIALOG")
-                            dropdown.clickCatcher:SetFrameLevel(1999)
-                            dropdown.clickCatcher:Show()
-                        end
-                        dropdown.activePanel = panel
-
-                        -- PRÆCIS samme animation som PhaseDropdown hvis vi har det
-                        local ag = panel:CreateAnimationGroup()
-                        local t = ag:CreateAnimation("Translation")
-                        t:SetOffset(0, 6)
-                        t:SetDuration(0.12)
-                        t:SetSmoothing("OUT")
-                        local a = ag:CreateAnimation("Alpha")
-                        a:SetFromAlpha(0)
-                        a:SetToAlpha(1)
-                        a:SetDuration(0.12)
-                        if ShouldAnimateInCombat and ShouldAnimateInCombat() then
-                            ag:Play()
-                        elseif _G.BossHelper_ShouldAnimateInCombat and _G.BossHelper_ShouldAnimateInCombat() then
-                            ag:Play()
-                        end
-                        if mainBtn.arrow then mainBtn.arrow:SetRotation(math.pi) end -- arrow up
+                        if i == index then btn:SetText("|cff00ff00" .. btn:GetText() .. "|r")
+                        else btn:SetText(languages[i].label) end
                     end
-                end)
-
-                return dropdown
+                end
+                mainBtn:SetText(lang.label)
+                if not dropdown.reloadLabel then
+                    dropdown.reloadLabel = dropdown:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+                    dropdown.reloadLabel:SetPoint("LEFT", dropdown, "RIGHT", 10, 0)
+                    dropdown.reloadLabel:SetTextColor(1, 0.2, 0.2)
+                    dropdown.reloadLabel:Hide()
+                end
+                if showNotice then
+                    dropdown.reloadLabel:SetText(Translate("/RELOAD_TEXT"))
+                    dropdown.reloadLabel:Show()
+                    C_Timer.After(10, function()
+                        if dropdown.reloadLabel and dropdown.reloadLabel.Hide then dropdown.reloadLabel:Hide() end
+                    end)
+                end
+                if playSound and deps and deps.BossHelper and deps.BossHelper.SafePlaySound then
+                    deps.BossHelper:SafePlaySound(deps.BossHelper.Sounds and deps.BossHelper.Sounds.NORMAL_BUTTON or 856)
+                end
+                if BossData and BossData.Reload then pcall(function() BossData:Reload() end)
+                elseif deps and deps.BossHelper and deps.BossHelper.Reload then pcall(function() deps.BossHelper:Reload() end)
+                elseif BossHelper and BossHelper.Reload then pcall(function() BossHelper:Reload() end) end
+                if rPanel and rPanel.Refresh then pcall(function() rPanel:Refresh() end) end
             end
 
-            -- Gem dropdown som settings-widget
-            rPanel.settingsWidgets = rPanel.settingsWidgets or {}
-            rPanel.languageDropdown = CreateLanguageDropdown(rPanel, startX, startY, last)
-            table.insert(rPanel.settingsWidgets, rPanel.languageDropdown)
+            for i, lang in ipairs(languages) do
+                local btn = CreateCustomButton(panel, 200, 26, lang.label)
+                btn:SetPoint("TOPLEFT", panel, "TOPLEFT", 0, -((i - 1) * 26))
+                btn:SetScript("OnClick", function()
+                    SelectLanguage(i, true, true)
+                    panel:Hide()
+                    if dropdown.clickCatcher then dropdown.clickCatcher:Hide(); dropdown.activePanel = nil end
+                    if mainBtn.arrow then mainBtn.arrow:SetRotation(0) end
+                end)
+                table.insert(buttons, btn)
+            end
 
-            -- så label over dropdown
-            local langLabel = rPanel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-            langLabel:SetParent(rPanel)
-            langLabel:SetTextColor(1, 0.82, 0)
-            langLabel:SetText(Translate("SELECT_LANGUAGE_TITLE"))
-            langLabel:SetJustifyH("CENTER")
-            langLabel:SetWidth(200)
-            langLabel:SetHeight(20)
-            langLabel:SetPoint("BOTTOM", rPanel.languageDropdown, "TOP", 0, 2)
-            langLabel:Show()
+            local startIndex = 1
+            for i, lang in ipairs(languages) do
+                if lang.key == currentLang then startIndex = i; break end
+            end
+            SelectLanguage(startIndex, false, false)
 
-            table.insert(rPanel.settingsWidgets, langLabel)
+            if not dropdown.clickCatcher then
+                local catcher = CreateFrame("Frame", nil, UIParent)
+                catcher:SetAllPoints(UIParent)
+                catcher:EnableMouse(true)
+                catcher:Hide()
+                catcher:SetFrameStrata("FULLSCREEN_DIALOG")
+                catcher:SetFrameLevel(1999)
+                catcher:SetScript("OnMouseDown", function(self)
+                    if dropdown.activePanel and dropdown.activePanel:IsShown() then
+                        dropdown.activePanel:Hide()
+                        self:Hide()
+                        dropdown.activePanel = nil
+                        if mainBtn.arrow then mainBtn.arrow:SetRotation(0) end
+                    end
+                end)
+                dropdown.clickCatcher = catcher
+            end
 
-            -- Opdater offset under dropdown
-            last = { offset = (last and last.offset or 0) - 45 } -- lidt ekstra plads under dropdown
+            mainBtn:SetScript("OnClick", function()
+                if deps and deps.BossHelper and deps.BossHelper.SafePlaySound then
+                    deps.BossHelper:SafePlaySound(deps.BossHelper.Sounds and deps.BossHelper.Sounds.NORMAL_BUTTON or 856)
+                end
+                if panel:IsShown() then
+                    panel:Hide()
+                    if dropdown.clickCatcher then dropdown.clickCatcher:Hide(); dropdown.activePanel = nil end
+                    if mainBtn.arrow then mainBtn.arrow:SetRotation(0) end
+                else
+                    panel:Show()
+                    panel:SetFrameStrata("FULLSCREEN_DIALOG")
+                    panel:SetFrameLevel(2000)
+                    if dropdown.clickCatcher then
+                        dropdown.clickCatcher:SetFrameStrata("FULLSCREEN_DIALOG")
+                        dropdown.clickCatcher:SetFrameLevel(1999)
+                        dropdown.clickCatcher:Show()
+                    end
+                    dropdown.activePanel = panel
+                    BossHelper.Anim.PlayDropdownOpen(panel)
+                    if mainBtn.arrow then mainBtn.arrow:SetRotation(math.pi) end
+                end
+            end)
+
+            rPanel.languageDropdown = dropdown
         end
 
+        -- Scale slider (below language dropdown)
+        local scaleAnchor = W(rPanel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall"))
+        scaleAnchor:SetPoint("TOPLEFT", rPanel.languageDropdown, "BOTTOMLEFT", 0, -18)
+        scaleAnchor:SetText(Translate("SCALE_SLIDER_TITLE"))
+        scaleAnchor:SetTextColor(0.9, 0.9, 0.9)
 
-
-        --------------------------------------------------------------------------------
-        -- thin gray separator
-        --------------------------------------------------------------------------------
-        local sep = rPanel:CreateTexture(nil, "ARTWORK")
-        sep:SetColorTexture(0.5, 0.5, 0.5, 0.5) -- gray line
-        sep:SetSize(200, 1)
-        sep:SetPoint("TOPLEFT", rPanel, "TOPLEFT", startX + 5, startY + (last and last.offset or 0))
-        rPanel.settingsWidgets = rPanel.settingsWidgets or {}
-        table.insert(rPanel.settingsWidgets, sep)
-
-        last = { offset = (last and last.offset or 0) - 20 } -- a bit extra spacing
-
-        --------------------------------------------------------------------------------
-        -- Scale slider
-        --------------------------------------------------------------------------------
         rPanel._widgets = rPanel._widgets or {}
-
         if not rPanel._widgets.scaleSlider then
             local scaleSlider = CreateFrame("Slider", "BossHelperScaleSlider", rPanel, "OptionsSliderTemplate")
             scaleSlider:SetWidth(200)
@@ -440,354 +315,338 @@ function BossSettings.BuildSettingsCategoryUI(rPanel, category, ctx)
             scaleSlider:SetValueStep(0.05)
             scaleSlider:SetObeyStepOnDrag(true)
             scaleSlider:SetValue(BossHelperDB and BossHelperDB.scale or 1.0)
-
-            -- Text on slider
             _G[scaleSlider:GetName().."Low"]:SetText("50%")
             _G[scaleSlider:GetName().."High"]:SetText("200%")
-            _G[scaleSlider:GetName().."Text"]:SetText(Translate("SCALE_SLIDER_TITLE"))
-            _G[scaleSlider:GetName().."Text"]:SetTextColor(1, 0.82, 0)
-            _G[scaleSlider:GetName().."Low"]:SetTextColor(1, 0.82, 0)
-            _G[scaleSlider:GetName().."High"]:SetTextColor(1, 0.82, 0)
-
-
-            -- Value text below slider
+            _G[scaleSlider:GetName().."Text"]:SetText("")  -- label above instead
+            _G[scaleSlider:GetName().."Low"]:SetTextColor(0.7, 0.7, 0.7)
+            _G[scaleSlider:GetName().."High"]:SetTextColor(0.7, 0.7, 0.7)
             scaleSlider.valueText = rPanel:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
             scaleSlider.valueText:SetPoint("TOP", scaleSlider, "BOTTOM", 0, -2)
-            scaleSlider.valueText:SetText(string.format("%.1f", scaleSlider:GetValue()))
-
-            -- Tooltip for slider
-            scaleSlider.tooltip = { 
-                Translate("SCALE_SLIDER_TITLE"),
-                Translate("SCALE_TOOLTIP") 
-            }
+            scaleSlider.valueText:SetText(string.format("%.2f", scaleSlider:GetValue()))
+            scaleSlider.tooltip = { Translate("SCALE_SLIDER_TITLE"), Translate("SCALE_TOOLTIP") }
             AttachTooltip(scaleSlider)
-
-            -- Update text when slider changes
             scaleSlider:SetScript("OnValueChanged", function(self, value)
-                if self.valueText then
-                    self.valueText:SetText(string.format("%.2f", value))
-                end
-                -- refresh tooltip if open and owned by this slider
+                if self.valueText then self.valueText:SetText(string.format("%.2f", value)) end
                 if GameTooltip:IsOwned(self) then
                     GameTooltip:ClearLines()
-                    GameTooltip:SetText("Addon Scale", 1, 0.82, 0)
+                    GameTooltip:SetText(Translate("SCALE_SLIDER_TITLE"), 1, 0.82, 0)
                     GameTooltip:AddLine(string.format("%.2f", value), 1,1,1)
                     GameTooltip:Show()
                 end
             end)
-
-
-            -- Save value and change UI scale
             scaleSlider:SetScript("OnMouseUp", function(self)
                 local value = self:GetValue()
-                if BossHelperDB then
-                    BossHelperDB.scale = value
-                end
+                if BossHelperDB then BossHelperDB.scale = value end
                 if BossUI and BossUI.GetFrame then
                     local f = BossUI.GetFrame()
                     if f then f:SetScale(value) end
                 end
             end)
-
-            -- Save reference for reuse
             rPanel._widgets.scaleSlider = scaleSlider
         end
-
-        -- Place and show slider each time UI is built
         local scaleSlider = rPanel._widgets.scaleSlider
         scaleSlider:SetParent(rPanel)
-        scaleSlider:SetPoint("TOPLEFT", rPanel, "TOPLEFT", startX + 5, startY + (last and last.offset or 0) - 10)
+        scaleSlider:SetPoint("TOPLEFT", scaleAnchor, "BOTTOMLEFT", 0, -6)
         scaleSlider:Show()
         if scaleSlider.valueText then scaleSlider.valueText:Show() end
+        W(scaleSlider)
 
-        rPanel.settingsWidgets = rPanel.settingsWidgets or {}
-        table.insert(rPanel.settingsWidgets, scaleSlider)
+        -- ==== RIGHT COLUMN: Behavior ==========================================
+        local behHdr, behRule = AddSectionHeader(
+            Translate("SETTINGS_BEHAVIOR_SECTION"), rPanel, "TOPLEFT", COL_R, TOP_Y, 220)
 
-        last = { offset = (last and last.offset or 0) - 75 }
+        BossHelperDB = BossHelperDB or {}
 
-        --------------------------------------------------------------------------------
-        -- thin gray separator
-        --------------------------------------------------------------------------------
-        --local sep = rPanel:CreateTexture(nil, "ARTWORK")
-        --sep:SetColorTexture(0.5, 0.5, 0.5, 0.5) -- gray line
-        --sep:SetSize(215, 1)
-        --sep:SetPoint("TOPLEFT", rPanel, "TOPLEFT", startX, startY + (last and last.offset or 0))
-        --rPanel.settingsWidgets = rPanel.settingsWidgets or {}
-        --table.insert(rPanel.settingsWidgets, sep)
+        -- 4 checkboxes, each 26px apart
+        local cb1 = AddCheck(behRule, "TOPLEFT", 0, -12,
+            Translate("ANIMATIONS_COMBT_TITLE"), Translate("ANIMATIONS_TOOLTIP"),
+            BossHelperDB.allowAnimationsInCombat,
+            function(v) BossHelperDB.allowAnimationsInCombat = v end)
 
-        --last = { offset = (last and last.offset or 0) - 20 } -- a bit extra spacing
+        local cb2 = AddCheck(cb1, "TOPLEFT", 0, -26,
+            Translate("CLOSE_WINDOW_TITLE"), Translate("CLOSE_WINDOW_TOOLTIP"),
+            BossHelperDB.closeOnPost,
+            function(v) BossHelperDB.closeOnPost = v end)
 
-        --------------------------------------------------------------------------------
-        -- Allow animations in combat (checkbox)
-        --------------------------------------------------------------------------------
-        do
-            local initial = false
-            if BossHelperDB and BossHelperDB.allowAnimationsInCombat then initial = true end
-
-            local cb_anim = CreateFrame("CheckButton", nil, rPanel, "UICheckButtonTemplate")
-            cb_anim.text = cb_anim:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-            cb_anim.text:SetPoint("LEFT", cb_anim, "RIGHT", 4, 0)
-            cb_anim.text:SetText(Translate("ANIMATIONS_COMBT_TITLE"))
-            cb_anim.tooltip = Translate("ANIMATIONS_TOOLTIP")
-            AttachTooltip(cb_anim)
-            cb_anim:SetChecked(initial)
-
-            if last then
-                cb_anim:SetPoint("TOPLEFT", rPanel, "TOPLEFT", startX, startY + last.offset)
-            else
-                cb_anim:SetPoint("TOPLEFT", rPanel, "TOPLEFT", startX, startY)
-            end
-
-            -- Save chosen state directly in savedvars when user clicks
-            cb_anim:SetScript("OnClick", function(self)
-                BossHelperDB = BossHelperDB or {}
-                BossHelperDB.allowAnimationsInCombat = self:GetChecked() and true or false
-                -- optional sound/feedback
-                if deps.BossHelper and deps.BossHelper.SafePlaySound then
-                    deps.BossHelper:SafePlaySound(856)
-                end
-            end)
-
-            rPanel.settingsWidgets = rPanel.settingsWidgets or {}
-            table.insert(rPanel.settingsWidgets, cb_anim)
-            last = { offset = (last and last.offset or 0) - 30 }
-        end
-
-        --------------------------------------------------------------------------------
-        -- Close window on Post (checkbox)
-        --------------------------------------------------------------------------------
-        do
-            local initial = false
-            if BossHelperDB and BossHelperDB.closeOnPost then initial = true end
-
-            local cb_close = CreateFrame("CheckButton", nil, rPanel, "UICheckButtonTemplate")
-            cb_close.text = cb_close:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-            cb_close.text:SetPoint("LEFT", cb_close, "RIGHT", 4, 0)
-            cb_close.text:SetText(Translate("CLOSE_WINDOW_TITLE"))
-            cb_close.tooltip = Translate("CLOSE_WINDOW_TOOLTIP")
-            AttachTooltip(cb_close)
-            cb_close:SetChecked(initial)
-
-            if last then
-                cb_close:SetPoint("TOPLEFT", rPanel, "TOPLEFT", startX, startY + last.offset)
-            else
-                cb_close:SetPoint("TOPLEFT", rPanel, "TOPLEFT", startX, startY)
-            end
-
-            cb_close:SetScript("OnClick", function(self)
-                BossHelperDB = BossHelperDB or {}
-                BossHelperDB.closeOnPost = self:GetChecked() and true or false
-                if deps.BossHelper and deps.BossHelper.SafePlaySound then deps.BossHelper:SafePlaySound(856) end
-            end)
-
-            rPanel.settingsWidgets = rPanel.settingsWidgets or {}
-            table.insert(rPanel.settingsWidgets, cb_close)
-            last = { offset = (last and last.offset or 0) - 30 }
-        end
-
-        --------------------------------------------------------------------------------
-        -- Allow ESC to close BossHelper window (checkbox)
-        --------------------------------------------------------------------------------
-        do
-            BossHelperDB = BossHelperDB or {}
-            local initial = BossHelperDB.allowEscClose or false
-
-            local cb_esc = CreateFrame("CheckButton", nil, rPanel, "UICheckButtonTemplate")
-            cb_esc.text = cb_esc:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-            cb_esc.text:SetPoint("LEFT", cb_esc, "RIGHT", 4, 0)
-            cb_esc.text:SetText(Translate("ESC_CLOSE_TITLE"))
-            cb_esc.tooltip = Translate("ESC_CLOSE_TOOLTIP")
-            AttachTooltip(cb_esc)
-            cb_esc:SetChecked(initial)
-
-            if last then
-                cb_esc:SetPoint("TOPLEFT", rPanel, "TOPLEFT", startX, startY + last.offset)
-            else
-                cb_esc:SetPoint("TOPLEFT", rPanel, "TOPLEFT", startX, startY)
-            end
-
-            -- Når spilleren ændrer setting
-            cb_esc:SetScript("OnClick", function(self)
-                BossHelperDB.allowEscClose = self:GetChecked()
-
-                -- Opdater framen med det samme
+        local cb3 = AddCheck(cb2, "TOPLEFT", 0, -26,
+            Translate("ESC_CLOSE_TITLE"), Translate("ESC_CLOSE_TOOLTIP"),
+            BossHelperDB.allowEscClose or false,
+            function(v)
+                BossHelperDB.allowEscClose = v
                 if BossUI and BossUI.GetFrame then
                     local f = BossUI.GetFrame()
-                    if f then
-                        BossHelper:RegisterEscClose(f)
-                    end
-                end
-
-                if deps.BossHelper and deps.BossHelper.SafePlaySound then
-                    deps.BossHelper:SafePlaySound(856)
+                    if f then BossHelper:RegisterEscClose(f) end
                 end
             end)
 
-            rPanel.settingsWidgets = rPanel.settingsWidgets or {}
-            table.insert(rPanel.settingsWidgets, cb_esc)
-            last = { offset = (last and last.offset or 0) - 30 }
-
-            
-end
+        AddCheck(cb3, "TOPLEFT", 0, -26,
+            Translate("AUTO_OPEN_NOTES_TITLE"), Translate("AUTO_OPEN_NOTES_TOOLTIP"),
+            BossHelperDB.autoOpenBossNotes ~= false,
+            function(v) BossHelperDB.autoOpenBossNotes = v end)
 
 
         --------------------------------------------------------------------------------
-        -- Auto-open Boss Notes on boss select (checkbox)
-        --------------------------------------------------------------------------------
-        do
-            BossHelperDB = BossHelperDB or {}
-            -- Default now initialized in BossHelper.lua; just read current value
-            local initial = (BossHelperDB.autoOpenBossNotes ~= false)
-
-            local cb_autoNotes = CreateFrame("CheckButton", nil, rPanel, "UICheckButtonTemplate")
-            cb_autoNotes.text = cb_autoNotes:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-            cb_autoNotes.text:SetPoint("LEFT", cb_autoNotes, "RIGHT", 4, 0)
-            cb_autoNotes.text:SetText(Translate("AUTO_OPEN_NOTES_TITLE"))
-            -- Multi-line tooltip via \n (no title)
-            cb_autoNotes.tooltip = Translate("AUTO_OPEN_NOTES_TOOLTIP")
-            AttachTooltip(cb_autoNotes)
-            cb_autoNotes:SetChecked(initial)
-
-            if last then
-                cb_autoNotes:SetPoint("TOPLEFT", rPanel, "TOPLEFT", startX, startY + last.offset)
-            else
-                cb_autoNotes:SetPoint("TOPLEFT", rPanel, "TOPLEFT", startX, startY)
-            end
-
-            cb_autoNotes:SetScript("OnClick", function(self)
-                BossHelperDB.autoOpenBossNotes = self:GetChecked() and true or false
-                if deps.BossHelper and deps.BossHelper.SafePlaySound then deps.BossHelper:SafePlaySound(856) end
-            end)
-
-            rPanel.settingsWidgets = rPanel.settingsWidgets or {}
-            table.insert(rPanel.settingsWidgets, cb_autoNotes)
-            last = { offset = (last and last.offset or 0) - 30 }
-        end
-
-
-        --------------------------------------------------------------------------------
-        -- category Auto-Invite
+        -- category Auto-Invite — single column layout
         --------------------------------------------------------------------------------
     elseif category == Translate("AUTO_INVITE_CATE") then
 
-        --------------------------------------------------------------------------------
-        -- Enable/disable Auto-Invite
-        --------------------------------------------------------------------------------
-        local cb = CreateFrame("CheckButton", nil, rPanel, "UICheckButtonTemplate")
-        cb.text = cb:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-        cb.text:SetPoint("LEFT", cb, "RIGHT", 4, 0)
-        cb.text:SetText(Translate("AUTO_INVITE_TITLE"))
-        cb:SetChecked(BossHelperDB and BossHelperDB.autoInviteEnabled)
-        cb.tooltip = Translate("AUTO_INVITE_TOOLTIP")
-        AttachTooltip(cb)
+        local COL = 20
+        local TOP = -50
 
+        -- Section header
+        local invHdr, invRule = AddSectionHeader(
+            Translate("AUTO_INVITE_CATE"), rPanel, "TOPLEFT", COL, TOP, 240)
 
-        if last then
-            cb:SetPoint("TOPLEFT", rPanel, "TOPLEFT", startX, startY + last.offset)
-        else
-            cb:SetPoint("TOPLEFT", rPanel, "TOPLEFT", startX, startY)
-        end
+        -- Enable checkbox
+        local cbInv = AddCheck(invRule, "TOPLEFT", 0, -12,
+            Translate("AUTO_INVITE_TITLE"), Translate("AUTO_INVITE_TOOLTIP"),
+            BossHelperDB and BossHelperDB.autoInviteEnabled,
+            function(v) BossHelperDB.autoInviteEnabled = v end)
 
-        cb:SetScript("OnClick", function(self)
-            BossHelperDB.autoInviteEnabled = self:GetChecked()
+        -- Trigger word label + editbox
+        local trigLbl = W(rPanel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall"))
+        trigLbl:SetPoint("TOPLEFT", cbInv, "BOTTOMLEFT", 0, -16)
+        trigLbl:SetText(Translate("TRIGGER_WORD_TITLE"))
+        trigLbl:SetTextColor(0.9, 0.9, 0.9)
+
+        local eb = W(CreateFrame("EditBox", nil, rPanel, "InputBoxTemplate"))
+        eb:SetSize(180, 22)
+        eb:SetPoint("TOPLEFT", trigLbl, "BOTTOMLEFT", 0, -4)
+        eb:SetAutoFocus(false)
+        eb:SetMaxLetters(50)
+        eb:SetText(BossHelperDB and BossHelperDB.triggerWord or "invite!")
+        eb.tooltip = Translate("TRIGGER_WORD_TOOLTIP")
+        AttachTooltip(eb)
+        eb:SetScript("OnEnterPressed", function(self)
+            local txt = trim(self:GetText())
+            if txt ~= "" then BossHelperDB.triggerWord = txt; Inviter.SetTrigger(txt) end
+            self:ClearFocus()
         end)
-
-        rPanel.settingsWidgets = rPanel.settingsWidgets or {}
-        table.insert(rPanel.settingsWidgets, cb)
-        last = { offset = (last and last.offset or 0) - 50 }
-
-        --------------------------------------------------------------------------------
-        -- Trigger word input
-        --------------------------------------------------------------------------------
-        local function AddEditBox(labelText, initialText, callback)
-            local lbl = rPanel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-            lbl:SetPoint("TOPLEFT", rPanel, "TOPLEFT", startX + 5, startY + (last and last.offset or 0))
-            lbl:SetText(labelText)
-
-            local eb = CreateFrame("EditBox", nil, rPanel, "InputBoxTemplate")
-            eb:SetSize(160, 20)
-            eb:SetPoint("TOPLEFT", lbl, "BOTTOMLEFT", 0, -5)
-            eb:SetAutoFocus(false)
-            eb:SetMaxLetters(50)
-            eb:SetText(initialText or "")
-            eb.tooltip = Translate("TRIGGER_WORD_TOOLTIP")
-            AttachTooltip(eb)
-
-            eb:SetScript("OnEnterPressed", function(self)
-                if callback then callback(self:GetText():trim()) end
-                self:ClearFocus()
-            end)
-            eb:SetScript("OnEditFocusLost", function(self)
-                if callback then callback(self:GetText():trim()) end
-            end)
-
-            rPanel.settingsWidgets = rPanel.settingsWidgets or {}
-            table.insert(rPanel.settingsWidgets, lbl)
-            table.insert(rPanel.settingsWidgets, eb)
-
-            last = { offset = (last and last.offset or 0) - 40 }
-            return eb
-        end
-
-        local triggerBox = AddEditBox(Translate("TRIGGER_WORD_TITLE"), BossHelperDB and BossHelperDB.triggerWord or "invite!", function(txt)
-            if txt ~= "" then
-                BossHelperDB.triggerWord = txt
-                Inviter.SetTrigger(txt)
-            end
+        eb:SetScript("OnEditFocusLost", function(self)
+            local txt = trim(self:GetText())
+            if txt ~= "" then BossHelperDB.triggerWord = txt; Inviter.SetTrigger(txt) end
         end)
 
         --------------------------------------------------------------------------------
-        -- category Notifications
+        -- category Mini Window — two-column layout
+        --   Left column (x=20):  Appearance section — transparency slider
+        --   Right column (x=300): Options section   — 3 checkboxes
         --------------------------------------------------------------------------------
-    --elseif category == "Notifications" then
-    --    AddLabel("Notification options:")
-    --    AddCheck("Announce tactics to party", "Sender taktikker til gruppen.", true)
-    --    AddCheck("Use raid warning", "Brug raid warning i stedet for chat.", false)
+    elseif category == Translate("MINI_WINDOW_CATE") then
 
+        local COL_L = 20
+        local COL_R = 300
+        local TOP_Y = -50
+
+        -- ==== LEFT: Appearance ===============================================
+        local appHdr, appRule = AddSectionHeader(
+            Translate("SETTINGS_APPEARANCE_SECTION"), rPanel, "TOPLEFT", COL_L, TOP_Y, 240)
+
+        local transLbl = W(rPanel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall"))
+        transLbl:SetPoint("TOPLEFT", appRule, "BOTTOMLEFT", 0, -14)
+        transLbl:SetText(Translate("MINI_WINDOW_TRANSPARENT_TITLE"))
+        transLbl:SetTextColor(0.9, 0.9, 0.9)
+
+        rPanel._widgets = rPanel._widgets or {}
+        if not rPanel._widgets.miniTransparencySlider then
+            local initVal = (BossHelperDB and tonumber(BossHelperDB.miniWindowTransparency)) or 0.95
+            local sld = CreateFrame("Slider", "BossHelperMiniWindowTransparencySlider", rPanel, "OptionsSliderTemplate")
+            sld:SetWidth(200)
+            sld:SetHeight(20)
+            sld:SetOrientation("HORIZONTAL")
+            sld:SetMinMaxValues(0.0, 1.0)
+            sld:SetValueStep(0.01)
+            sld:SetObeyStepOnDrag(true)
+            sld:SetValue(initVal)
+            _G[sld:GetName().."Low"]:SetText("0%")
+            _G[sld:GetName().."High"]:SetText("100%")
+            _G[sld:GetName().."Text"]:SetText("")
+            _G[sld:GetName().."Low"]:SetTextColor(0.7, 0.7, 0.7)
+            _G[sld:GetName().."High"]:SetTextColor(0.7, 0.7, 0.7)
+            sld.valueText = rPanel:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+            sld.valueText:SetPoint("TOP", sld, "BOTTOM", 0, -2)
+            sld.valueText:SetText(string.format("%d%%", math.floor(sld:GetValue() * 100 + 0.5)))
+            sld.tooltip = { Translate("MINI_WINDOW_TRANSPARENT_TITLE"), Translate("MINI_WINDOW_TRANSPARENT_TOOLTIP") }
+            AttachTooltip(sld)
+            sld:SetScript("OnValueChanged", function(self, value)
+                if self.valueText then self.valueText:SetText(string.format("%d%%", math.floor(value * 100 + 0.5))) end
+                if GameTooltip:IsOwned(self) then
+                    GameTooltip:ClearLines()
+                    GameTooltip:SetText(Translate("MINI_WINDOW_TRANSPARENT_TITLE"), 1, 0.82, 0)
+                    GameTooltip:AddLine(string.format("%d%%", math.floor(value * 100 + 0.5)), 1,1,1)
+                    GameTooltip:Show()
+                end
+            end)
+            sld:SetScript("OnMouseUp", function(self)
+                local v = tonumber(self:GetValue()) or 0
+                BossHelperDB = BossHelperDB or {}
+                BossHelperDB.miniWindowTransparency = v
+                if MiniWindow and MiniWindow.ApplySettings then MiniWindow.ApplySettings() end
+            end)
+            rPanel._widgets.miniTransparencySlider = sld
+        end
+
+        local miniSlider = rPanel._widgets.miniTransparencySlider
+        miniSlider:SetParent(rPanel)
+        miniSlider:SetPoint("TOPLEFT", transLbl, "BOTTOMLEFT", 0, -6)
+        miniSlider:Show()
+        if miniSlider.valueText then miniSlider.valueText:Show() end
+        W(miniSlider)
+
+        -- Appearance checkboxes (below slider)
+        local mCb1 = AddCheck(miniSlider, "TOPLEFT", 0, -30,
+            Translate("MINI_WINDOW_NO_BORDER_TITLE"), Translate("MINI_WINDOW_NO_BORDER_TOOLTIP"),
+            BossHelperDB and BossHelperDB.miniWindowNoBorder,
+            function(v)
+                BossHelperDB.miniWindowNoBorder = v
+                if MiniWindow and MiniWindow.ApplySettings then MiniWindow.ApplySettings() end
+            end)
+
+        local mCb2 = AddCheck(mCb1, "TOPLEFT", 0, -26,
+            Translate("MINI_WINDOW_HIDE_SEP_TITLE"), Translate("MINI_WINDOW_HIDE_SEP_TOOLTIP"),
+            BossHelperDB and BossHelperDB.miniWindowHideSeparator,
+            function(v)
+                BossHelperDB.miniWindowHideSeparator = v
+                if MiniWindow and MiniWindow.ApplySettings then MiniWindow.ApplySettings() end
+            end)
+
+        AddCheck(mCb2, "TOPLEFT", 0, -26,
+            Translate("MINI_WINDOW_ICONS_ONLY_TITLE"), Translate("MINI_WINDOW_ICONS_ONLY_TOOLTIP"),
+            BossHelperDB and BossHelperDB.miniWindowHideButtonChrome,
+            function(v)
+                BossHelperDB.miniWindowHideButtonChrome = v
+                if MiniWindow and MiniWindow.ApplySettings then MiniWindow.ApplySettings() end
+            end)
+
+        -- ==== RIGHT: Behavior ================================================
+        local behHdrMini, behRuleMini = AddSectionHeader(
+            Translate("SETTINGS_BEHAVIOR_SECTION"), rPanel, "TOPLEFT", COL_R, TOP_Y, 220)
+
+        AddCheck(behRuleMini, "TOPLEFT", 0, -12,
+            Translate("MINI_WINDOW_AUTO_EXPAND_TITLE"), Translate("MINI_WINDOW_AUTO_EXPAND_TOOLTIP"),
+            BossHelperDB and BossHelperDB.miniWindowAutoExpand,
+            function(v)
+                BossHelperDB.miniWindowAutoExpand = v
+            end)
 
         --------------------------------------------------------------------------------
-        -- category Profile
+        -- category Key Tracker — two-column layout
+        --   Left column (x=20):  Display section   — show/hide checkboxes
+        --   Right column (x=300): Group Finder Panel appearance — slider + checkboxes
         --------------------------------------------------------------------------------
-    --elseif category == "Profile" then
-    --    AddLabel("Profile options:")
-    --    local info = rPanel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    --    info:SetPoint("TOPLEFT", rPanel, "TOPLEFT", startX, startY + (last and last.offset or 0))
-    --    info:SetText("Current profile: Default (Work in Progress).")
-    --    rPanel.settingsWidgets = rPanel.settingsWidgets or {}
-    --    table.insert(rPanel.settingsWidgets, info)
-    --    last = { offset = (last and last.offset or 0) - 30 }
+    elseif category == Translate("KEY_TRACKER_CATE") then
 
-        --------------------------------------------------------------------------------
-        -- category Advanced
-        --------------------------------------------------------------------------------
-    --elseif category == "Advanced" then
-    --    AddLabel("Advanced / debug options:")
-    --    AddCheck("Enable debug logging", "Log mere info til fejlretning.", false)
---
-    --    local dumpBtn = (CreateCustomButton or deps.CreateCustomButton)(rPanel, 160, 30, "Dump SavedVars")
-    --    dumpBtn:SetPoint("TOPLEFT", rPanel, "TOPLEFT", startX, startY + (last and last.offset or 0) - 30)
-    --    dumpBtn:SetScript("OnClick", function()
-    --        print("|cffFF4500[MythicMentor]|r SavedVars dump:")
-    --        if deps.BossHelperDB then
-    --            print("BossHelperDB:")
-    --            Print(deps.BossHelperDB)
-    --        else
-    --            Print("No BossHelperDB available")
-    --        end
-    --    end)
-    --    rPanel.settingsWidgets = rPanel.settingsWidgets or {}
-    --    table.insert(rPanel.settingsWidgets, dumpBtn)
-    --    last = { offset = (last and last.offset or 0) - 40 }
+        local COL_L = 20
+        local COL_R = 300
+        local TOP_Y = -50
+
+        BossHelperDB = BossHelperDB or {}
+
+        -- ==== LEFT: Display =====================================================
+        local dispHdr, dispRule = AddSectionHeader(
+            Translate("KEY_TRACKER_SECTION"), rPanel, "TOPLEFT", COL_L, TOP_Y, 240)
+
+        local cb1 = AddCheck(dispRule, "TOPLEFT", 0, -12,
+            Translate("KEY_TRACKER_STARTPAGE_TITLE"), Translate("KEY_TRACKER_STARTPAGE_TOOLTIP"),
+            BossHelperDB.showKeysOnStartPage ~= false,
+            function(v)
+                BossHelperDB.showKeysOnStartPage = v
+                -- Live-opdater StartPage widget hvis det er synligt
+                if rightPanel and rightPanel.keystoneWidget then
+                    rightPanel.keystoneWidget:SetEnabled(v)
+                end
+            end)
+
+        AddCheck(cb1, "TOPLEFT", 0, -26,
+            Translate("KEY_TRACKER_GROUPFINDER_TITLE"), Translate("KEY_TRACKER_GROUPFINDER_TOOLTIP"),
+            BossHelperDB.showKeysInGroupFinder ~= false,
+            function(v)
+                BossHelperDB.showKeysInGroupFinder = v
+                -- Live-opdater Group Finder panelet med det samme
+                if BossHelper.GroupFinderPanel and BossHelper.GroupFinderPanel.UpdateVisibility then
+                    BossHelper.GroupFinderPanel.UpdateVisibility()
+                end
+            end)
+
+        -- ==== RIGHT: Group Finder Panel appearance ==============================
+        local gfHdr, gfRule = AddSectionHeader(
+            Translate("KEY_TRACKER_GF_APPEARANCE"), rPanel, "TOPLEFT", COL_R, TOP_Y, 220)
+
+        -- Background transparency label
+        local gfTransLbl = W(rPanel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall"))
+        gfTransLbl:SetPoint("TOPLEFT", gfRule, "BOTTOMLEFT", 0, -14)
+        gfTransLbl:SetText(Translate("KEY_TRACKER_GF_TRANSPARENT_TITLE"))
+        gfTransLbl:SetTextColor(0.9, 0.9, 0.9)
+
+        rPanel._widgets = rPanel._widgets or {}
+        if not rPanel._widgets.gfTransparencySlider then
+            local initVal = (BossHelperDB and tonumber(BossHelperDB.gfPanelTransparency)) or 0.95
+            local sld = CreateFrame("Slider", "BossHelperGFTransparencySlider", rPanel, "OptionsSliderTemplate")
+            sld:SetWidth(200)
+            sld:SetHeight(20)
+            sld:SetOrientation("HORIZONTAL")
+            sld:SetMinMaxValues(0.0, 1.0)
+            sld:SetValueStep(0.01)
+            sld:SetObeyStepOnDrag(true)
+            sld:SetValue(initVal)
+            _G[sld:GetName().."Low"]:SetText("0%")
+            _G[sld:GetName().."High"]:SetText("100%")
+            _G[sld:GetName().."Text"]:SetText("")
+            _G[sld:GetName().."Low"]:SetTextColor(0.7, 0.7, 0.7)
+            _G[sld:GetName().."High"]:SetTextColor(0.7, 0.7, 0.7)
+            sld.valueText = rPanel:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+            sld.valueText:SetPoint("TOP", sld, "BOTTOM", 0, -2)
+            sld.valueText:SetText(string.format("%d%%", math.floor(initVal * 100 + 0.5)))
+            sld.tooltip = { Translate("KEY_TRACKER_GF_TRANSPARENT_TITLE"), Translate("KEY_TRACKER_GF_TRANSPARENT_TOOLTIP") }
+            AttachTooltip(sld)
+            sld:SetScript("OnValueChanged", function(self, value)
+                if self.valueText then self.valueText:SetText(string.format("%d%%", math.floor(value * 100 + 0.5))) end
+                if GameTooltip:IsOwned(self) then
+                    GameTooltip:ClearLines()
+                    GameTooltip:SetText(Translate("KEY_TRACKER_GF_TRANSPARENT_TITLE"), 1, 0.82, 0)
+                    GameTooltip:AddLine(string.format("%d%%", math.floor(value * 100 + 0.5)), 1, 1, 1)
+                    GameTooltip:Show()
+                end
+            end)
+            sld:SetScript("OnMouseUp", function(self)
+                local v = tonumber(self:GetValue()) or 0
+                BossHelperDB = BossHelperDB or {}
+                BossHelperDB.gfPanelTransparency = v
+                if BossHelper.GroupFinderPanel and BossHelper.GroupFinderPanel.ApplySettings then
+                    BossHelper.GroupFinderPanel.ApplySettings()
+                end
+            end)
+            rPanel._widgets.gfTransparencySlider = sld
+        end
+        local gfSlider = rPanel._widgets.gfTransparencySlider
+        gfSlider:SetParent(rPanel)
+        gfSlider:SetPoint("TOPLEFT", gfTransLbl, "BOTTOMLEFT", 0, -6)
+        gfSlider:Show()
+        if gfSlider.valueText then gfSlider.valueText:Show() end
+        W(gfSlider)
+
+        -- No border checkbox
+        local gfCb1 = AddCheck(gfSlider, "TOPLEFT", 0, -30,
+            Translate("KEY_TRACKER_GF_NO_BORDER_TITLE"), Translate("KEY_TRACKER_GF_NO_BORDER_TOOLTIP"),
+            BossHelperDB and BossHelperDB.gfNoBorder,
+            function(v)
+                BossHelperDB.gfNoBorder = v
+                if BossHelper.GroupFinderPanel and BossHelper.GroupFinderPanel.ApplySettings then
+                    BossHelper.GroupFinderPanel.ApplySettings()
+                end
+            end)
+
+        -- Hide title checkbox
+        AddCheck(gfCb1, "TOPLEFT", 0, -26,
+            Translate("KEY_TRACKER_GF_HIDE_TITLE_TITLE"), Translate("KEY_TRACKER_GF_HIDE_TITLE_TOOLTIP"),
+            BossHelperDB and BossHelperDB.gfHideTitle,
+            function(v)
+                BossHelperDB.gfHideTitle = v
+                if BossHelper.GroupFinderPanel and BossHelper.GroupFinderPanel.ApplySettings then
+                    BossHelper.GroupFinderPanel.ApplySettings()
+                end
+            end)
     end
-
-        --------------------------------------------------------------------------------
-        -- Footer
-        --------------------------------------------------------------------------------
-    --local footer = rPanel:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    --footer:SetPoint("BOTTOMLEFT", rPanel, "BOTTOMLEFT", 10, 10)
-    --footer:SetText("Tip: changes are not saved in this example - add savedvar-updates in callbacks.")
-    --rPanel.settingsWidgets = rPanel.settingsWidgets or {}
-    --table.insert(rPanel.settingsWidgets, footer)
 end
 
 -- SelectSettingCategory (tracks left-button state in frame.settingsSelectedButton)
@@ -837,12 +696,9 @@ function BossSettings.ShowSettings(ctx)
     local leftPanel = ctx.leftPanel
     local rightPanel = ctx.rightPanel
 
-    -- Skjul Discord knappen på indstillinger siden
-    if rightPanel and rightPanel.discordButton then rightPanel.discordButton:Hide() end
-    -- Skjul GitHub knappen på indstillinger siden
-    if rightPanel and rightPanel.githubButton then rightPanel.githubButton:Hide() end
-    -- Skjul Bug Report knappen på indstillinger siden
-    if rightPanel and rightPanel.bugReportButton then rightPanel.bugReportButton:Hide() end
+    BossHelper.UI.hide(rightPanel and rightPanel.discordButton)
+    BossHelper.UI.hide(rightPanel and rightPanel.githubButton)
+    BossHelper.UI.hide(rightPanel and rightPanel.bugReportButton)
     local backButton = ctx.backButton
     local CreateCustomButton = ctx.CreateCustomButton or deps.CreateCustomButton
 
@@ -894,7 +750,9 @@ function BossSettings.ShowSettings(ctx)
     -- define your settings categories
     local categories = { 
         Translate("GENERAL_CATE"), 
-        Translate("AUTO_INVITE_CATE")
+        Translate("AUTO_INVITE_CATE"),
+        Translate("MINI_WINDOW_CATE"),
+        Translate("KEY_TRACKER_CATE"),
     }
     --local categories = { "General", "Auto-Invite", "Notifications", "Profile", "Advanced" }
 

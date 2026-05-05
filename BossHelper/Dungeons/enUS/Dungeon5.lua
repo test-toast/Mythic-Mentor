@@ -1,8 +1,8 @@
 ﻿Dungeon5 = {
-    instanceID = 476,
+    instanceID = 476, -- Skyreach
     bosses = {
         {
-            encounterID = 965,
+            encounterID = 965, -- Ranjit
             short       = [[
 1. Dodge EVERYTHING and stay away from the platform's edge.
 ]],
@@ -11,7 +11,7 @@
         },
 
         {
-            encounterID = 966,
+            encounterID = 966, -- Arknath
             short       = [[
 1. Soak the three light rays; move out when they become triangles.
 
@@ -22,7 +22,7 @@ Tank. Point boss away from the group & dodge frontal.
         },
 
         {
-            encounterID = 967,
+            encounterID = 967, -- Rukhran
             short       = [[
 1. Killing adds leaves behind an egg; do NOT kill other adds next to these eggs.
 2. Run when fixated.
@@ -35,7 +35,7 @@ DPS. please don't stand on each side of det pillar.
         },
 
         {
-            encounterID = 968,
+            encounterID = 968, -- High Sage Viryx
             short       = [[
 1. Interrupt Solar Blast.
 2. CC & nuke adds ASAP.

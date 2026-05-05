@@ -6,7 +6,7 @@
 -- ================================================
 function BossHelper:RegisterEscClose(frame)
     if not frame or not frame.GetName then
-        print("|cffff5555[MythicMentor]|r Kan ikke registrere frame til ESC-lukning (mangler navn)")
+        print(BossHelper.CHAT_TAG_ERR .. " Kan ikke registrere frame til ESC-lukning (mangler navn)")
         return
     end
 
@@ -22,327 +22,207 @@ function BossHelper:RegisterEscClose(frame)
     -- Tilføj kun hvis indstillingen er aktiv
     if BossHelperDB and BossHelperDB.allowEscClose then
         table.insert(UISpecialFrames, name)
-        -- print("BossHelper: ESC lukning aktiveret for -> " .. name)
-    else
-        -- print("BossHelper: ESC lukning deaktiveret for -> " .. name)
     end
 end
 
 -- ================================================
--- Discord Link Popup Function
+-- Shared popup frame factory
+-- Builds the common moveable backdrop frame used by all link popups.
+-- cfg = { name, width, height, alpha }  (all optional except name)
+-- ================================================
+local POPUP_BACKDROP = {
+    bgFile   = "Interface\\DialogFrame\\UI-DialogBox-Background",
+    edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
+    tile = true, tileSize = 32, edgeSize = 32,
+    insets = { left = 11, right = 12, top = 12, bottom = 11 },
+}
+
+local function _CreateBasePopupFrame(cfg)
+    local popup = CreateFrame("Frame", cfg.name, UIParent, "BackdropTemplate")
+    popup:SetSize(cfg.width or 350, cfg.height or 120)
+    popup:SetPoint("CENTER")
+    popup:SetBackdrop(POPUP_BACKDROP)
+    popup:SetBackdropColor(0, 0, 0, cfg.alpha or 0.8)
+    popup:SetFrameStrata("DIALOG")
+    popup:SetFrameLevel(100)
+    popup:EnableMouse(true)
+    popup:SetMovable(true)
+    popup:RegisterForDrag("LeftButton")
+    popup:SetScript("OnDragStart", popup.StartMoving)
+    popup:SetScript("OnDragStop", popup.StopMovingOrSizing)
+
+    local xBtn = CreateFrame("Button", nil, popup, "UIPanelCloseButton")
+    xBtn:SetPoint("TOPRIGHT", popup, "TOPRIGHT", -5, -5)
+    xBtn:SetScript("OnClick", function() popup:Hide() end)
+
+    return popup
+end
+
+-- Creates a copyable read-only EditBox anchored below `anchor`.
+local function _CreateLinkBox(popup, width, anchor, link)
+    local box = CreateFrame("EditBox", nil, popup, "InputBoxTemplate")
+    box:SetSize(width or 300, 20)
+    box:SetPoint("TOP", anchor, "BOTTOM", 0, -6)
+    box:SetAutoFocus(false)
+    box:SetText(link or "")
+    box:SetScript("OnEnterPressed", function(self) self:HighlightText() end)
+    box:SetScript("OnEscapePressed", function() popup:Hide() end)
+    return box
+end
+
+-- Creates an instruction label anchored below `anchor`.
+local function _AddCopyInstructions(popup, anchor)
+    local lbl = popup:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    lbl:SetPoint("TOP", anchor, "BOTTOM", 0, -12)
+    lbl:SetText(Translate("COPY_LINK"))
+    lbl:SetTextColor(0.8, 0.8, 0.8)
+    return lbl
+end
+
+-- Factory for the common single-link popup (Discord / GitHub).
+-- titleKey  = Translate key for the popup title
+-- titleColor = { r, g, b }
+-- linkKey   = key in BossHelper.Links
+-- Returns popup, linkBox
+local function _MakeSingleLinkPopup(self, frameName, titleKey, titleColor, linkKey)
+    local popup = _CreateBasePopupFrame({ name = frameName, width = 350, height = 120 })
+
+    local title = popup:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
+    title:SetPoint("TOP", popup, "TOP", 0, -20)
+    title:SetText(Translate(titleKey))
+    title:SetTextColor(titleColor[1], titleColor[2], titleColor[3])
+
+    -- Anchor box to center of popup (keeps original layout)
+    local box = CreateFrame("EditBox", nil, popup, "InputBoxTemplate")
+    box:SetSize(300, 20)
+    box:SetPoint("CENTER", popup, "CENTER", 0, 10)
+    box:SetAutoFocus(false)
+    box:SetText(BossHelper.Links[linkKey] or "")
+    box:SetScript("OnEnterPressed", function(b) b:HighlightText() end)
+    box:SetScript("OnEscapePressed", function() popup:Hide() end)
+
+    local inst = popup:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    inst:SetPoint("TOP", box, "BOTTOM", 0, -10)
+    inst:SetText(Translate("COPY_LINK"))
+    inst:SetTextColor(0.8, 0.8, 0.8)
+
+    self:RegisterEscClose(popup)
+    return popup, box
+end
+
+-- ================================================
+-- Discord Link Popup
 -- ================================================
 function BossHelper:ShowDiscordLinkPopup()
-    -- Discord link - ændre dette til dit Discord link
-    local discordLink = "https://discord.gg/sYFdZDPKr3"
-    
-    -- Opret popup frame hvis det ikke eksisterer
     if not self.discordPopup then
-        local popup = CreateFrame("Frame", "BossHelperDiscordPopup", UIParent, "BackdropTemplate")
-        popup:SetSize(350, 120)
-        popup:SetPoint("CENTER")
-        popup:SetBackdrop({
-            bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
-            edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
-            tile = true, tileSize = 32, edgeSize = 32,
-            insets = { left = 11, right = 12, top = 12, bottom = 11 }
-        })
-        popup:SetBackdropColor(0, 0, 0, 0.8)
-        popup:SetFrameStrata("DIALOG")
-        popup:SetFrameLevel(100)
-        popup:EnableMouse(true)
-        popup:SetMovable(true)
-        popup:RegisterForDrag("LeftButton")
-        popup:SetScript("OnDragStart", popup.StartMoving)
-        popup:SetScript("OnDragStop", popup.StopMovingOrSizing)
-        
-        -- Title
-        local title = popup:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
-        title:SetPoint("TOP", popup, "TOP", 0, -20)
-        title:SetText(Translate("JOIN_DISCORD"))
-        title:SetTextColor(0.5, 0.7, 1)
-        
-        -- Link editbox
-        local linkBox = CreateFrame("EditBox", nil, popup, "InputBoxTemplate")
-        linkBox:SetSize(300, 20)
-        linkBox:SetPoint("CENTER", popup, "CENTER", 0, 10)
-        linkBox:SetText(discordLink)
-        linkBox:SetAutoFocus(false)
-        linkBox:HighlightText()
-        linkBox:SetScript("OnEscapePressed", function() popup:Hide() end)
-        linkBox:SetScript("OnEnterPressed", function() linkBox:HighlightText() end)
-        
-        -- Instructions
-        local instructions = popup:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-        instructions:SetPoint("TOP", linkBox, "BOTTOM", 0, -10)
-        instructions:SetText(Translate("COPY_LINK"))
-        instructions:SetTextColor(0.8, 0.8, 0.8)
-        
-
-        
-        -- X button
-        local xBtn = CreateFrame("Button", nil, popup, "UIPanelCloseButton")
-        xBtn:SetPoint("TOPRIGHT", popup, "TOPRIGHT", -5, -5)
-        xBtn:SetScript("OnClick", function() popup:Hide() end)
-        
-        self.discordPopup = popup
-        self.discordLinkBox = linkBox
-        
-        -- Register for ESC close
-        self:RegisterEscClose(popup)
+        self.discordPopup, self.discordLinkBox = _MakeSingleLinkPopup(
+            self, "BossHelperDiscordPopup",
+            "JOIN_DISCORD", { 0.5, 0.7, 1 }, "DISCORD"
+        )
     end
-    
-    -- Update link and show
-    self.discordLinkBox:SetText(discordLink)
+    self.discordLinkBox:SetText(BossHelper.Links.DISCORD)
     self.discordPopup:Show()
     self.discordLinkBox:SetFocus()
     self.discordLinkBox:HighlightText()
 end
 
 -- ================================================
--- GitHub Link Popup Function
+-- GitHub Link Popup
 -- ================================================
 function BossHelper:ShowGitHubLinkPopup()
-    -- GitHub link - ændre dette til dit GitHub repository link
-    local githubLink = "https://github.com/test-toast/Mythic-Mentor"
-    
-    -- Opret popup frame hvis det ikke eksisterer
     if not self.githubPopup then
-        local popup = CreateFrame("Frame", "BossHelperGitHubPopup", UIParent, "BackdropTemplate")
-        popup:SetSize(350, 120)
-        popup:SetPoint("CENTER")
-        popup:SetBackdrop({
-            bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
-            edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
-            tile = true, tileSize = 32, edgeSize = 32,
-            insets = { left = 11, right = 12, top = 12, bottom = 11 }
-        })
-        popup:SetBackdropColor(0, 0, 0, 0.8)
-        popup:SetFrameStrata("DIALOG")
-        popup:SetFrameLevel(100)
-        popup:EnableMouse(true)
-        popup:SetMovable(true)
-        popup:RegisterForDrag("LeftButton")
-        popup:SetScript("OnDragStart", popup.StartMoving)
-        popup:SetScript("OnDragStop", popup.StopMovingOrSizing)
-        
-        -- Title
-        local title = popup:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
-        title:SetPoint("TOP", popup, "TOP", 0, -20)
-        title:SetText(Translate("VISIT_GITHUB"))
-        title:SetTextColor(0.9, 0.9, 0.9)
-        
-        -- Link editbox
-        local linkBox = CreateFrame("EditBox", nil, popup, "InputBoxTemplate")
-        linkBox:SetSize(300, 20)
-        linkBox:SetPoint("CENTER", popup, "CENTER", 0, 10)
-        linkBox:SetText(githubLink)
-        linkBox:SetAutoFocus(false)
-        linkBox:HighlightText()
-        linkBox:SetScript("OnEscapePressed", function() popup:Hide() end)
-        linkBox:SetScript("OnEnterPressed", function() linkBox:HighlightText() end)
-        
-        -- Instructions
-        local instructions = popup:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-        instructions:SetPoint("TOP", linkBox, "BOTTOM", 0, -10)
-        instructions:SetText(Translate("COPY_LINK"))
-        instructions:SetTextColor(0.8, 0.8, 0.8)
-        
-
-        
-        -- X button
-        local xBtn = CreateFrame("Button", nil, popup, "UIPanelCloseButton")
-        xBtn:SetPoint("TOPRIGHT", popup, "TOPRIGHT", -5, -5)
-        xBtn:SetScript("OnClick", function() popup:Hide() end)
-        
-        self.githubPopup = popup
-        self.githubLinkBox = linkBox
-        
-        -- Register for ESC close
-        self:RegisterEscClose(popup)
+        self.githubPopup, self.githubLinkBox = _MakeSingleLinkPopup(
+            self, "BossHelperGitHubPopup",
+            "VISIT_GITHUB", { 0.9, 0.9, 0.9 }, "GITHUB"
+        )
     end
-    
-    -- Update link and show
-    self.githubLinkBox:SetText(githubLink)
+    self.githubLinkBox:SetText(BossHelper.Links.GITHUB)
     self.githubPopup:Show()
     self.githubLinkBox:SetFocus()
     self.githubLinkBox:HighlightText()
 end
 
 -- ================================================
--- Update Links Popup (GitHub + CurseForge) - for banner
+-- Update Links Popup (GitHub + CurseForge) – shown by the update banner
 -- ================================================
 function BossHelper:ShowUpdateLinksPopup()
-    local githubLink = "https://github.com/test-toast/Mythic-Mentor"
-    local curseLink  = "https://www.curseforge.com/wow/addons/mythic-mentor"
-
     if not self.updateLinksPopup then
-        local popup = CreateFrame("Frame", "BossHelperUpdateLinksPopup", UIParent, "BackdropTemplate")
-        popup:SetSize(400, 200)
-        popup:SetPoint("CENTER")
-        popup:SetBackdrop({
-            bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
-            edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
-            tile = true, tileSize = 32, edgeSize = 32,
-            insets = { left = 11, right = 12, top = 12, bottom = 11 }
-        })
-        popup:SetBackdropColor(0, 0, 0, 0.85)
-        popup:SetFrameStrata("DIALOG")
-        popup:SetFrameLevel(100)
-        popup:EnableMouse(true)
-        popup:SetMovable(true)
-        popup:RegisterForDrag("LeftButton")
-        popup:SetScript("OnDragStart", popup.StartMoving)
-        popup:SetScript("OnDragStop", popup.StopMovingOrSizing)
+        local popup = _CreateBasePopupFrame({ name = "BossHelperUpdateLinksPopup", width = 400, height = 200, alpha = 0.85 })
 
-    local title = popup:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
-    title:SetPoint("TOP", popup, "TOP", 0, -16)
-    title:SetText("Mythic Mentor Links")
+        local title = popup:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
+        title:SetPoint("TOP", popup, "TOP", 0, -16)
+        title:SetText("Mythic Mentor Links")
 
-        -- GitHub row
-    local ghLabel = popup:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    ghLabel:SetPoint("TOP", title, "BOTTOM", 0, -18)
+        local ghLabel = popup:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        ghLabel:SetPoint("TOP", title, "BOTTOM", 0, -18)
         ghLabel:SetText("GitHub:")
         ghLabel:SetTextColor(0.9, 0.9, 0.9)
 
-        local ghBox = CreateFrame("EditBox", nil, popup, "InputBoxTemplate")
-    ghBox:SetSize(320, 20)
-    ghBox:SetPoint("TOP", ghLabel, "BOTTOM", 0, -6)
-        ghBox:SetAutoFocus(false)
-        ghBox:SetText(githubLink)
-        ghBox:HighlightText()
-        ghBox:SetScript("OnEnterPressed", function(self) self:HighlightText() end)
-        ghBox:SetScript("OnEscapePressed", function() popup:Hide() end)
+        local ghBox = _CreateLinkBox(popup, 320, ghLabel, BossHelper.Links.GITHUB)
 
-        -- CurseForge row
-    local cfLabel = popup:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    cfLabel:SetPoint("TOP", ghBox, "BOTTOM", 0, -14)
+        local cfLabel = popup:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        cfLabel:SetPoint("TOP", ghBox, "BOTTOM", 0, -14)
         cfLabel:SetText("CurseForge:")
         cfLabel:SetTextColor(1.0, 0.85, 0.4)
 
-        local cfBox = CreateFrame("EditBox", nil, popup, "InputBoxTemplate")
-    cfBox:SetSize(320, 20)
-    cfBox:SetPoint("TOP", cfLabel, "BOTTOM", 0, -6)
-        cfBox:SetAutoFocus(false)
-        cfBox:SetText(curseLink)
-        cfBox:SetScript("OnEnterPressed", function(self) self:HighlightText() end)
-        cfBox:SetScript("OnEscapePressed", function() popup:Hide() end)
+        local cfBox = _CreateLinkBox(popup, 320, cfLabel, BossHelper.Links.CURSEFORGE)
 
-        -- Instructions
-    local inst = popup:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    inst:SetPoint("TOP", cfBox, "BOTTOM", 0, -12)
-        inst:SetText(Translate and Translate("COPY_LINK") or "Ctrl+C to copy link")
-        inst:SetTextColor(0.8, 0.8, 0.8)
+        _AddCopyInstructions(popup, cfBox)
 
-        -- Close button
-        local xBtn = CreateFrame("Button", nil, popup, "UIPanelCloseButton")
-        xBtn:SetPoint("TOPRIGHT", popup, "TOPRIGHT", -5, -5)
-        xBtn:SetScript("OnClick", function() popup:Hide() end)
-
-        self.updateLinksPopup = popup
+        self.updateLinksPopup  = popup
         self.updateLinksGithub = ghBox
-        self.updateLinksCurse = cfBox
-
+        self.updateLinksCurse  = cfBox
         self:RegisterEscClose(popup)
     end
 
-    -- Update and show
-    if self.updateLinksGithub then self.updateLinksGithub:SetText(githubLink) end
-    if self.updateLinksCurse then self.updateLinksCurse:SetText(curseLink) end
+    self.updateLinksGithub:SetText(BossHelper.Links.GITHUB)
+    self.updateLinksCurse:SetText(BossHelper.Links.CURSEFORGE)
     self.updateLinksPopup:Show()
 end
 
 -- ================================================
--- Bug Report Popup Function
+-- Bug Report Popup
 -- ================================================
 function BossHelper:ShowBugReportPopup()
-    -- Bug report links
-    local discordLink = "https://discord.gg/sYFdZDPKr3"
-    local githubLink = "https://github.com/test-toast/Mythic-Mentor/issues"
-    
-    -- Opret popup frame hvis det ikke eksisterer
     if not self.bugReportPopup then
-        local popup = CreateFrame("Frame", "BossHelperBugReportPopup", UIParent, "BackdropTemplate")
-        popup:SetSize(400, 250)
-        popup:SetPoint("CENTER")
-        popup:SetBackdrop({
-            bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
-            edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
-            tile = true, tileSize = 32, edgeSize = 32,
-            insets = { left = 11, right = 12, top = 12, bottom = 11 }
-        })
-        popup:SetBackdropColor(0, 0, 0, 0.8)
-        popup:SetFrameStrata("DIALOG")
-        popup:SetFrameLevel(100)
-        popup:EnableMouse(true)
-        popup:SetMovable(true)
-        popup:RegisterForDrag("LeftButton")
-        popup:SetScript("OnDragStart", popup.StartMoving)
-        popup:SetScript("OnDragStop", popup.StopMovingOrSizing)
-        
-        -- Title
+        local popup = _CreateBasePopupFrame({ name = "BossHelperBugReportPopup", width = 400, height = 250 })
+
         local title = popup:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
         title:SetPoint("TOP", popup, "TOP", 0, -20)
         title:SetText(Translate("REPORT_BUG"))
         title:SetTextColor(1, 0.3, 0.3)
-        
-        -- Description
+
         local desc = popup:CreateFontString(nil, "OVERLAY", "GameFontNormal")
         desc:SetPoint("TOP", title, "BOTTOM", 0, -15)
         desc:SetSize(350, 40)
         desc:SetText(Translate("BUG_GUIDE"))
         desc:SetTextColor(1, 1, 1)
         desc:SetJustifyH("CENTER")
-        
-        -- Discord link section
+
         local discordLabel = popup:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         discordLabel:SetPoint("TOP", desc, "BOTTOM", 0, -20)
         discordLabel:SetText("Discord:")
         discordLabel:SetTextColor(0.5, 0.7, 1)
-        
-        local discordBox = CreateFrame("EditBox", nil, popup, "InputBoxTemplate")
-        discordBox:SetSize(300, 20)
-        discordBox:SetPoint("TOP", discordLabel, "BOTTOM", 0, -5)
-        discordBox:SetText(discordLink)
-        discordBox:SetAutoFocus(false)
-        discordBox:SetScript("OnEscapePressed", function() popup:Hide() end)
-        discordBox:SetScript("OnEnterPressed", function() discordBox:HighlightText() end)
-        
-        -- GitHub link section
+
+        local discordBox = _CreateLinkBox(popup, 300, discordLabel, BossHelper.Links.DISCORD)
+
         local githubLabel = popup:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         githubLabel:SetPoint("TOP", discordBox, "BOTTOM", 0, -15)
         githubLabel:SetText("GitHub Issues:")
         githubLabel:SetTextColor(0.9, 0.9, 0.9)
-        
-        local githubBox = CreateFrame("EditBox", nil, popup, "InputBoxTemplate")
-        githubBox:SetSize(300, 20)
-        githubBox:SetPoint("TOP", githubLabel, "BOTTOM", 0, -5)
-        githubBox:SetText(githubLink)
-        githubBox:SetAutoFocus(false)
-        githubBox:SetScript("OnEscapePressed", function() popup:Hide() end)
-        githubBox:SetScript("OnEnterPressed", function() githubBox:HighlightText() end)
-        
-        -- Instructions
-        local instructions = popup:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-        instructions:SetPoint("TOP", githubBox, "BOTTOM", 0, -15)
-        instructions:SetText(Translate("COPY_LINK"))
-        instructions:SetTextColor(0.8, 0.8, 0.8)
-        
-        -- X button
-        local xBtn = CreateFrame("Button", nil, popup, "UIPanelCloseButton")
-        xBtn:SetPoint("TOPRIGHT", popup, "TOPRIGHT", -5, -5)
-        xBtn:SetScript("OnClick", function() popup:Hide() end)
-        
+
+        local githubBox = _CreateLinkBox(popup, 300, githubLabel, BossHelper.Links.GITHUB_ISSUES)
+
+        _AddCopyInstructions(popup, githubBox)
+
         self.bugReportPopup = popup
-        self.bugDiscordBox = discordBox
-        self.bugGithubBox = githubBox
-        
-        -- Register for ESC close
+        self.bugDiscordBox  = discordBox
+        self.bugGithubBox   = githubBox
         self:RegisterEscClose(popup)
     end
-    
-    -- Update links and show
-    self.bugDiscordBox:SetText(discordLink)
-    self.bugGithubBox:SetText(githubLink)
+
+    self.bugDiscordBox:SetText(BossHelper.Links.DISCORD)
+    self.bugGithubBox:SetText(BossHelper.Links.GITHUB_ISSUES)
     self.bugReportPopup:Show()
 end
 
@@ -350,22 +230,8 @@ end
 -- Text Processing Functions
 -- ================================================
 
--- Farveord til hex-koder
-local colorHex = {
-    Boss          = "|cFFFF6600",   -- dyb orange
-    BossAbilities = "|cFFFF0000",   -- rød
-    Buff          = "|cFF00FF00",   -- grøn
-    Debuff        = "|cFFFFAA33",   -- mørk orange
-
-    Objectives    = "|cFF3399FF",   -- blå
-    Miscellaneous = "|cFF00FFFF",   -- cyan
-    Important     = "|cFFCC00FF",   -- lilla
-}
-
--- Escape specialtegn til Lua mønstre
-local function escapeLuaPattern(str)
-    return str:gsub("([^%w%s])", "%%%1")
-end
+-- colorHex er nu centraliseret i BossHelper.COLOR_TAGS (defineret i BossHelper.lua)
+local colorHex = BossHelper.COLOR_TAGS
 
 -- Hovedfunktion til tekstbehandling
 function BossHelper:ReplaceRoleIcons(text)

@@ -4,7 +4,7 @@ if not LDB then return end
 -- Opret LDB-objekt for Titan Panel
 local ldbObject = LDB:NewDataObject("BossHelper", {
     type = "launcher",
-    icon = "Interface\\AddOns\\BossHelper\\Media\\Mythic Mentor no te 256x256.tga",
+    icon = "Interface\\AddOns\\BossHelper\\Media\\Mythic Mentor no te 512x512.png",
     text = "Mythic Mentor",
     OnClick = function(self, button)
         if button == "LeftButton" then

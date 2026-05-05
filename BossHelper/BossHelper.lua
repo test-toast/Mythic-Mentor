@@ -6,6 +6,165 @@ BossHelper = {}
 --------------------------------------------------------------------------------
 BossHelper.ADDON_NAME = "BossHelper"
 
+--------------------------------------------------------------------------------
+-- Central locale registry
+-- key    = internal locale code
+-- label  = display name shown in Settings
+-- suffix = global variable suffix used by dungeon files (e.g. "_daDK")
+-- Adding a new language only requires one entry here + its Locale/Dungeon files.
+--------------------------------------------------------------------------------
+BossHelper.LOCALES = {
+    { key = "enUS", label = "English", suffix = ""      },
+    { key = "daDK", label = "Danish",  suffix = "_daDK" },
+    { key = "ruRU", label = "Russian", suffix = "_ruRU" },
+    { key = "deDE", label = "German",  suffix = "_deDE" },
+    { key = "frFR", label = "French",  suffix = "_frFR" },
+}
+
+-- Chat message color tags (centralized so all files use the same colors)
+BossHelper.CHAT_TAG     = "|cff00ff00[MythicMentor]|r"
+BossHelper.CHAT_TAG_ERR = "|cffff5555[MythicMentor]|r"
+
+--------------------------------------------------------------------------------
+-- Centralized external links
+-- Change links here once – all popups and UI elements pick them up automatically.
+--------------------------------------------------------------------------------
+BossHelper.Links = {
+    DISCORD       = "https://discord.gg/sYFdZDPKr3",
+    GITHUB        = "https://github.com/test-toast/Mythic-Mentor",
+    GITHUB_ISSUES = "https://github.com/test-toast/Mythic-Mentor/issues",
+    CURSEFORGE    = "https://www.curseforge.com/wow/addons/mythic-mentor",
+}
+
+--------------------------------------------------------------------------------
+-- Default SavedVariables values
+-- ApplyDefaults() iterates this table so adding a new setting only requires
+-- one entry here instead of an extra if-nil block in the ADDON_LOADED handler.
+--------------------------------------------------------------------------------
+BossHelper.DB_DEFAULTS = {
+-- General settings
+    language                   = "enUS",
+    scale                      = 1.0,
+    allowAnimationsInCombat    = true,
+    closeOnPost                = false,
+    allowEscClose              = true,
+    autoOpenBossNotes          = true,
+-- Auto-invite settings    
+    autoInviteEnabled          = false,
+    triggerWord                = "invite!",
+
+-- mini-window settings
+    miniWindowTransparency     = 0.95,
+    miniWindowNoBorder         = false,
+    miniWindowHideSeparator    = false,
+    miniWindowHideButtonChrome = false,
+    miniWindowAutoExpand       = false,
+
+-- Key tracking settings    
+    showKeysOnStartPage        = true,
+    showKeysInGroupFinder      = true,
+    gfPanelTransparency        = 0.95,
+    gfNoBorder                 = false,
+    gfHideTitle                = false,
+}
+
+function BossHelper:ApplyDefaults()
+    BossHelperDB = BossHelperDB or {}
+    for key, default in pairs(self.DB_DEFAULTS) do
+        if BossHelperDB[key] == nil then
+            BossHelperDB[key] = default
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
+-- Shared safe UI utilities
+-- Available as BossHelper.UI.hide(obj) etc. from any file, removing the need
+-- for each module to define its own local phide/psetparent/… copies.
+--------------------------------------------------------------------------------
+BossHelper.UI = {}
+
+function BossHelper.UI.hide(obj)
+    if not obj then return end
+    pcall(function() if obj.Hide then obj:Hide() end end)
+end
+
+function BossHelper.UI.setParent(obj, p)
+    if not obj then return end
+    pcall(function() if obj.SetParent then obj:SetParent(p) end end)
+end
+
+function BossHelper.UI.clearPoints(obj)
+    if not obj then return end
+    pcall(function() if obj.ClearAllPoints then obj:ClearAllPoints() end end)
+end
+
+function BossHelper.UI.setText(obj, txt)
+    if not obj then return end
+    pcall(function() if obj.SetText then obj:SetText(txt) end end)
+end
+
+function BossHelper.UI.destroyWidget(w)
+    BossHelper.UI.hide(w)
+    BossHelper.UI.setParent(w, nil)
+    BossHelper.UI.clearPoints(w)
+end
+
+--------------------------------------------------------------------------------
+-- Shared backdrop presets  (avoid copy-pasting the same 7-line table)
+-- Usage:  frame:SetBackdrop(BossHelper.UI.Backdrop.FRAME)
+--    or   BossHelper.UI.ApplyBackdrop(frame, "FRAME", bgColor, borderColor)
+--------------------------------------------------------------------------------
+local _BGFILE  = "Interface/Buttons/WHITE8X8"
+local _EDGEFILE = "Interface/Tooltips/UI-Tooltip-Border"
+
+BossHelper.UI.Backdrop = {
+    FRAME   = { bgFile=_BGFILE, edgeFile=_EDGEFILE, tile=true, tileSize=16, edgeSize=16, insets={left=3,right=3,top=3,bottom=3} },
+    NORMAL  = { bgFile=_BGFILE, edgeFile=_EDGEFILE, tile=true, tileSize=16, edgeSize=16, insets={left=3,right=3,top=3,bottom=3} },
+    EDITBOX = { bgFile=_BGFILE, edgeFile=_EDGEFILE, tile=true, tileSize=16, edgeSize=16, insets={left=3,right=3,top=3,bottom=3} },
+    SMALL   = { bgFile=_BGFILE, edgeFile=_EDGEFILE, tile=true, tileSize=16, edgeSize=12, insets={left=3,right=3,top=3,bottom=3} },
+    ITEM    = { bgFile=_BGFILE, edgeFile=_EDGEFILE, tile=true, tileSize=16, edgeSize=12, insets={left=3,right=3,top=3,bottom=3} },
+    BTN     = { bgFile=_BGFILE, edgeFile=_EDGEFILE, tile=true, tileSize=16, edgeSize=12, insets={left=3,right=3,top=3,bottom=3} },
+}
+
+-- Color palette  (avoid repeating raw RGBA floats throughout the UI code)
+-- Usage:  local C = BossHelper.UI.C
+--         frame:SetBackdropColor(C.BG_DARK[1], C.BG_DARK[2], C.BG_DARK[3], C.BG_DARK[4])
+--    or   BossHelper.UI.ApplyBackdrop(frame, "NORMAL", C.BG_DARK, C.BORDER_GREY)
+BossHelper.UI.C = {
+    BG_DARK               = {0.06, 0.07, 0.11, 0.95},
+    BG_DARK_90            = {0.06, 0.07, 0.11, 0.9 },
+    BG_DARK_OPAQUE        = {0.06, 0.07, 0.11, 0.98},
+    BG_VERY_DARK          = {0.02, 0.03, 0.06, 1   },
+    BG_FOCUSED            = {0.08, 0.07, 0.05, 1   },
+    BG_PANEL              = {0.08, 0.08, 0.15, 0.9 },
+    BG_PANEL_DARK         = {0.08, 0.08, 0.15, 0.95},
+    BG_RED                = {0.35, 0.07, 0.07, 0.9 },
+    BORDER_GREY           = {0.3,  0.3,  0.3,  0.8},
+    BORDER_DARK_BLUE      = {0.12, 0.15, 0.26, 1  },
+    BORDER_AMBER          = {1,    0.5,  0,    0.8},
+    BORDER_ORANGE         = {1,    0.6,  0.2,  0.6},
+    BORDER_ORANGE_MED     = {1,    0.6,  0.2,  0.8},
+    BORDER_ORANGE_BRIGHT  = {1,    0.6,  0.2,  0.9},
+    BORDER_RED            = {0.6,  0.18, 0.18, 0.8},
+    TEXT_GOLD             = {0.95, 0.85, 0.6 },
+    TEXT_ORANGE           = {0.98, 0.82, 0.55},
+}
+
+-- Apply a standard backdrop + optional colors to a BackdropTemplate frame in one call.
+-- variant     = "FRAME" | "NORMAL" | "EDITBOX" | "SMALL" | "BTN"
+-- bgColor     = RGBA array from BossHelper.UI.C, or nil to skip
+-- borderColor = RGBA array from BossHelper.UI.C, or nil to skip
+function BossHelper.UI.ApplyBackdrop(frame, variant, bgColor, borderColor)
+    frame:SetBackdrop(BossHelper.UI.Backdrop[variant or "NORMAL"])
+    if bgColor then
+        frame:SetBackdropColor(bgColor[1], bgColor[2], bgColor[3], bgColor[4])
+    end
+    if borderColor then
+        frame:SetBackdropBorderColor(borderColor[1], borderColor[2], borderColor[3], borderColor[4])
+    end
+end
+
 local function _GetTOCMetadata(field)
     local v
     if C_AddOns and C_AddOns.GetAddOnMetadata then
@@ -40,10 +199,35 @@ function BossHelper:CompareVersions(a, b)
     return 0
 end
 
--- Addon message prefix for version pings
-BossHelper.VERSION_PREFIX = "BOSSHELPER_VER"
-BossHelper._latestSeenVersion = nil -- highest version seen from others this session
-BossHelper._updatePopupShown = false
+--------------------------------------------------------------------------------
+-- Centralized sound IDs
+-- Reference BossHelper.Sounds.X instead of hardcoding numbers anywhere.
+--------------------------------------------------------------------------------
+BossHelper.Sounds = {
+    NORMAL_BUTTON  = 1115,    -- knap-klik (generisk)
+    BOSS_SELECT    = 841,     -- vælg boss
+    DUNGEON_SELECT = 841,     -- vælg dungeon
+    POST_TO_CHAT   = 271864,  -- send til chat afsluttet
+    BACK_BUTTON    = 84240,   -- back-knap
+    OPEN_SETTINGS  = 84240,   -- åbn indstillinger
+    CLOSE_SETTINGS = 84240,   -- luk indstillinger
+    OPEN_MENU      = 175320,  -- åbn addon
+    CLOSE_MENU     = 170887,  -- luk addon
+}
+
+--------------------------------------------------------------------------------
+-- Centralized text color codes for [category:text] markup
+-- Reference BossHelper.COLOR_TAGS.X instead of hardcoding hex-values.
+--------------------------------------------------------------------------------
+BossHelper.COLOR_TAGS = {
+    Boss          = "|cFFFF6600",   -- dyb orange
+    BossAbilities = "|cFFFF0000",   -- rød
+    Buff          = "|cFF00FF00",   -- grøn
+    Debuff        = "|cFFFFAA33",   -- mørk orange
+    Objectives    = "|cFF3399FF",   -- blå
+    Miscellaneous = "|cFF00FFFF",   -- cyan
+    Important     = "|cFFCC00FF",   -- lilla
+}
 
 --------------------------------------------------------------------------------
 -- Hent Mythic+ dungeons
@@ -62,25 +246,12 @@ end
 --------------------------------------------------------------------------------
 -- Localisering af UI
 --------------------------------------------------------------------------------
--- Var for holding language selected by user
-    BossHelperDB = BossHelperDB or {}         -- sørg for at SavedVariables eksisterer
-    BossHelper.selectedLocale = BossHelperDB.language or "enUS"
---BossHelper.selectedLocale = "enUS"
--- function load localization file based on selected locale
+-- Load the correct locale table. Locale tables follow the naming convention L_{key}.
+-- Adding a new language only requires adding it to BossHelper.LOCALES above.
 function BossHelper:LoadLocale()
-    BossHelperDB = BossHelperDB or {}         -- sørg for at SavedVariables eksisterer
+    BossHelperDB = BossHelperDB or {}
     BossHelper.selectedLocale = BossHelperDB.language or "enUS"
-    
-    local locale = BossHelper.selectedLocale or "enUS"
-        local locales = {
-            enUS = L_enUS,
-            daDK = L_daDK,
-            ruRU = L_ruRU,
-            deDE = L_deDE,
-            frFR = L_frFR,
-            -- tilføj flere sprog her
-        }
-    self.Lfile = locales[locale] or L_enUS
+    self.Lfile = _G["L_" .. BossHelper.selectedLocale] or L_enUS
 end
 -- Load default locale at startup
 BossHelper:LoadLocale()
@@ -108,206 +279,20 @@ function BossHelper:SafePlaySound(soundId)
     pcall(PlaySound, soundId)
 end
 
---------------------------------------------------------------------------------
--- Chat system (robust version med kø og throttling)
---------------------------------------------------------------------------------
-BossHelper._messageQueue = BossHelper._messageQueue or {}
-BossHelper._isSending = false
-
-local MESSAGE_INTERVAL = 1.5 -- sekunder mellem beskeder
-local MAX_LENGTH = 250       -- hold lidt under 255
-BossHelper.MESSAGE_INTERVAL = MESSAGE_INTERVAL
-
--- Starter kø-processor
-local function StartMessageProcessor()
-    if BossHelper._isSending then return end
-    BossHelper._isSending = true
-
-    local function ProcessQueue()
-        if #BossHelper._messageQueue == 0 then
-            BossHelper._isSending = false
-
-            -- Spil "Accept"-lyd når ALLE beskeder er sendt
-            if PlayButtonSound then
-                PlayButtonSound(SOUND.ACCEPT)
-            end
-            return
-        end
-
-
-        local entry = table.remove(BossHelper._messageQueue, 1)
-
-        if entry then
-            if entry.channel then
-                -- normal gruppe/raid besked
-                local ok, err = pcall(SendChatMessage, entry.msg, entry.channel, nil, entry.target)
-                if not ok then
-                    DEFAULT_CHAT_FRAME:AddMessage("|cffff5555[MythicMentor]|r Chat send fejlede: " .. tostring(err))
-                end
-
-                --Anders: Dette sender en reklame men den kommer samtidig med den sidste besked vi vil gerne have et delay
-                --if #BossHelper._messageQueue == 0 then
-                    --pcall(SendChatMessage, "This messages was send by Mythic Mentor", entry.channel, nil, entry.target)
-                --end
-            else
-                -- ikke i gruppe -> vis lokalt
-                DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00[MythicMentor]|r " .. entry.msg)
-            end
-        end
-        
-        if #BossHelper._messageQueue > 0 then
-            C_Timer.After(BossHelper.MESSAGE_INTERVAL, ProcessQueue)
-        else
-            BossHelper._isSending = false
-        end
-    end
-
-    -- Send første besked med det samme
-    ProcessQueue()
-end
-
-function BossHelper:SendSmartMessage(msg)
-    if not msg or msg == "" then return 0 end
-
-    local channel, target
-    if IsInRaid() then
-        channel = "RAID"
-    elseif IsInGroup(LE_PARTY_CATEGORY_INSTANCE) then
-        channel = "INSTANCE_CHAT"
-    elseif IsInGroup() then
-        channel = "PARTY"
-    else
-        -- Ikke i gruppe -> info til spiller
-        DEFAULT_CHAT_FRAME:AddMessage("|cffff5555[MythicMentor]|r Not in a group, messages will only be sent to you.")
-        channel = nil -- vi bruger local fallback
-    end
-
-    -- Split på linjeskift
-    local paragraphs = {}
-    for para in msg:gmatch("([^\n]+)") do
-        table.insert(paragraphs, para)
-    end
-    if #paragraphs == 0 then table.insert(paragraphs, msg) end
-
-    -- Split lange linjer
-    local function splitParagraph(par)
-        local parts, buffer = {}, ""
-        for word in par:gmatch("%S+") do
-            if buffer == "" then
-                buffer = word
-            else
-                if #buffer + 1 + #word <= MAX_LENGTH then
-                    buffer = buffer .. " " .. word
-                else
-                    table.insert(parts, buffer)
-                    buffer = word
-                end
-            end
-        end
-        if buffer ~= "" then table.insert(parts, buffer) end
-        return parts
-    end
-
-    -- Læg alt i køen, returner antal nye entries
-    local before = #BossHelper._messageQueue
-
-    for _, para in ipairs(paragraphs) do
-        local trimmed = para:gsub("^%s+", ""):gsub("%s+$", "")
-        if #trimmed == 0 then
-            table.insert(BossHelper._messageQueue, {msg = " ", channel = channel, target = target})
-        else
-            for _, part in ipairs(splitParagraph(trimmed)) do
-                table.insert(BossHelper._messageQueue, {msg = part, channel = channel, target = target})
-            end
-        end
-    end
-
-    table.insert(BossHelper._messageQueue, {msg = "-- Provided by Mythic Mentor --", channel = channel, target = target})
-
-    local added = #BossHelper._messageQueue - before
-
-    StartMessageProcessor()
-
-    return added -- antal beskeder vi lagde i kø
-end
-
---------
--- Single button send message
---------
-function BossHelper:SendSingleSmartMessage(msg)
-    if not msg or msg == "" then return 0 end
-
-    local channel, target
-    if IsInRaid() then
-        channel = "RAID"
-    elseif IsInGroup(LE_PARTY_CATEGORY_INSTANCE) then
-        channel = "INSTANCE_CHAT"
-    elseif IsInGroup() then
-        channel = "PARTY"
-    else
-        -- Ikke i gruppe -> info til spiller
-        DEFAULT_CHAT_FRAME:AddMessage("|cffff5555[MythicMentor]|r Not in a group, messages will only be sent to you.")
-        channel = nil -- vi bruger local fallback
-    end
-
-    -- Split på linjeskift
-    local paragraphs = {}
-    for para in msg:gmatch("([^\n]+)") do
-        table.insert(paragraphs, para)
-    end
-    if #paragraphs == 0 then table.insert(paragraphs, msg) end
-
-    -- Split lange linjer
-    local function splitParagraph(par)
-        local parts, buffer = {}, ""
-        for word in par:gmatch("%S+") do
-            if buffer == "" then
-                buffer = word
-            else
-                if #buffer + 1 + #word <= MAX_LENGTH then
-                    buffer = buffer .. " " .. word
-                else
-                    table.insert(parts, buffer)
-                    buffer = word
-                end
-            end
-        end
-        if buffer ~= "" then table.insert(parts, buffer) end
-        return parts
-    end
-
-    -- Læg alt i køen, returner antal nye entries
-    local before = #BossHelper._messageQueue
-
-    for _, para in ipairs(paragraphs) do
-        local trimmed = para:gsub("^%s+", ""):gsub("%s+$", "")
-        if #trimmed == 0 then
-            table.insert(BossHelper._messageQueue, {msg = " ", channel = channel, target = target})
-        else
-            for _, part in ipairs(splitParagraph(trimmed)) do
-                table.insert(BossHelper._messageQueue, {msg = part, channel = channel, target = target})
-            end
-        end
-    end
-
-    --table.insert(BossHelper._messageQueue, {msg = "-- Provided by Mythic Mentor --", channel = channel, target = target})
-
-    local added = #BossHelper._messageQueue - before
-
-    StartMessageProcessor()
-
-    return added -- antal beskeder vi lagde i kø
-end
+-- Chat-systemet (kø + throttling + SendSmartMessage/SendSingleSmartMessage)
+-- er flyttet til Chat.lua som loades efter denne fil.
 
 --------------------------------------------------------------------------------
 -- Encounter Journal hjælpefunktioner
 --------------------------------------------------------------------------------
 
--- Hent bossens navn fra Encounter Journal via encounterID
+-- Hent bossens navn fra Encounter Journal via journalEncounterID
 function BossHelper:GetBossName(encounterID)
     if not encounterID or encounterID <= 0 then return nil end
     return (EJ_GetEncounterInfo(encounterID))
 end
+
+-- GetDungeonEncounterID er defineret i EncounterIDLookup.lua
 
 -- Hent dungeonens navn fra Encounter Journal via instanceID
 function BossHelper:GetDungeonName(instanceID)
@@ -343,35 +328,7 @@ function BossHelper:GetBossPortraitFileID(encounterID, bossData)
     return nil
 end
 
---------------------------------------------------------------------------------
--- Send alle bossbeskeder for en dungeon (inklusive faser)
---------------------------------------------------------------------------------
-function BossHelper:SendDungeonMessages(dungeon)
-    if not dungeon or not dungeon.bosses then
-        DEFAULT_CHAT_FRAME:AddMessage("|cffff5555[MythicMentor]|r Dungeon ikke fundet eller ingen bosser!")
-        return
-    end
-
-    for _, boss in ipairs(dungeon.bosses) do
-        local bossName = BossHelper:GetBossName(boss.encounterID) or "?"
-        -- Send short tekst
-        if boss.short and boss.short ~= "" then
-            BossHelper:SendSmartMessage("|cff00ff00["..bossName.."]|r")
-            BossHelper:SendSmartMessage(boss.short)
-        end
-
-        -- Send faser hvis de findes
-        if boss.phases and boss.phaseText then
-            for _, phaseName in ipairs(boss.phases) do
-                local text = boss.phaseText[phaseName]
-                if text and text ~= "" then
-                    BossHelper:SendSmartMessage("|cff00ffff["..bossName.." - "..phaseName.."]|r")
-                    BossHelper:SendSmartMessage(text)
-                end
-            end
-        end
-    end
-end
+-- SendDungeonMessages er flyttet til Chat.lua
 
 --------------------------------------------------------------------------------
 -- Loader events
@@ -389,50 +346,18 @@ _loader:SetScript("OnEvent", function(self, event, ...)
         BossHelper:LoadLocale()
         BossData:Load(BossHelper.selectedLocale)
 
-        -------------------------------------------------------------------------
-        -- DEFAULT SETTINGS (kun hvis de ikke allerede er sat)
-        -------------------------------------------------------------------------
-        if BossHelperDB.scale == nil then
-            BossHelperDB.scale = 1.0
-        end
-
-        if BossHelperDB.allowAnimationsInCombat == nil then
-            BossHelperDB.allowAnimationsInCombat = true
-        end
-
-        if BossHelperDB.closeOnPost == nil then
-            BossHelperDB.closeOnPost = false
-        end
-
-        if BossHelperDB.allowEscClose == nil then
-            BossHelperDB.allowEscClose = true
-        end
-
-        if BossHelperDB.autoInviteEnabled == nil then
-            BossHelperDB.autoInviteEnabled = false
-        end
-
-        if BossHelperDB.triggerWord == nil then
-            BossHelperDB.triggerWord = "invite!"
-        end
+        -- Apply all default settings from the central DB_DEFAULTS table
+        BossHelper:ApplyDefaults()
 
         -- Ved reload: nulstil panelvalg så General Notes ikke åbner automatisk
         if BossHelperDB.lastOpenPanel == "info" or BossHelperDB.lastOpenPanel == "notes" then
             BossHelperDB.lastOpenPanel = nil
         end
-        -------------------------------------------------------------------------
 
         -- Opret UI hvis BossUI er klar
         if BossUI and BossUI.CreateUI then
             BossUI:CreateUI()
             BossHelper._uiCreated = true
-        end
-
-        -- Saved variables defaults
-        BossHelperDB = BossHelperDB or {}
-        -- Default: auto-open Boss Notes is enabled unless explicitly disabled
-        if BossHelperDB.autoOpenBossNotes == nil then
-            BossHelperDB.autoOpenBossNotes = true
         end
 
         -- Registrer ESC-lukning hvis indstillingen er aktiv
@@ -447,9 +372,8 @@ _loader:SetScript("OnEvent", function(self, event, ...)
         self:UnregisterEvent("ADDON_LOADED")
 
     elseif event == "PLAYER_LOGIN" then
-        -- init scale og andre saved vars
         BossHelperDB = BossHelperDB or {}
-        BossHelperDB.scale = BossHelperDB.scale or 1.0
+        BossHelper:ApplyDefaults()
 
         -- Register addon message prefix for version checks
         if C_ChatInfo and C_ChatInfo.RegisterAddonMessagePrefix then
@@ -511,87 +435,7 @@ end)
 _loader:RegisterEvent("GROUP_ROSTER_UPDATE")
 _loader:RegisterEvent("CHAT_MSG_ADDON")
 
---------------------------------------------------------------------------------
--- Version announcement + handling
---------------------------------------------------------------------------------
-function BossHelper:BroadcastVersion()
-    local ver = tostring(BossHelper.VERSION_STRING or "0")
-    local function send(chan)
-        if C_ChatInfo and C_ChatInfo.SendAddonMessage then
-            pcall(C_ChatInfo.SendAddonMessage, BossHelper.VERSION_PREFIX, ver, chan)
-        elseif SendAddonMessage then
-            pcall(SendAddonMessage, BossHelper.VERSION_PREFIX, ver, chan)
-        end
-    end
-
-    if IsInGroup(LE_PARTY_CATEGORY_INSTANCE) then
-        send("INSTANCE_CHAT")
-    end
-    if IsInRaid() then
-        send("RAID")
-    elseif IsInGroup() then
-        send("PARTY")
-    end
-    if IsInGuild and IsInGuild() then
-        send("GUILD")
-    end
-end
-
-function BossHelper:HandleIncomingVersion(otherVersion, sender)
-    otherVersion = tostring(otherVersion or "0")
-    -- Track highest seen this session
-    if not self._latestSeenVersion or self:CompareVersions(self._latestSeenVersion, otherVersion) < 0 then
-        self._latestSeenVersion = otherVersion
-    end
-
-    -- If other is greater than ours, notify once per version
-    if self:CompareVersions(self.VERSION_STRING, otherVersion) < 0 then
-        if BossHelperDB and BossHelperDB.notifiedLatestVersion == otherVersion then
-            return -- already notified for this version previously
-        end
-
-        -- Store last notified version to avoid repeats across sessions until a newer one appears
-        if BossHelperDB then BossHelperDB.notifiedLatestVersion = otherVersion end
-
-        -- Show persistent banner in UI
-        if BossUI and BossUI.ShowUpdateBanner then
-            BossUI:ShowUpdateBanner(otherVersion)
-        end
-        -- Popup disabled: we only use the banner now
-    end
-end
-
-function BossHelper:ShowUpdatePopup(latestVersion)
-    if self._updatePopupShown then return end
-    self._updatePopupShown = true
-
-    if not StaticPopupDialogs["BOSSHELPER_UPDATE_AVAILABLE"] then
-        StaticPopupDialogs["BOSSHELPER_UPDATE_AVAILABLE"] = {
-            text = string.format("Der er en ny version af Mythic Mentor tilgængelig!\n\nDin: %s\nNy: %s\n\nÅbn GitHub for at opdatere?", tostring(self.VERSION_STRING), tostring(latestVersion)),
-            button1 = "GitHub",
-            button2 = OKAY,
-            OnAccept = function()
-                if BossHelper and BossHelper.ShowGitHubLinkPopup then
-                    BossHelper:ShowGitHubLinkPopup()
-                end
-            end,
-            timeout = 0,
-            whileDead = 1,
-            hideOnEscape = 1,
-            preferredIndex = 3,
-        }
-    else
-        StaticPopupDialogs["BOSSHELPER_UPDATE_AVAILABLE"].text = string.format(
-            "Der er en ny version af Mythic Mentor tilgængelig!\n\nDin: %s\nNy: %s\n\nÅbn GitHub for at opdatere?",
-            tostring(self.VERSION_STRING), tostring(latestVersion)
-        )
-    end
-    StaticPopup_Show("BOSSHELPER_UPDATE_AVAILABLE")
-end
-
--- When player updates to a newer version (on next load), hide banner if any
--- (RefreshUpdateBanner is now called from within the PLAYER_LOGIN timer above)
-
+-- BroadcastVersion / HandleIncomingVersion / ShowUpdatePopup er flyttet til Version.lua
 
 --------------------------------------------------------------------------------
 -- Slash command til at åbne addonet
@@ -613,10 +457,10 @@ SlashCmdList["BOSSHELPER"] = function(msg)
                 end
             end
         else
-            print("|cffff0000[MythicMentor]|r UI not ready yet. Try again in a moment.")
+            print(BossHelper.CHAT_TAG_ERR .. " UI not ready yet. Try again in a moment.")
         end
     else
-        print("|cffff0000[MythicMentor]|r BossUI not loaded.")
+        print(BossHelper.CHAT_TAG_ERR .. " BossUI not loaded.")
     end
 end
 

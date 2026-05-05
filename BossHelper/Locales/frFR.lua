@@ -28,6 +28,11 @@ L_frFR = {
     -- text
     ["/RELOAD_TEXT"] = "Tactiques mises à jour. Utilisez /reload pour la traduction de l'interface.",
 
+    -- Section headers
+    ["SETTINGS_DISPLAY_SECTION"] = "Affichage",
+    ["SETTINGS_BEHAVIOR_SECTION"] = "Comportement",
+    ["SETTINGS_APPEARANCE_SECTION"] = "Apparence",
+
     -- Setting Main
     ["SELECT_LANGUAGE_TITLE"] = "Sélectionner la langue",
     ["SCALE_SLIDER_TITLE"] = "Échelle de l'addon",
@@ -51,6 +56,37 @@ L_frFR = {
 
     ["AUTO_INVITE_TOOLTIP"] = "Activer l'auto-invitation (invitations sur déclencheur).",
     ["TRIGGER_WORD_TOOLTIP"] = "Mot déclencheur pour l'auto-invitation (ex. invite!).",
+
+    -- Mini Window settings
+    ["MINI_WINDOW_CATE"] = "Mini-fenêtre",
+    ["MINI_WINDOW_TRANSPARENT_TITLE"] = "Fond transparent",
+    ["MINI_WINDOW_TRANSPARENT_TOOLTIP"] = "Ajuste la transparence de l'arrière-plan de la mini-fenêtre (0% = totalement transparent, 100% = opaque).",
+    ["MINI_WINDOW_NO_BORDER_TITLE"] = "Masquer la bordure",
+    ["MINI_WINDOW_NO_BORDER_TOOLTIP"] = "Supprime la bordure de la mini-fenêtre.",
+    ["MINI_WINDOW_HIDE_SEP_TITLE"] = "Masquer le séparateur",
+    ["MINI_WINDOW_HIDE_SEP_TOOLTIP"] = "Masque la fine ligne de séparation sous l'en-tête de la mini-fenêtre.",
+    ["MINI_WINDOW_ICONS_ONLY_TITLE"] = "Icônes seulement (masquer le chrome des boutons)",
+    ["MINI_WINDOW_ICONS_ONLY_TOOLTIP"] = "Supprime le fond et la bordure des boutons de fenêtre, n'affiche que les icônes.",
+    ["MINI_WINDOW_AUTO_EXPAND_TITLE"] = "Auto-agrandir lors d'un pull de boss",
+    ["MINI_WINDOW_AUTO_EXPAND_TOOLTIP"] = "Agrandit automatiquement la Mini Fenêtre lorsqu'un combat de boss commence, et la réduit à nouveau lorsque le boss est mort.",
+
+    -- Catégorie Key Tracker
+    ["KEY_TRACKER_CATE"] = "Key Tracker",
+    ["KEY_TRACKER_SECTION"] = "Affichage",
+    ["KEY_TRACKER_STARTPAGE_TITLE"] = "Afficher les clés sur la page de démarrage",
+    ["KEY_TRACKER_STARTPAGE_TOOLTIP"] = "Affiche le widget de suivi des pierres de clé en bas de la page de démarrage.",
+    ["KEY_TRACKER_GROUPFINDER_TITLE"] = "Afficher les clés dans le Groupe Finder",
+    ["KEY_TRACKER_GROUPFINDER_TOOLTIP"] = "Affiche le panneau de suivi des clés attaché à la fenêtre du Groupe Finder.",
+
+    -- Apparence du panneau Groupe Finder
+    ["KEY_TRACKER_GF_APPEARANCE"] = "Panneau Groupe Finder",
+    ["KEY_TRACKER_GF_TRANSPARENT_TITLE"] = "Fond transparent",
+    ["KEY_TRACKER_GF_TRANSPARENT_TOOLTIP"] = "Ajustez la transparence du fond du panneau (0% = entièrement transparent, 100% = opaque).",
+    ["KEY_TRACKER_GF_NO_BORDER_TITLE"] = "Masquer la bordure",
+    ["KEY_TRACKER_GF_NO_BORDER_TOOLTIP"] = "Supprime la bordure du panneau Groupe Finder.",
+    ["KEY_TRACKER_GF_HIDE_TITLE_TITLE"] = "Masquer l'en-tête 'Keys'",
+    ["KEY_TRACKER_GF_HIDE_TITLE_TOOLTIP"] = "Masque l'étiquette 'Keys' en haut du panneau Groupe Finder.",
+    ["NO_KEY"] = "Pas de clé",
 
     -----------------------------------------------
     -- Start Side
@@ -129,6 +165,12 @@ L_frFR = {
     ["RESET_TACTICS_MSG"] = "Êtes-vous sûr de vouloir réinitialiser toutes les tactiques pour ce boss ?\n\nCette action est irréversible.",
     ["UNSAVED_CHANGES_TITLE"] = "Modifications non sauvegardées",
     ["UNSAVED_CHANGES_MSG"] = "Vous avez des modifications non sauvegardées.\n\nÊtes-vous sûr de vouloir annuler sans sauvegarder ?",
+
+    -----------------------------------------------
+    -- Update popup
+    -----------------------------------------------
+    ["UPDATE_POPUP_TEXT"] = "Une nouvelle version de Mythic Mentor est disponible !\n\nLa vôtre : %s\nNouvelle : %s\n\nOuvrir GitHub pour mettre à jour ?",
+    ["UPDATE_POPUP_BTN_GITHUB"] = "GitHub",
 }
 
 return L_frFR

@@ -1,8 +1,8 @@
 ﻿Dungeon2 = {
-    instanceID = 249,
+    instanceID = 249, --  Magister's Terrace
     bosses = {
         {
-            encounterID = 2659,
+            encounterID = 2659, -- Arcanotron Custos
             short       = [[
 1. Avoid puddles, and soak orbs when they come (ideally not near the boss).
 
@@ -14,19 +14,17 @@ Tank. Boss creates puddles. Kite near walls to managed space.
         },
 
         {
-            encounterID = 2661,
+            encounterID = 2661, -- Seranel Sunlash
             short       = [[
 1. 3 players get marked. Step in purple zone to remove - but stagger this!
 2. Go into the purple zone when boss cast Vow of Silence.
 3. Missles = bad.
-
-
 ]],
             details     = [[Coming soon
 ]]
         },
         {
-            encounterID = 2660,
+            encounterID = 2660, -- Gemellus
             short       = [[
 1. Move out when targeted by Cosmic Sting.
 2. When blue arrow appears, follow it & touch the clone
@@ -36,7 +34,7 @@ Tank. Boss creates puddles. Kite near walls to managed space.
 ]]
         },
         {
-            encounterID = 2662,
+            encounterID = 2662, -- Degentrius
             short       = [[
 1. The room is split in 4 quadrants. You need at least one player in each.
 2. Soak ball as it bounces between quadrants.

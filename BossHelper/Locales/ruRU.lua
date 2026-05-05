@@ -29,6 +29,11 @@ L_ruRU = {
     -- text
     ["/RELOAD_TEXT"] = "Тактики обновлены. Используйте /reload для перевода интерфейса.",
 
+    -- Section headers
+    ["SETTINGS_DISPLAY_SECTION"] = "Отображение",
+    ["SETTINGS_BEHAVIOR_SECTION"] = "Поведение",
+    ["SETTINGS_APPEARANCE_SECTION"] = "Внешний вид",
+
     -- Setting Main
     ["SELECT_LANGUAGE_TITLE"] = "Выбрать язык",
     ["SCALE_SLIDER_TITLE"] = "Масштаб аддона",
@@ -52,6 +57,37 @@ L_ruRU = {
 
     ["AUTO_INVITE_TOOLTIP"] = "Включить авто-приглашение (приглашает по ключевому слову).",
     ["TRIGGER_WORD_TOOLTIP"] = "Ключевое слово для авто-приглашения (например, invite!).",
+
+    -- Mini Window settings
+    ["MINI_WINDOW_CATE"] = "Мини-окно",
+    ["MINI_WINDOW_TRANSPARENT_TITLE"] = "Прозрачный фон",
+    ["MINI_WINDOW_TRANSPARENT_TOOLTIP"] = "Регулирует прозрачность фона мини-окна (0% = полностью прозрачный, 100% = непрозрачный).",
+    ["MINI_WINDOW_NO_BORDER_TITLE"] = "Скрыть рамку",
+    ["MINI_WINDOW_NO_BORDER_TOOLTIP"] = "Удаляет рамку мини-окна.",
+    ["MINI_WINDOW_HIDE_SEP_TITLE"] = "Скрыть разделитель",
+    ["MINI_WINDOW_HIDE_SEP_TOOLTIP"] = "Скрывает тонкую разделительную линию под заголовком мини-окна.",
+    ["MINI_WINDOW_ICONS_ONLY_TITLE"] = "Только иконки (скрыть оформление кнопок)",
+    ["MINI_WINDOW_ICONS_ONLY_TOOLTIP"] = "Удаляет фон и рамку у кнопок окна, оставляя видимыми только иконки.",
+    ["MINI_WINDOW_AUTO_EXPAND_TITLE"] = "Авто-развернуть при пулле босса",
+    ["MINI_WINDOW_AUTO_EXPAND_TOOLTIP"] = "Автоматически разворачивает мини-окно при начале энкаунтера с боссом и сворачивает его обратно после гибели босса.",
+
+    -- Категория Key Tracker
+    ["KEY_TRACKER_CATE"] = "Key Tracker",
+    ["KEY_TRACKER_SECTION"] = "Отображение",
+    ["KEY_TRACKER_STARTPAGE_TITLE"] = "Показывать ключи на стартовой странице",
+    ["KEY_TRACKER_STARTPAGE_TOOLTIP"] = "Показывает виджет отслеживания ключевых камней внизу стартовой страницы.",
+    ["KEY_TRACKER_GROUPFINDER_TITLE"] = "Показывать ключи в Поиске группы",
+    ["KEY_TRACKER_GROUPFINDER_TOOLTIP"] = "Показывает панель отслеживания ключей рядом с окном Поиска группы.",
+
+    -- Внешний вид панели Поиска группы
+    ["KEY_TRACKER_GF_APPEARANCE"] = "Панель Поиска группы",
+    ["KEY_TRACKER_GF_TRANSPARENT_TITLE"] = "Прозрачный фон",
+    ["KEY_TRACKER_GF_TRANSPARENT_TOOLTIP"] = "Настройте прозрачность фона панели (0% = полностью прозрачный, 100% = непрозрачный).",
+    ["KEY_TRACKER_GF_NO_BORDER_TITLE"] = "Скрыть рамку",
+    ["KEY_TRACKER_GF_NO_BORDER_TOOLTIP"] = "Убирает рамку с панели Поиска группы.",
+    ["KEY_TRACKER_GF_HIDE_TITLE_TITLE"] = "Скрыть заголовок 'Keys'",
+    ["KEY_TRACKER_GF_HIDE_TITLE_TOOLTIP"] = "Скрывает надпись 'Keys' вверху панели Поиска группы.",
+    ["NO_KEY"] = "Нет ключа",
 
     -----------------------------------------------
     -- Start Side
@@ -126,6 +162,12 @@ L_ruRU = {
     ["RESET_TACTICS_MSG"] = "Вы уверены, что хотите сбросить все тактики для этого босса?\n\nЭто действие необратимо.",
     ["UNSAVED_CHANGES_TITLE"] = "Несохранённые изменения",
     ["UNSAVED_CHANGES_MSG"] = "У вас есть несохранённые изменения.\n\nВы уверены, что хотите отменить без сохранения?",
+
+    -----------------------------------------------
+    -- Update popup
+    -----------------------------------------------
+    ["UPDATE_POPUP_TEXT"] = "Доступна новая версия Mythic Mentor!\n\nВаша: %s\nНовая: %s\n\nОткрыть GitHub для обновления?",
+    ["UPDATE_POPUP_BTN_GITHUB"] = "GitHub",
 }
 
 return L_ruRU

@@ -1,8 +1,8 @@
 ﻿Dungeon3 = {
-    instanceID = 1316,
+    instanceID = 1316, -- Nexus-Point Xenas
     bosses = {
         {
-            encounterID = 2813,
+            encounterID = 2813, -- Chief Corewright Kasreth
             short       = [[
 1. Avoid beams & kick boss.
 2. When you get the Reflux Charge debuff, move INTO the beams to remove it (ideally move into overlaping beams).
@@ -12,7 +12,7 @@
         },
 
         {
-            encounterID = 2814,
+            encounterID = 2814, -- Corewarden Nysarra
             short       = [[
 1. Move out with circle.
 2. Kick and nuke adds.
@@ -23,7 +23,7 @@
         },
 
         {
-            encounterID = 2815,
+            encounterID = 2815, -- Lothraxion
             short       = [[
 1. Move out with circles, and don't stand in the giant arrows of doom.
 2. After the attack at 100 energy, the boss clones itself. Only interrupt the clone WITHOUT horns.

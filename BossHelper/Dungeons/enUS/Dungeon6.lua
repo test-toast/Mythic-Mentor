@@ -1,8 +1,8 @@
 ﻿Dungeon6 = {
-    instanceID = 278,
+    instanceID = 278, -- Pit of Saron
     bosses = {
         {
-            encounterID = 608,
+            encounterID = 608, -- Forgemaster Garfrost
             short       = [[
 1. Hide behind Saronite Ores during Glacial Overload.
 
@@ -14,7 +14,7 @@ Tank. Move next to a Saronite Ore when he casts Cryostomp.
         },
 
         {
-            encounterID = 609,
+            encounterID = 609, -- Krick and Ick
             short       = [[
 1. Prio kick Krick's Death Bolt.
 2. Interrupt & kill adds.
@@ -27,7 +27,7 @@ Tank. Avoid placing Blight Smash puddles on purple swirlies.
         },
 
         {
-            encounterID = 610,
+            encounterID = 610, -- Scourgelord Tyrannus
             short       = [[
 1. Move with blue circles on top of green glowing corpse piles.
 2. Kick & kill adds.

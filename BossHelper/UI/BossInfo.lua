@@ -20,22 +20,11 @@ function BossInfo.Init(d)
     for k,v in pairs(d) do deps[k] = v end
 end
 
-local function phide(obj)
-    if not obj then return end
-    pcall(function() if obj.Hide then obj:Hide() end end)
-end
-local function psetparent(obj, p)
-    if not obj then return end
-    pcall(function() if obj.SetParent then obj:SetParent(p) end end)
-end
-local function pclearpoints(obj)
-    if not obj then return end
-    pcall(function() if obj.ClearAllPoints then obj:ClearAllPoints() end end)
-end
-local function psettext(obj, txt)
-    if not obj then return end
-    pcall(function() if obj.SetText then obj:SetText(txt) end end)
-end
+-- Delegate to the shared UI utilities in BossHelper.UI
+local phide        = function(o)      BossHelper.UI.hide(o)         end
+local psetparent   = function(o, p)   BossHelper.UI.setParent(o, p) end
+local pclearpoints = function(o)      BossHelper.UI.clearPoints(o)  end
+local psettext     = function(o, txt) BossHelper.UI.setText(o, txt) end
 local function psafesound(sid)
     pcall(function()
         if deps.BossHelper and deps.BossHelper.SafePlaySound then deps.BossHelper:SafePlaySound(sid) end
@@ -47,17 +36,13 @@ local function CleanupInfoWidgets(rPanel)
     if not rPanel then return end
     if rPanel.settingsWidgets then
         for _, w in ipairs(rPanel.settingsWidgets) do
-            if w then
-                phide(w)
-                psetparent(w, nil)
-                pclearpoints(w)
-            end
+            BossHelper.UI.destroyWidget(w)
         end
         rPanel.settingsWidgets = nil
     end
     -- Discard old content frame; it will be rebuilt fresh for next category
     if rPanel.infoScrollContent then
-        phide(rPanel.infoScrollContent)
+        BossHelper.UI.hide(rPanel.infoScrollContent)
         rPanel.infoScrollContent:SetParent(nil)
         rPanel.infoScrollContent = nil
     end
@@ -124,32 +109,27 @@ function BossInfo.BuildInfoCategoryUI(rPanel, category, ctx)
     elseif category == "ChangeLog" then
         AddInfoText("Change Log", "GameFontHighlightLarge")
         AddSpacer(10)
-        local verStr
-        if C_AddOns and C_AddOns.GetAddOnMetadata then
-            verStr = C_AddOns.GetAddOnMetadata("BossHelper", "Version")
-        elseif GetAddOnMetadata then
-            verStr = GetAddOnMetadata("BossHelper", "Version")
-        end
-        AddInfoText("Version: " .. (verStr or "unknown"))
+        AddInfoText("Version: " .. (BossHelper.VERSION_STRING or "unknown") .. " Date: April 23, 2026")
         AddSpacer()
         AddInfoText("New:")
-        AddInfoText("• Edit Tactics: You can now edit all boss tactics or create your own")
-        AddInfoText("• Custom confirmation popups")
-        AddInfoText("• All tactics have been translated into Danish, German, French, and Russian")
+        AddInfoText("• Small boss tactics window.")
+        AddInfoText("• M+ Key Tracking now shows all party keys.")
+        AddInfoText("• Added more small animations.")
         AddSpacer()
         AddInfoText("• Changes")
-        AddInfoText("• In active instances (e.g. Mythic+), a copy window is now shown since Blizzard’s chat lockdown system prevents addons from writing directly to chat during encounters.")
-        AddInfoText("• Updated left panel background to match the right panel design")
-        AddInfoText("• Changed button border color to dark grey instead of black")
-        AddInfoText("• Hover animation now only appears on hover (removed from de-hover state)")
+        AddInfoText("• New icons (Close, Settings, Info, Notes, and Edit).")
+        AddInfoText("• Removed old images (now 1 MB, previously 3 MB).")
+        AddInfoText("• Removed small gaps between borders and backgrounds (buttons and panels).")
+        AddInfoText("• Overhauled the Affix tap now custom taktik to evry affix and beder guidning.")
+        AddInfoText("• Overhauled the Settings tab.")
+        AddInfoText("• Move the Vision nr over i højre side.")
+        AddInfoText("• Refactored codebase for better organization, modularity, and performanc.")
         AddSpacer()
         AddInfoText("• Bug Fixes")
-        AddInfoText("• Core: Added UI toggle, moved update-banner refresh into PLAYER_LOGIN, and made sound playback safe.")
-        AddInfoText("• Messaging: Fixed PlayButtonSound nil guard and stabilized the message queue.")
-        AddInfoText("• Auto-invite: Fixed slash command and removed unused global trigger; use Inviter.SetTrigger().")
-        AddInfoText("• Settings: Fixed language dropdown initial label bug, removed duplicate rightPanel declaration, and used Translate(SETTINGS).")
-        AddInfoText("• UI: Replaced hardcoded texts with localization keys; added UNKNOWN_BOSS and COPY_HINT_TEXT.")
-        AddInfoText("• Fixed missing image for Xenas Kasreth (Nexus-Point)")
+        AddInfoText("• Fixed Reset button in Edit Mode; now resets to original tactics.")
+        AddInfoText("• Fixed hover effect on buttons where the background visually grew beyond button borders.")
+        AddInfoText("• Fixed Boss Notes button sometimes remaining active when switching to another tab.")
+        AddInfoText("• Minor Bug Fixes.")
 
     elseif category == "Help" then
         AddInfoText("Help & Support", "GameFontHighlightLarge")
@@ -234,12 +214,9 @@ function BossInfo.ShowInfo(ctx)
     local rightPanel = ctx.rightPanel
     local backButton = ctx.backButton
 
-    -- Skjul Discord knappen på info siden
-    if rightPanel and rightPanel.discordButton then rightPanel.discordButton:Hide() end
-    -- Skjul GitHub knappen på info siden
-    if rightPanel and rightPanel.githubButton then rightPanel.githubButton:Hide() end
-    -- Skjul Bug Report knappen på info siden
-    if rightPanel and rightPanel.bugReportButton then rightPanel.bugReportButton:Hide() end
+    BossHelper.UI.hide(rightPanel and rightPanel.discordButton)
+    BossHelper.UI.hide(rightPanel and rightPanel.githubButton)
+    BossHelper.UI.hide(rightPanel and rightPanel.bugReportButton)
     local CreateCustomButton = ctx.CreateCustomButton or deps.CreateCustomButton
 
     if not (frame and leftPanel and rightPanel and CreateCustomButton) then

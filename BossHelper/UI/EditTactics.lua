@@ -17,6 +17,11 @@ local BOX_W      = ROW_W - LEFT_MARGIN - 16
 local FOOTER_H   = 32
 local PHASE_NONE = "No phase"
 
+-- Kortere navne til delte UI-præseter (defineret i BossHelper.lua)
+local _B  = BossHelper.UI.Backdrop   -- backdrop-præseter
+local _C  = BossHelper.UI.C          -- farvepalette
+local _BD = BossHelper.UI.ApplyBackdrop  -- backdrop + farver i ét kald
+
 -- =====================================================================
 -- Modul-lokale variable
 -- =====================================================================

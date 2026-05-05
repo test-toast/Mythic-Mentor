@@ -28,6 +28,11 @@ L_deDE = {
     -- text
     ["/RELOAD_TEXT"] = "Taktiken aktualisiert. Verwenden Sie /reload für die UI-Übersetzung.",
 
+    -- Section headers
+    ["SETTINGS_DISPLAY_SECTION"] = "Anzeige",
+    ["SETTINGS_BEHAVIOR_SECTION"] = "Verhalten",
+    ["SETTINGS_APPEARANCE_SECTION"] = "Erscheinungsbild",
+
     -- Setting Main
     ["SELECT_LANGUAGE_TITLE"] = "Sprache auswählen",
     ["SCALE_SLIDER_TITLE"] = "Addon-Skalierung",
@@ -51,6 +56,37 @@ L_deDE = {
 
     ["AUTO_INVITE_TOOLTIP"] = "Auto-Einladen aktivieren (lädt bei Auslöser ein).",
     ["TRIGGER_WORD_TOOLTIP"] = "Auslösewort für Auto-Einladen (z.B. invite!).",
+
+    -- Mini Window settings
+    ["MINI_WINDOW_CATE"] = "Mini-Fenster",
+    ["MINI_WINDOW_TRANSPARENT_TITLE"] = "Transparenter Hintergrund",
+    ["MINI_WINDOW_TRANSPARENT_TOOLTIP"] = "Stellen Sie die Hintergrundtransparenz des Mini-Fensters ein (0% = vollständig transparent, 100% = undurchsichtig).",
+    ["MINI_WINDOW_NO_BORDER_TITLE"] = "Rahmen ausblenden",
+    ["MINI_WINDOW_NO_BORDER_TOOLTIP"] = "Entfernt den Rahmen des Mini-Fensters.",
+    ["MINI_WINDOW_HIDE_SEP_TITLE"] = "Trennlinie ausblenden",
+    ["MINI_WINDOW_HIDE_SEP_TOOLTIP"] = "Versteckt die dünne Trennlinie unter der Mini-Fenster-Überschrift.",
+    ["MINI_WINDOW_ICONS_ONLY_TITLE"] = "Nur Symbole (Knopf-Oberfläche ausblenden)",
+    ["MINI_WINDOW_ICONS_ONLY_TOOLTIP"] = "Entfernt Hintergrund und Rahmen der Fensterknöpfe, zeigt nur die Symbole.",
+    ["MINI_WINDOW_AUTO_EXPAND_TITLE"] = "Auto-erweitern bei Boss-Pull",
+    ["MINI_WINDOW_AUTO_EXPAND_TOOLTIP"] = "Erweitert das Mini-Fenster automatisch, wenn ein Boss-Encounter beginnt, und minimiert es wieder, wenn der Boss besiegt wird.",
+
+    -- Key Tracker Kategorie
+    ["KEY_TRACKER_CATE"] = "Key Tracker",
+    ["KEY_TRACKER_SECTION"] = "Anzeige",
+    ["KEY_TRACKER_STARTPAGE_TITLE"] = "Keys auf Startseite anzeigen",
+    ["KEY_TRACKER_STARTPAGE_TOOLTIP"] = "Zeigt das Keystone-Widget unten auf der Startseite an.",
+    ["KEY_TRACKER_GROUPFINDER_TITLE"] = "Keys im Gruppensuche-Fenster anzeigen",
+    ["KEY_TRACKER_GROUPFINDER_TOOLTIP"] = "Zeigt das Keystone-Panel am Gruppensuche-Fenster an.",
+
+    -- Gruppensuche-Panel Erscheinungsbild
+    ["KEY_TRACKER_GF_APPEARANCE"] = "Gruppensuche-Panel",
+    ["KEY_TRACKER_GF_TRANSPARENT_TITLE"] = "Transparenter Hintergrund",
+    ["KEY_TRACKER_GF_TRANSPARENT_TOOLTIP"] = "Hintergrundtransparenz des Panels anpassen (0% = vollständig transparent, 100% = undurchsichtig).",
+    ["KEY_TRACKER_GF_NO_BORDER_TITLE"] = "Rahmen ausblenden",
+    ["KEY_TRACKER_GF_NO_BORDER_TOOLTIP"] = "Entfernt den Rahmen des Gruppensuche-Panels.",
+    ["KEY_TRACKER_GF_HIDE_TITLE_TITLE"] = "'Keys'-Überschrift ausblenden",
+    ["KEY_TRACKER_GF_HIDE_TITLE_TOOLTIP"] = "Blendet die 'Keys'-Beschriftung oben im Gruppensuche-Panel aus.",
+    ["NO_KEY"] = "Kein Key",
 
     -----------------------------------------------
     -- Start Side
@@ -127,6 +163,12 @@ L_deDE = {
     ["RESET_TACTICS_MSG"] = "Bist du sicher, dass du alle Taktiken für diesen Boss zurücksetzen möchtest?\n\nDies kann nicht rückgängig gemacht werden.",
     ["UNSAVED_CHANGES_TITLE"] = "Ungespeicherte Änderungen",
     ["UNSAVED_CHANGES_MSG"] = "Du hast ungespeicherte Änderungen.\n\nBist du sicher, dass du abbrechen möchtest, ohne zu speichern?",
+
+    -----------------------------------------------
+    -- Update popup
+    -----------------------------------------------
+    ["UPDATE_POPUP_TEXT"] = "Eine neue Version von Mythic Mentor ist verfügbar!\n\nDeine: %s\nNeu: %s\n\nGitHub öffnen, um zu aktualisieren?",
+    ["UPDATE_POPUP_BTN_GITHUB"] = "GitHub",
 }
 
 return L_deDE

@@ -59,91 +59,115 @@ local BuildShortLineButtons  -- forward declaration
 local ShowSettings, SelectSettingCategory, BuildSettingsCategoryUI
 -- Forward: General Notes wrappers
 local ShowGeneralNotes, SelectNotesCategory
+-- Forward: Boss Note panel slide animationer
+local OpenBossNotePanel, CloseBossNotePanel
 
--- ---------- Sound config ----------
--- Centraliserede lyd-IDs så vi ikke hardcoder tal rundt omkring
-BossHelper = BossHelper or {}
-BossHelper.Sounds = BossHelper.Sounds or {
-    NORMAL_BUTTON  = 1115,   -- normal lyd til knapper
-    BOSS_SELECT    = 841,   -- når man vælger en boss
-    DUNGEON_SELECT = 841,  -- når man vælger en dungeon i listen
-    POST_TO_CHAT   = 271864,   -- når 'Post to chat' afsluttes
-    BACK_BUTTON    = 84240,   -- når man klikker på back
-    OPEN_SETTINGS  = 84240,   -- når settings åbnes
-    CLOSE_SETTINGS = 84240,   -- når settings åbnes
-    OPEN_MENU      = 175320,   -- når addonet åbnes
-    CLOSE_MENU     = 170887,   -- når addonet lukkes
-}
-
--- Fallback SafePlaySound, hvis BossHelper ikke allerede har en
-if not BossHelper.SafePlaySound then
-    function BossHelper:SafePlaySound(soundID)
-        if type(soundID) == "number" then
-            pcall(PlaySound, soundID, "Master")
-        end
-    end
-end
--- ---------- end sound config ----------
+-- BossHelper.Sounds og SafePlaySound er defineret centralt i BossHelper.lua
 
 
--- --- NYT: helper til at rydde settings-widgets hvis de eksisterer ---
 local function ClearRightPanelSettings()
     if not rightPanel then return end
     if rightPanel.settingsWidgets then
         for _, w in ipairs(rightPanel.settingsWidgets) do
-            if w then
-                pcall(function() if w.Hide then w:Hide() end end)
-                pcall(function() if w.SetParent then w:SetParent(nil) end end)
-                pcall(function() if w.ClearAllPoints then w:ClearAllPoints() end end)
-            end
+            BossHelper.UI.destroyWidget(w)
         end
         rightPanel.settingsWidgets = nil
     end
-
-    -- ekstra kendte navne
-    pcall(function() if rightPanel.BossSettingsFrame then rightPanel.BossSettingsFrame:Hide() end end)
-    pcall(function() if rightPanel.settingsScroll then rightPanel.settingsScroll:Hide() end end)
-    pcall(function() if rightPanel.infoScrollFrame then rightPanel.infoScrollFrame:Hide() end end)
-
-    -- ryd evt. fasevalget, så dropdown/fase ikke hænger ved
-    pcall(function() rightPanel.selectedPhaseIndex = nil end)
+    BossHelper.UI.hide(rightPanel.BossSettingsFrame)
+    BossHelper.UI.hide(rightPanel.settingsScroll)
+    BossHelper.UI.hide(rightPanel.infoScrollFrame)
+    rightPanel.selectedPhaseIndex = nil
 end
 
 -- Clear widgets created by GeneralNotes page
 local function ClearRightPanelNotes()
     if not rightPanel then return end
-    if rightPanel.notesWidgets then
-        for _, w in ipairs(rightPanel.notesWidgets) do
-            if w then
-                pcall(function() if w.Hide then w:Hide() end end)
-                pcall(function() if w.SetParent then w:SetParent(nil) end end)
-                pcall(function() if w.ClearAllPoints then w:ClearAllPoints() end end)
-            end
+    for _, key in ipairs({"notesWidgets", "_noteButtons"}) do
+        if rightPanel[key] then
+            for _, w in ipairs(rightPanel[key]) do BossHelper.UI.destroyWidget(w) end
+            rightPanel[key] = nil
         end
-        rightPanel.notesWidgets = nil
-    end
-    if rightPanel._noteButtons then
-        for _, b in ipairs(rightPanel._noteButtons) do
-            if b then
-                pcall(function() if b.Hide then b:Hide() end end)
-                pcall(function() if b.SetParent then b:SetParent(nil) end end)
-                pcall(function() if b.ClearAllPoints then b:ClearAllPoints() end end)
-            end
-        end
-        rightPanel._noteButtons = nil
     end
     if rightPanel._notesInput then
-        pcall(function() if rightPanel._notesInput.Hide then rightPanel._notesInput:Hide() end end)
-        pcall(function() if rightPanel._notesInput.SetParent then rightPanel._notesInput:SetParent(nil) end end)
+        BossHelper.UI.destroyWidget(rightPanel._notesInput)
         rightPanel._notesInput = nil
+    end
+end
+
+-- Helper: ryd alt generisk indhold fra rightPanel
+local function ClearRightPanelContent(rPanel)
+    if not rPanel then return end
+    BossHelper.UI.hide(rPanel.logo)
+    BossHelper.UI.setText(rPanel.mainTitle, "")
+    BossHelper.UI.setText(rPanel.mainDesc, "")
+    BossHelper.UI.setText(rPanel.footerText, "")
+    BossHelper.UI.setText(rPanel.footerText2, "")
+    BossHelper.UI.setText(rPanel.rightTitle, "")
+    BossHelper.UI.hide(rPanel.rightShortScroll)
+    BossHelper.UI.hide(rPanel.shortBtnScroll)
+    BossHelper.UI.setText(rPanel.rightShortText, "")
+    BossHelper.UI.setText(rPanel.rightDetailText, "")
+    BossHelper.UI.hide(rPanel.rightDetailScroll)
+    rPanel.showingDetails = false
+    for _, key in ipairs({"detailToggle","postButton","bossNoteButton","discordButton","githubButton","bugReportButton"}) do
+        BossHelper.UI.hide(rPanel[key])
+    end
+    if rPanel.keystoneWidget then rPanel.keystoneWidget:SetVisible(false) end
+end
+
+local function HideSocialButtons()
+    BossHelper.UI.hide(rightPanel and rightPanel.discordButton)
+    BossHelper.UI.hide(rightPanel and rightPanel.githubButton)
+    BossHelper.UI.hide(rightPanel and rightPanel.bugReportButton)
+end
+
+local function ShowSocialButtons()
+    if not rightPanel then return end
+    if rightPanel.discordButton then rightPanel.discordButton:Show() end
+    if rightPanel.githubButton  then rightPanel.githubButton:Show()  end
+    if rightPanel.bugReportButton then rightPanel.bugReportButton:Show() end
+end
+
+-- Animeret slide ind (venstre → fuld bredde) for Boss Note panelet
+OpenBossNotePanel = function(animated)
+    if not frame or not frame.bossNotePanel then return end
+    local bnp  = frame.bossNotePanel
+    local anim = BossHelper.Anim
+    if bnp._widthTween then bnp._widthTween.running = false end
+    local fullW = bnp._fullWidth or 200
+    if animated and anim and anim.AnimateWidth and anim.ShouldAnimate() then
+        bnp:SetWidth(0)
+        bnp:Show()
+        anim.AnimateWidth(bnp, 0, fullW, 0.18)
+    else
+        bnp:SetWidth(fullW)
+        bnp:Show()
+    end
+end
+
+-- Animeret slide ud (fuld bredde → 0) for Boss Note panelet
+CloseBossNotePanel = function(animated)
+    if not frame or not frame.bossNotePanel then return end
+    local bnp  = frame.bossNotePanel
+    if not bnp:IsShown() then return end
+    local anim  = BossHelper.Anim
+    local fullW = bnp._fullWidth or 200
+    if animated and anim and anim.AnimateWidth and anim.ShouldAnimate() then
+        if bnp._widthTween then bnp._widthTween.running = false end
+        local curW = bnp:GetWidth() or fullW
+        anim.AnimateWidth(bnp, curW, 0, 0.18, function()
+            bnp:Hide()
+            bnp:SetWidth(fullW)
+        end)
+    else
+        bnp:Hide()
+        bnp:SetWidth(fullW)
     end
 end
 
 -- Helper: Luk Boss Note panelet hvis det er åbent (og nulstil knap-tekst)
 local function CloseBossNotePanelIfOpen()
-    if frame and frame.bossNotePanel and frame.bossNotePanel:IsShown() then
-        frame.bossNotePanel:Hide()
-    end
+    CloseBossNotePanel(false)
     if rightPanel and rightPanel.bossNoteButton then
         rightPanel.bossNoteButton:SetText(Translate("BOSS_NOTES"))
     end
@@ -165,51 +189,13 @@ local function ExitEditMode(saveChanges)
 end
 
 
--- Animation / combat helper (put dette tidligt i BossUI.lua)
-BossHelperDB = BossHelperDB or {}
-local function ShouldAnimateInCombat()
-    -- Hvis brugeren eksplicit har slået animationer i combat til -> tillad altid
-    if BossHelperDB.allowAnimationsInCombat then
-        return true
-    end
-    -- Ellers: kun animation hvis vi ikke er i combat
-    return not InCombatLockdown()
-end
+-- Lokale aliases til centrale animations-hjælpere (defineret i Animations.lua)
+local ShouldAnimateInCombat = BossHelper.Anim.ShouldAnimate
+local CrossfadeFrameText    = BossHelper.Anim.CrossfadeText
 
--- Gør helper globalt tilgængelig for andre filer (f.eks. StartPage.lua)
-_G.BossHelper_ShouldAnimateInCombat = ShouldAnimateInCombat
-
-
--- Crossfade helper: fade out, kør callback når færdig, så fade in
-local function CrossfadeFrameText(fontString, newText, duration)
-    duration = duration or 0.12
-    if not fontString then return end
-
-    -- hvis animationer ikke er tilladt -> sæt tekst direkte (fallback)
-    if not ShouldAnimateInCombat() then
-        fontString:SetText(newText or "")
-        return
-    end
-
-    -- fade out/in via AnimationGroup (kun hvis tilladt)
-    local outAG = fontString:CreateAnimationGroup()
-    local a1 = outAG:CreateAnimation("Alpha")
-    a1:SetFromAlpha(1)
-    a1:SetToAlpha(0)
-    a1:SetDuration(duration)
-    a1:SetSmoothing("OUT")
-    outAG:SetScript("OnFinished", function()
-        fontString:SetText(newText or "")
-        -- fade in
-        local inAG = fontString:CreateAnimationGroup()
-        local a2 = inAG:CreateAnimation("Alpha")
-        a2:SetFromAlpha(0)
-        a2:SetToAlpha(1)
-        a2:SetDuration(duration)
-        a2:SetSmoothing("IN")
-        inAG:Play()
-    end)
-    outAG:Play()
+-- Shorthand for safe sound playback
+local function SafePlay(sound)
+    if BossHelper and BossHelper.SafePlaySound then BossHelper:SafePlaySound(sound) end
 end
 
 -- Text processing is now handled in Functions.lua
@@ -329,175 +315,166 @@ local function UpdatePostButtonLabel(btn)
     end
 end
 
--- CreateCustomButton (opgraderet med animationer, men respekterer ShouldAnimateInCombat())
-local function CreateCustomButton(parent, width, height, text)
-    local btn = CreateFrame("Button", nil, parent, "BackdropTemplate")
-    btn:SetSize(width, height)
+-- Alle knap-oprettelse og styling er centraliseret i UI/Buttons.lua.
+-- Lokalt alias bevares så eksisterende kode i denne fil ikke ændres.
+local CreateCustomButton = BossHelper.Buttons.Create
 
-    btn:SetBackdrop({
-        edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
-        tile = true, tileSize = 16, edgeSize = 12,
+-- Eksponér til EditTactics.lua og andre submoduler.
+BossUI.CreateCustomButton = CreateCustomButton
+
+-- ============================================================
+-- Fase-dropdown (delt af native-fase og custom-kun faser)
+--   parent       = frame at forankre dropdown til
+--   rPanel       = rightPanel (gemmer phaseDropdown / clickCatcher)
+--   phases       = ordnet liste af fase-navne (strings)
+--   textResolver = function(phaseName) → string (taktik-tekst)
+-- Returnerer dropdown-frame eller nil (hvis kun én fase).
+-- ============================================================
+local function CreatePhaseDropdown(parent, rPanel, phases, textResolver)
+    if #phases == 1 then
+        BuildShortLineButtons(rPanel, textResolver(phases[1]))
+        return nil
+    end
+
+    local dropdown = CreateFrame("Frame", nil, parent, "BackdropTemplate")
+    dropdown:SetSize(140, 26)
+    dropdown:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -10, -40)
+
+    local mainBtn = CreateCustomButton(dropdown, 140, 26, phases[1])
+    mainBtn:SetPoint("TOP", dropdown, "TOP", -419, 30)
+    mainBtn.arrow = mainBtn:CreateTexture(nil, "OVERLAY")
+    mainBtn.arrow:SetTexture("Interface\\AddOns\\BossHelper\\Media\\icon\\Arrow_Down_icon.png")
+    mainBtn.arrow:SetVertexColor(0.98, 0.82, 0.55, 0.8)
+    mainBtn.arrow:SetSize(20, 10)
+    mainBtn.arrow:SetPoint("RIGHT", mainBtn, "RIGHT", -8, 0)
+    mainBtn.arrow:SetAlpha(0.8)
+    mainBtn.arrow:SetRotation(0)
+
+    local panel = CreateFrame("Frame", nil, dropdown, "BackdropTemplate")
+    panel:SetSize(140, #phases * 26)
+    panel:SetPoint("TOP", mainBtn, "BOTTOM", 0, -2)
+    panel:Hide()
+    panel:SetBackdrop({
+        bgFile   = "Interface\\DialogFrame\\UI-DialogBox-Background",
+        edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
+        tile = true, tileSize = 16, edgeSize = 16,
         insets = { left = 4, right = 4, top = 4, bottom = 4 },
     })
-    btn:SetBackdropBorderColor(0.3, 0.3, 0.3, 0.8)
+    panel:SetBackdropColor(0.08, 0.09, 0.13, 0.95)
+    panel:SetFrameStrata("FULLSCREEN_DIALOG")
+    panel:SetFrameLevel(2000)
+    dropdown:SetFrameStrata("FULLSCREEN_DIALOG")
+    dropdown:SetFrameLevel(1999)
 
-    btn.bg = btn:CreateTexture(nil, "BACKGROUND", nil, 1)
-    btn.bg:SetPoint("TOPLEFT", 4, -4)
-    btn.bg:SetPoint("BOTTOMRIGHT", -4, 4)
-    btn.bg:SetColorTexture(1, 0.8, 0.4, 1)
+    local buttons = {}
 
-    local t = Translate(text)
-    --print("Creating button with text: ", text, " -> localized: ", t)
+    local function SelectPhase(index)
+        rPanel.selectedPhaseIndex = index
+        for i, btn in ipairs(buttons) do btn:SetSelected(i == index) end
+        mainBtn:SetText(phases[index])
+        BuildShortLineButtons(rPanel, textResolver(phases[index]))
+    end
 
-    btn.text = btn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    btn.text:SetPoint("CENTER", 0, 0)
-    btn.text:SetText(t or "")
-    btn.text:SetTextColor(0.98, 0.82, 0.55)
+    for i, phaseName in ipairs(phases) do
+        local btn = CreateCustomButton(panel, 140, 26, phaseName)
+        btn:SetPoint("TOP", panel, "TOP", 0, -((i - 1) * 26))
+        btn:SetScript("OnClick", function()
+            SafePlay(BossHelper.Sounds.NORMAL_BUTTON)
+            SelectPhase(i)
+            panel:Hide()
+            if rPanel.phaseDropdownClickCatcher then rPanel.phaseDropdownClickCatcher:Hide() end
+            if mainBtn.arrow then mainBtn.arrow:SetRotation(0) end
+        end)
+        table.insert(buttons, btn)
+    end
 
-    btn.icon = nil
-    function btn:SetIcon(texture)
-        if not texture then
-            if btn.icon then btn.icon:Hide() end
-            return
+    -- Start med gemt fase-indeks eller første fase
+    if rPanel.selectedPhaseIndex and rPanel.selectedPhaseIndex <= #phases then
+        SelectPhase(rPanel.selectedPhaseIndex)
+    else
+        SelectPhase(1)
+    end
+
+    -- Click-catcher: lukker panel ved klik udenfor
+    local catcher = CreateFrame("Frame", nil, UIParent)
+    catcher:SetAllPoints(UIParent)
+    catcher:EnableMouse(true)
+    catcher:Hide()
+    catcher:SetFrameStrata("FULLSCREEN_DIALOG")
+    catcher:SetFrameLevel(1999)
+    catcher:SetScript("OnMouseDown", function(self)
+        if panel:IsShown() then
+            panel:Hide()
+            self:Hide()
+            if mainBtn.arrow then mainBtn.arrow:SetRotation(0) end
         end
-        if not btn.icon then
-            btn.icon = btn:CreateTexture(nil, "ARTWORK")
-            btn.icon:SetSize(20, 20)
-            btn.icon:SetPoint("LEFT", btn, "LEFT", 6, 0)
-        end
-        btn.icon:SetTexture(texture)
-        btn.icon:SetAlpha(1)
-        btn.icon:Show()
-    end
+    end)
+    rPanel.phaseDropdownClickCatcher = catcher
 
-    function btn:SetText(s)
-        if btn.text then btn.text:SetText(s) end
-    end
-
-    -- Forbered animation-grupper kun hvis animationer er tilladt
-    local enterAG, pulseAG
-    if ShouldAnimateInCombat() then
-        enterAG = btn:CreateAnimationGroup()
-        local enterScale = enterAG:CreateAnimation("Scale")
-        enterScale:SetScale(1.06, 1.06)
-        enterScale:SetDuration(0.12)
-        enterScale:SetSmoothing("OUT")
-        local enterAlpha = enterAG:CreateAnimation("Alpha")
-        enterAlpha:SetFromAlpha(1)
-        enterAlpha:SetToAlpha(1)
-        enterAlpha:SetDuration(0.12)
-
-        pulseAG = btn:CreateAnimationGroup()
-        pulseAG:SetLooping("NONE")
-        local pulseOut = pulseAG:CreateAnimation("Scale")
-        pulseOut:SetScale(1.10, 1.10)
-        pulseOut:SetDuration(0.10)
-        pulseOut:SetSmoothing("OUT")
-        local pulseIn = pulseAG:CreateAnimation("Scale")
-        pulseIn:SetScale(1/1.10, 1/1.10)
-        pulseIn:SetDuration(0.10)
-        pulseIn:SetSmoothing("IN")
-    end
-
-    local function StopAllAnims()
-        if enterAG and enterAG:IsPlaying() then enterAG:Stop() end
-        if pulseAG and pulseAG:IsPlaying() then pulseAG:Stop() end
-    end
-
-    btn:SetScript("OnEnter", function(self)
-        -- stop gamle animationer og play hover-lyd
-        StopAllAnims()
-        if enterAG then enterAG:Play() end
-
-        if not self._isSelected then
-            self.bg:SetColorTexture(0.15, 0.15, 0.25, 1)
-            self:SetBackdropBorderColor(1, 0.6, 0.2, 1)
-            self.text:SetTextColor(1, 0.95, 0.75)
+    mainBtn:SetScript("OnClick", function()
+        SafePlay(BossHelper.Sounds.NORMAL_BUTTON)
+        if panel:IsShown() then
+            panel:Hide()
+            if rPanel.phaseDropdownClickCatcher then rPanel.phaseDropdownClickCatcher:Hide() end
+            if mainBtn.arrow then mainBtn.arrow:SetRotation(0) end
         else
-            self.bg:SetColorTexture(1, 0.5, 0, 1)
-            self:SetBackdropBorderColor(1, 0.5, 0, 1)
-            self.text:SetTextColor(1, 1, 1)
+            panel:Show()
+            panel:SetFrameStrata("FULLSCREEN_DIALOG")
+            panel:SetFrameLevel(2000)
+            if rPanel.phaseDropdownClickCatcher then
+                rPanel.phaseDropdownClickCatcher:SetFrameStrata("FULLSCREEN_DIALOG")
+                rPanel.phaseDropdownClickCatcher:SetFrameLevel(1999)
+                rPanel.phaseDropdownClickCatcher:Show()
+            end
+            BossHelper.Anim.PlayDropdownOpen(panel)
+            if mainBtn.arrow then mainBtn.arrow:SetRotation(math.pi) end
         end
     end)
 
-
-    btn:SetScript("OnLeave", function(self)
-        StopAllAnims()
-
-        if not self._isSelected then
-            self.bg:SetColorTexture(0.06, 0.07, 0.11, 1)
-            self:SetBackdropBorderColor(0.3, 0.3, 0.3, 0.8)
-            self.text:SetTextColor(0.98, 0.82, 0.55)
-        else
-            self.bg:SetColorTexture(1, 0.5, 0, 1)
-            self:SetBackdropBorderColor(1, 0.5, 0, 1)
-            self.text:SetTextColor(1, 1, 1)
-        end
-    end)
-
-    function btn:SetSelected(on)
-        self._isSelected = on
-        if on then
-            self.bg:SetColorTexture(1, 0.5, 0, 1)
-            self:SetBackdropBorderColor(1, 0.5, 0, 1)
-            self.text:SetTextColor(1, 1, 1)
-            if pulseAG then pulseAG:Play() end
-        else
-            self.bg:SetColorTexture(0.06, 0.07, 0.11, 1)
-            self:SetBackdropBorderColor(0.3, 0.3, 0.3, 0.8)
-            self.text:SetTextColor(0.98, 0.82, 0.55)
-        end
-    end
-
-    btn:SetSelected(false)
-    return btn
+    dropdown.mainBtn = mainBtn
+    return dropdown
 end
 
--- Expose for use in EditTactics.lua
-BossUI.CreateCustomButton = CreateCustomButton
+-- Helper: auto-open eller luk boss note panel når en boss vælges
+local function UpdateBossNotePanel(bossKey)
+    if not frame.bossNotePanel then return end
+    BossHelperDB.bossNotes = BossHelperDB.bossNotes or {}
+    local notesList = BossHelperDB.bossNotes[currentDungeon] and
+                      BossHelperDB.bossNotes[currentDungeon][bossKey]
+    local hasNote = (type(notesList) == "string" and notesList ~= "") or
+                    (type(notesList) == "table" and #notesList > 0)
+    if hasNote and BossHelperDB.autoOpenBossNotes ~= false then
+        rightPanel.bossNoteButton:SetText(Translate("BOSS_CLOSE_NOTE"))
+        if not frame.bossNotePanel.initialized then CreateBossNoteContent() end
+        if frame.bossNotePanel.LoadNotesForBoss then
+            frame.bossNotePanel.LoadNotesForBoss(bossKey, currentDungeon)
+        end
+        OpenBossNotePanel(true)
+    else
+        frame.bossNotePanel:Hide()
+        rightPanel.bossNoteButton:SetText(Translate("BOSS_NOTES"))
+    end
+end
 
 -- Helper: SelectBoss
 local function SelectBoss(bossData, btn)
     HideAffixesView()
-    -- Annuller edit mode hvis aktiv (uden at gemme)
     HideEditModeUI()
-    if rightPanel.logo then rightPanel.logo:Hide() end
-    if rightPanel.mainTitle then rightPanel.mainTitle:SetText("") end
-    if rightPanel.mainDesc then rightPanel.mainDesc:SetText("") end
-    if rightPanel.footerText then rightPanel.footerText:SetText("") end
-    if rightPanel.footerText2 then rightPanel.footerText2:SetText("") end
-    if rightPanel.rightTitle then rightPanel.rightTitle:SetText("") end
-    if rightPanel.rightShortText then rightPanel.rightShortText:SetText("") end
-    if rightPanel.rightDetailText then rightPanel.rightDetailText:SetText("") end
-    if rightPanel.rightDetailScroll then rightPanel.rightDetailScroll:Hide() end
-
-    if selectedButton then
-        selectedButton:SetSelected(false)
-    end
-
-    frame.selectedBoss = bossData  -- gem reference til boss-objektet
+    ClearRightPanelContent(rightPanel)
+    if selectedButton then selectedButton:SetSelected(false) end
+    frame.selectedBoss = bossData
 
     BossUI:ShowBoss(rightPanel, bossData)
 
-    rightPanel.showingDetails = false
     if rightPanel.detailToggle then
         rightPanel.detailToggle:SetText(Translate("SHOW_DETAILS"))
+        rightPanel.detailToggle:Show()
     end
-
     if rightPanel.postButton then
         rightPanel.postButton:Show()
         UpdatePostButtonLabel(rightPanel.postButton)
     end
-    if rightPanel.detailToggle then rightPanel.detailToggle:Show() end
-    
-    -- Skjul Discord knappen på boss sider
-    if rightPanel.discordButton then rightPanel.discordButton:Hide() end
-    -- Skjul GitHub knappen på boss sider
-    if rightPanel.githubButton then rightPanel.githubButton:Hide() end
-    -- Skjul Bug Report knappen på boss sider
-    if rightPanel.bugReportButton then rightPanel.bugReportButton:Hide() end
-    if rightPanel.bossNoteButton then rightPanel.bossNoteButton:Show() end -- Vis BossNote knap når man ser en boss
-    -- Vis edit-taktik knap når man ser en boss
+    if rightPanel.bossNoteButton then rightPanel.bossNoteButton:Show() end
     if rightPanel.editTacticsBtn then
         rightPanel.editTacticsBtn:ClearAllPoints()
         if rightPanel.phaseDropdown and rightPanel.phaseDropdown.mainBtn then
@@ -508,52 +485,8 @@ local function SelectBoss(bossData, btn)
         rightPanel.editTacticsBtn:Show()
     end
 
-    -- Åbn automatisk bossNote panel kun hvis der er en gemt note
-    if frame.bossNotePanel then
-        -- Tjek om der er en gemt note for denne boss
-        BossHelperDB = BossHelperDB or {}
-        BossHelperDB.bossNotes = BossHelperDB.bossNotes or {}
-        -- Setting: auto open boss notes (default true if nil)
-        local autoOpenNotes = (BossHelperDB.autoOpenBossNotes ~= false)
-        
-        local bossKey = bossData.encounterID
-        local hasNote = false
-        if BossHelperDB.bossNotes[currentDungeon] and 
-           BossHelperDB.bossNotes[currentDungeon][bossKey] then
-            local notesList = BossHelperDB.bossNotes[currentDungeon][bossKey]
-            -- Tjek både gamle string format og nye array format
-            if type(notesList) == "string" then
-                hasNote = (notesList ~= "")
-            elseif type(notesList) == "table" then
-                hasNote = (#notesList > 0)
-            end
-        end
-        
-        if hasNote and autoOpenNotes then
-            -- Åbn panelet kun hvis der er en note
-            frame.bossNotePanel:Show()
-            rightPanel.bossNoteButton:SetText(Translate("BOSS_CLOSE_NOTE"))
-            
-            -- Opret indhold i bossNote panel hvis det ikke allerede eksisterer
-            if not frame.bossNotePanel.initialized then
-                CreateBossNoteContent()
-            end
-            
-            -- Load notes for current boss
-            if frame.bossNotePanel.LoadNotesForBoss then
-                frame.bossNotePanel.LoadNotesForBoss(bossKey, currentDungeon)
-            end
-        else
-            -- Skjul panelet hvis der ikke er en note
-            frame.bossNotePanel:Hide()
-            rightPanel.bossNoteButton:SetText(Translate("BOSS_NOTES"))
-        end
-    end
-
-    if btn then
-        btn:SetSelected(true)
-        selectedButton = btn
-    end
+    UpdateBossNotePanel(bossData.encounterID)
+    if btn then btn:SetSelected(true); selectedButton = btn end
 end
 
 -- ShowDungeons
@@ -613,7 +546,7 @@ local function ShowDungeons()
             end
 
             btn:SetScript("OnClick", function()
-                if BossHelper and BossHelper.SafePlaySound then BossHelper:SafePlaySound(BossHelper.Sounds.DUNGEON_SELECT) end
+                SafePlay(BossHelper.Sounds.DUNGEON_SELECT)
                 ShowBosses(dungeonKey)
             end)
 
@@ -630,7 +563,7 @@ local function ShowDungeons()
         leftPanel.affixButton = aBtn
         aBtn.isAffixActive = false
         aBtn:SetScript("OnClick", function(self)
-            if BossHelper and BossHelper.SafePlaySound then BossHelper:SafePlaySound(BossHelper.Sounds.NORMAL_BUTTON) end
+            SafePlay(BossHelper.Sounds.NORMAL_BUTTON)
             if self.isAffixActive then
                 -- Toggle off: go back to start page + dungeon list
                 self.isAffixActive = false
@@ -641,10 +574,7 @@ local function ShowDungeons()
                 if rightPanel and rightPanel.rightTitle then rightPanel.rightTitle:SetText("") end
                 -- Show start page again (with dungeons list still present)
                 ShowStartPage(frame, rightPanel)
-                -- Re-show social / link buttons if they exist
-                pcall(function() if rightPanel.discordButton then rightPanel.discordButton:Show() end end)
-                pcall(function() if rightPanel.githubButton then rightPanel.githubButton:Show() end end)
-                pcall(function() if rightPanel.bugReportButton then rightPanel.bugReportButton:Show() end end)
+                ShowSocialButtons()
             else
                 -- Activate affixes view
                 self.isAffixActive = true
@@ -692,34 +622,9 @@ function ShowAffixes()
     BossHelperDB = BossHelperDB or {}
     BossHelperDB.lastOpenPanel = "affixes"
     if backButton then backButton:Hide() end
-    -- keep dungeon list visible (do not hide boss buttons list itself)
-    if frame and frame.bossButtons then
-        for _, btn in ipairs(frame.bossButtons) do
-            -- buttons remain so player can switch dungeon after viewing affixes
-        end
-    end
-    -- clear right panel (including StartPage elements)
-    if rightPanel then
-        -- Hide/clear generic boss UI
-        pcall(function() if rightPanel.rightShortScroll then rightPanel.rightShortScroll:Hide() end end)
-        pcall(function() if rightPanel.shortBtnScroll then rightPanel.shortBtnScroll:Hide() end end)
-        pcall(function() if rightPanel.rightShortText then rightPanel.rightShortText:SetText("") end end)
-        pcall(function() if rightPanel.rightDetailText then rightPanel.rightDetailText:SetText("") end end)
-        pcall(function() if rightPanel.rightDetailScroll then rightPanel.rightDetailScroll:Hide() end end)
-        if rightPanel.detailToggle then rightPanel.detailToggle:Hide() end
-        if rightPanel.postButton then rightPanel.postButton:Hide() end
-        if rightPanel.bossNoteButton then rightPanel.bossNoteButton:Hide() end
-    -- Hide social / link buttons too
-    pcall(function() if rightPanel.discordButton then rightPanel.discordButton:Hide() end end)
-    pcall(function() if rightPanel.githubButton then rightPanel.githubButton:Hide() end end)
-    pcall(function() if rightPanel.bugReportButton then rightPanel.bugReportButton:Hide() end end)
-        -- Hide StartPage specific elements if they exist
-        pcall(function() if rightPanel.logo then rightPanel.logo:Hide() end end)
-        pcall(function() if rightPanel.mainTitle then rightPanel.mainTitle:SetText("") end end)
-        pcall(function() if rightPanel.mainDesc then rightPanel.mainDesc:SetText("") end end)
-        pcall(function() if rightPanel.footerText then rightPanel.footerText:SetText("") end end)
-        pcall(function() if rightPanel.footerText2 then rightPanel.footerText2:SetText("") end end)
-    end
+    -- dungeon buttons remain visible so player can switch dungeons after viewing affixes
+    -- Ryd rightPanel-indhold inden affixes vises
+    ClearRightPanelContent(rightPanel)
     -- also hide boss note side panel if open
     if frame and frame.bossNotePanel and frame.bossNotePanel:IsShown() then
         frame.bossNotePanel:Hide()
@@ -797,8 +702,7 @@ function ShowBosses(dungeonName)
 
         btn:SetScript("OnClick", function()
             SelectBoss(bossData, btn)
-
-            if BossHelper and BossHelper.SafePlaySound then BossHelper:SafePlaySound(BossHelper.Sounds.BOSS_SELECT) end
+            SafePlay(BossHelper.Sounds.BOSS_SELECT)
         end)
 
 
@@ -859,160 +763,26 @@ function BossUI:ShowBoss(rPanel, boss)
             rPanel.phaseDropdown = nil
         end
 
-        -- Byg fase-dropdown (native faser + eventuelle custom-kun faser)
-        local function CreatePhaseDropdown(parent, boss)
-            local dropdown = CreateFrame("Frame", nil, parent, "BackdropTemplate")
-            dropdown:SetSize(140, 26)
-            dropdown:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -10, -40)
-
-            -- Merged faseliste: native faser + custom-kun faser (ikke "No phase")
-            local mergedPhases = {}
-            local nativeSet = {}
-            for _, p in ipairs(boss.phases) do
+        -- Byg merged faseliste: native faser + custom-kun faser (ikke "No phase")
+        local mergedPhases = {}
+        local nativeSet = {}
+        for _, p in ipairs(boss.phases) do
+            table.insert(mergedPhases, p)
+            nativeSet[p] = true
+        end
+        local customPhaseList = BossUI.GetCustomPhases and BossUI.GetCustomPhases(currentDungeon, boss.encounterID) or {}
+        for _, p in ipairs(customPhaseList) do
+            if not nativeSet[p] and p ~= "No phase" then
                 table.insert(mergedPhases, p)
-                nativeSet[p] = true
             end
-            local customPhaseList = BossUI.GetCustomPhases and BossUI.GetCustomPhases(currentDungeon, boss.encounterID) or {}
-            for _, p in ipairs(customPhaseList) do
-                if not nativeSet[p] and p ~= "No phase" then
-                    table.insert(mergedPhases, p)
-                end
-            end
-
-            -- Hvis kun én fase eksisterer, vis den direkte uden dropdown
-            if #mergedPhases == 1 then
-                local phaseName = mergedPhases[1]
-                local customText = BossUI.GetCustomTacticsText and BossUI.GetCustomTacticsText(currentDungeon, boss.encounterID, phaseName)
-                local nativeText = boss.phaseText and boss.phaseText[phaseName]
-                BuildShortLineButtons(rPanel, customText or nativeText or "")
-                dropdown:Hide()
-                dropdown:SetParent(nil)
-                return nil
-            end
-
-            -- Main-knap
-            local mainBtn = CreateCustomButton(dropdown, 140, 26, mergedPhases[1] or boss.phases[1])
-            mainBtn:SetPoint("TOP", dropdown, "TOP", -419, 30)
-            -- Tilføj pil-ikon til dropdown-knappen
-            mainBtn.arrow = mainBtn:CreateTexture(nil, "OVERLAY")
-            mainBtn.arrow:SetTexture("Interface\\AddOns\\BossHelper\\Media\\icon\\Arrow_Down_icon.png")
-            mainBtn.arrow:SetVertexColor(0.98, 0.82, 0.55, 0.8)
-            mainBtn.arrow:SetSize(20, 10)
-            mainBtn.arrow:SetPoint("RIGHT", mainBtn, "RIGHT", -8, 0)
-            mainBtn.arrow:SetAlpha(0.8)
-            mainBtn.arrow:SetRotation(0) -- pil ned
-
-            -- Panel med fase-knapper
-            local panel = CreateFrame("Frame", nil, dropdown, "BackdropTemplate")
-            panel:SetSize(140, #mergedPhases * 26)
-            panel:SetPoint("TOP", mainBtn, "BOTTOM", 0, -2)
-            panel:Hide()
-            panel:SetBackdrop({
-                bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
-                edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
-                tile = true, tileSize = 16, edgeSize = 16,
-                insets = { left = 4, right = 4, top = 4, bottom = 4 }
-            })
-            panel:SetBackdropColor(0.08, 0.09, 0.13, 0.95)
-
-            -- Frame-level / strata så den kommer over det meste
-            panel:SetFrameStrata("FULLSCREEN_DIALOG")
-            panel:SetFrameLevel(2000)
-            dropdown:SetFrameStrata("FULLSCREEN_DIALOG")
-            dropdown:SetFrameLevel(1999)
-
-            local buttons = {}
-
-            local function SelectPhase(index)
-                rPanel.selectedPhaseIndex = index
-                for i, btn in ipairs(buttons) do
-                    btn:SetSelected(i == index)
-                end
-                mainBtn:SetText(mergedPhases[index])
-                -- Brug custom tekst hvis tilgængelig, ellers native phaseText
-                local customText = BossUI.GetCustomTacticsText and BossUI.GetCustomTacticsText(currentDungeon, boss.encounterID, mergedPhases[index])
-                local nativeText = boss.phaseText and boss.phaseText[mergedPhases[index]]
-                BuildShortLineButtons(rPanel, customText or nativeText or "")
-            end
-
-            for i, phaseName in ipairs(mergedPhases) do
-                local btn = CreateCustomButton(panel, 140, 26, phaseName)
-                btn:SetPoint("TOP", panel, "TOP", 0, -((i-1)*26))
-                btn:SetScript("OnClick", function()
-                    if BossHelper and BossHelper.SafePlaySound then BossHelper:SafePlaySound(BossHelper.Sounds.NORMAL_BUTTON) end
-                    SelectPhase(i)
-                    panel:Hide()
-                    if rPanel.phaseDropdownClickCatcher then
-                        rPanel.phaseDropdownClickCatcher:Hide()
-                    end
-                    if mainBtn.arrow then mainBtn.arrow:SetRotation(0) end -- pil ned
-                end)
-                table.insert(buttons, btn)
-            end
-
-            -- Start med gemt fase eller første fase (bounds-tjek så vi ikke indexer en fase der ikke findes)
-            if rPanel.selectedPhaseIndex and rPanel.selectedPhaseIndex <= #mergedPhases then
-                SelectPhase(rPanel.selectedPhaseIndex)
-            else
-                SelectPhase(1)
-            end
-
-            -- Opret click-catcher for denne dropdown, parented til UIParent
-            local catcher = CreateFrame("Frame", nil, UIParent)
-            catcher:SetAllPoints(UIParent)
-            catcher:EnableMouse(true)
-            catcher:Hide()
-            catcher:SetFrameStrata("FULLSCREEN_DIALOG")
-            catcher:SetFrameLevel(1999)
-            catcher:SetScript("OnMouseDown", function(self)
-                if panel:IsShown() then
-                    panel:Hide()
-                    self:Hide()
-                    if mainBtn.arrow then mainBtn.arrow:SetRotation(0) end -- pil ned
-                end
-            end)
-            rPanel.phaseDropdownClickCatcher = catcher
-
-            -- Main-knap toggler panel
-            mainBtn:SetScript("OnClick", function()
-                if BossHelper and BossHelper.SafePlaySound then BossHelper:SafePlaySound(BossHelper.Sounds.NORMAL_BUTTON) end
-                if panel:IsShown() then
-                    panel:Hide()
-                    if rPanel.phaseDropdownClickCatcher then
-                        rPanel.phaseDropdownClickCatcher:Hide()
-                    end
-                    if mainBtn.arrow then mainBtn.arrow:SetRotation(0) end -- pil ned
-                else
-                    panel:Show()
-                    panel:SetFrameStrata("FULLSCREEN_DIALOG")
-                    panel:SetFrameLevel(2000)
-                    if rPanel.phaseDropdownClickCatcher then
-                        rPanel.phaseDropdownClickCatcher:SetFrameStrata("FULLSCREEN_DIALOG")
-                        rPanel.phaseDropdownClickCatcher:SetFrameLevel(1999)
-                        rPanel.phaseDropdownClickCatcher:Show()
-                    end
-                    -- Optional lille slide/alpha animation hvis du vil
-                    local ag = panel:CreateAnimationGroup()
-                    local t = ag:CreateAnimation("Translation")
-                    t:SetOffset(0, 6)
-                    t:SetDuration(0.12)
-                    t:SetSmoothing("OUT")
-                    local a = ag:CreateAnimation("Alpha")
-                    a:SetFromAlpha(0)
-                    a:SetToAlpha(1)
-                    a:SetDuration(0.12)
-                    if ShouldAnimateInCombat and ShouldAnimateInCombat() then
-                        ag:Play()
-                    end
-                    if mainBtn.arrow then mainBtn.arrow:SetRotation(math.pi) end -- pil op
-                end
-            end)
-
-            dropdown.mainBtn = mainBtn
-            return dropdown
         end
 
-        rPanel.phaseDropdown = CreatePhaseDropdown(rPanel, boss)
+        local function nativeTextResolver(phaseName)
+            local customText = BossUI.GetCustomTacticsText and BossUI.GetCustomTacticsText(currentDungeon, boss.encounterID, phaseName)
+            return customText or (boss.phaseText and boss.phaseText[phaseName]) or ""
+        end
+
+        rPanel.phaseDropdown = CreatePhaseDropdown(rPanel, rPanel, mergedPhases, nativeTextResolver)
 
    else
         if rPanel.phaseDropdown then
@@ -1027,110 +797,11 @@ function BossUI:ShowBoss(rPanel, boss)
         if hasCustomNonPhase then
             local customPhaseList = BossUI.GetCustomPhases and BossUI.GetCustomPhases(currentDungeon, boss.encounterID) or {}
             if #customPhaseList > 1 then
-                -- Multiple custom faser → byg fase-dropdown
-                local dropdown = CreateFrame("Frame", nil, rPanel, "BackdropTemplate")
-                dropdown:SetSize(140, 26)
-                dropdown:SetPoint("TOPRIGHT", rPanel, "TOPRIGHT", -10, -40)
-
-                local mainBtn = CreateCustomButton(dropdown, 140, 26, customPhaseList[1])
-                mainBtn:SetPoint("TOP", dropdown, "TOP", -419, 30)
-                mainBtn.arrow = mainBtn:CreateTexture(nil, "OVERLAY")
-                mainBtn.arrow:SetTexture("Interface\\AddOns\\BossHelper\\Media\\icon\\Arrow_Down_icon.png")
-                mainBtn.arrow:SetVertexColor(0.98, 0.82, 0.55, 0.8)
-                mainBtn.arrow:SetSize(20, 10)
-                mainBtn.arrow:SetPoint("RIGHT", mainBtn, "RIGHT", -8, 0)
-                mainBtn.arrow:SetAlpha(0.8)
-                mainBtn.arrow:SetRotation(0)
-
-                local panel = CreateFrame("Frame", nil, dropdown, "BackdropTemplate")
-                panel:SetSize(140, #customPhaseList * 26)
-                panel:SetPoint("TOP", mainBtn, "BOTTOM", 0, -2)
-                panel:Hide()
-                panel:SetBackdrop({
-                    bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
-                    edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
-                    tile = true, tileSize = 16, edgeSize = 16,
-                    insets = { left = 4, right = 4, top = 4, bottom = 4 }
-                })
-                panel:SetBackdropColor(0.08, 0.09, 0.13, 0.95)
-                panel:SetFrameStrata("FULLSCREEN_DIALOG")
-                panel:SetFrameLevel(2000)
-                dropdown:SetFrameStrata("FULLSCREEN_DIALOG")
-                dropdown:SetFrameLevel(1999)
-
-                local buttons = {}
-                local function SelectCustomPhase(index)
-                    rPanel.selectedPhaseIndex = index
-                    for i, btn in ipairs(buttons) do btn:SetSelected(i == index) end
-                    mainBtn:SetText(customPhaseList[index])
-                    local txt = BossUI.GetCustomTacticsText and BossUI.GetCustomTacticsText(currentDungeon, boss.encounterID, customPhaseList[index])
-                    BuildShortLineButtons(rPanel, txt or "")
+                -- Multiple custom faser → genbrugelig dropdown
+                local function customTextResolver(phaseName)
+                    return (BossUI.GetCustomTacticsText and BossUI.GetCustomTacticsText(currentDungeon, boss.encounterID, phaseName)) or ""
                 end
-
-                for i, phaseName in ipairs(customPhaseList) do
-                    local btn = CreateCustomButton(panel, 140, 26, phaseName)
-                    btn:SetPoint("TOP", panel, "TOP", 0, -((i-1)*26))
-                    btn:SetScript("OnClick", function()
-                        if BossHelper and BossHelper.SafePlaySound then BossHelper:SafePlaySound(BossHelper.Sounds.NORMAL_BUTTON) end
-                        SelectCustomPhase(i)
-                        panel:Hide()
-                        if rPanel.phaseDropdownClickCatcher then rPanel.phaseDropdownClickCatcher:Hide() end
-                        if mainBtn.arrow then mainBtn.arrow:SetRotation(0) end
-                    end)
-                    table.insert(buttons, btn)
-                end
-
-                if rPanel.selectedPhaseIndex and rPanel.selectedPhaseIndex <= #customPhaseList then
-                    SelectCustomPhase(rPanel.selectedPhaseIndex)
-                else
-                    SelectCustomPhase(1)
-                end
-
-                local catcher = CreateFrame("Frame", nil, UIParent)
-                catcher:SetAllPoints(UIParent)
-                catcher:EnableMouse(true)
-                catcher:Hide()
-                catcher:SetFrameStrata("FULLSCREEN_DIALOG")
-                catcher:SetFrameLevel(1999)
-                catcher:SetScript("OnMouseDown", function(self)
-                    if panel:IsShown() then
-                        panel:Hide()
-                        self:Hide()
-                        if mainBtn.arrow then mainBtn.arrow:SetRotation(0) end
-                    end
-                end)
-                rPanel.phaseDropdownClickCatcher = catcher
-
-                mainBtn:SetScript("OnClick", function()
-                    if BossHelper and BossHelper.SafePlaySound then BossHelper:SafePlaySound(BossHelper.Sounds.NORMAL_BUTTON) end
-                    if panel:IsShown() then
-                        panel:Hide()
-                        if rPanel.phaseDropdownClickCatcher then rPanel.phaseDropdownClickCatcher:Hide() end
-                        if mainBtn.arrow then mainBtn.arrow:SetRotation(0) end
-                    else
-                        panel:Show()
-                        panel:SetFrameStrata("FULLSCREEN_DIALOG")
-                        panel:SetFrameLevel(2000)
-                        if rPanel.phaseDropdownClickCatcher then
-                            rPanel.phaseDropdownClickCatcher:SetFrameStrata("FULLSCREEN_DIALOG")
-                            rPanel.phaseDropdownClickCatcher:SetFrameLevel(1999)
-                            rPanel.phaseDropdownClickCatcher:Show()
-                        end
-                        local ag = panel:CreateAnimationGroup()
-                        local t = ag:CreateAnimation("Translation")
-                        t:SetOffset(0, 6)
-                        t:SetDuration(0.12)
-                        t:SetSmoothing("OUT")
-                        local a = ag:CreateAnimation("Alpha")
-                        a:SetFromAlpha(0)
-                        a:SetToAlpha(1)
-                        a:SetDuration(0.12)
-                        if ShouldAnimateInCombat and ShouldAnimateInCombat() then ag:Play() end
-                        if mainBtn.arrow then mainBtn.arrow:SetRotation(math.pi) end
-                    end
-                end)
-                dropdown.mainBtn = mainBtn
-                rPanel.phaseDropdown = dropdown
+                rPanel.phaseDropdown = CreatePhaseDropdown(rPanel, rPanel, customPhaseList, customTextResolver)
             else
                 -- Enkelt eller ingen custom fase → vis flat liste
                 local txt = BossUI.GetCustomTacticsText and BossUI.GetCustomTacticsText(currentDungeon, boss.encounterID, customPhaseList[1])
@@ -1190,7 +861,7 @@ if LDB and LibDBIcon then
 
     local ldbObject = LDB:NewDataObject("BossHelper", {
         type = "data source",                -- <--- data source giver tekst
-        icon = "Interface\\AddOns\\BossHelper\\Media\\Mythic Mentor no te 256x256.tga",
+        icon = "Interface\\AddOns\\BossHelper\\Media\\Mythic Mentor no te 512x512.png",
         text = "Mythic Mentor",                 -- teksten TitanPanel kan vise
         label = "Mythic Mentor",                -- nogle LDB-plugins bruger label også
         OnClick = function(_, button)
@@ -1199,12 +870,12 @@ if LDB and LibDBIcon then
                     if BossUI and BossUI.CreateUI then BossUI:CreateUI() end
                 end
                 if frame and frame:IsShown() then
-                    if BossHelper and BossHelper.SafePlaySound then BossHelper:SafePlaySound(BossHelper.Sounds.CLOSE_MENU) end
+                    SafePlay(BossHelper.Sounds.CLOSE_MENU)
                     frame:Hide()
                 else
                     if frame then
                         frame:Show()
-                        if BossHelper and BossHelper.SafePlaySound then BossHelper:SafePlaySound(BossHelper.Sounds.OPEN_MENU) end
+                        SafePlay(BossHelper.Sounds.OPEN_MENU)
                         if currentDungeon and frame.selectedBoss then
                             ShowBosses(currentDungeon)
                             -- Find og vælg den gemte boss igen for at trigge note panel logik
@@ -1236,10 +907,8 @@ if LDB and LibDBIcon then
                                 ShowAffixes()
                             else
                                 -- vis normal start
-                                pcall(function()
-                                    if rightPanel and rightPanel.rightShortScroll then rightPanel.rightShortScroll:Hide() end
-                                    if rightPanel and rightPanel.shortBtnScroll then rightPanel.shortBtnScroll:Hide() end
-                                end)
+                                BossHelper.UI.hide(rightPanel.rightShortScroll)
+                                BossHelper.UI.hide(rightPanel.shortBtnScroll)
                                 ClearRightPanelNotes()
                                 ShowStartPage(frame, rightPanel)
                                 ShowDungeons()
@@ -1258,7 +927,7 @@ if LDB and LibDBIcon then
                     end
                 end
             elseif button == "RightButton" then
-                --print("|cffFF4500[BossHelper]|r Right-click: No action")
+
             end
         end,
 
@@ -1270,13 +939,6 @@ if LDB and LibDBIcon then
         end,
     })
 
-
-    local function RegisterMinimapIcon()
-        -- sikre at savedtable har minimerbar profiltab
-        BossHelperDB = BossHelperDB or {}
-        BossHelperDB.minimap = BossHelperDB.minimap or { hide = false }
-        LibDBIcon:Register("BossHelper", ldbObject, BossHelperDB.minimap)
-    end
 
     -- vent til login, så savedvars er loadet korrekt
     -- PLAYER_LOGIN handler
@@ -1387,18 +1049,18 @@ function BuildShortLineButtons(rPanel, text)
 
         -- optional click action per line:
         btn:SetScript("OnClick", function() 
-            if BossHelper and BossHelper.SafePlaySound then BossHelper:SafePlaySound(BossHelper.Sounds.POST_TO_CHAT) end
+            SafePlay(BossHelper.Sounds.POST_TO_CHAT)
             BossHelper:SendSingleSmartMessage(ln) 
         end)
 
         -- Fjern hover scale-animation (kun farveændring, ingen scale)
         btn:SetScript("OnEnter", function(self)
-            self.bg:SetColorTexture(0.15, 0.15, 0.25, 1)
+            self:SetBackdropColor(0.15, 0.15, 0.25, 1)
             self:SetBackdropBorderColor(1, 0.6, 0.2, 1)
             self.text:SetTextColor(1, 0.95, 0.75)
         end)
         btn:SetScript("OnLeave", function(self)
-            self.bg:SetColorTexture(0.06, 0.07, 0.11, 1)
+            self:SetBackdropColor(0.06, 0.07, 0.11, 1)
             self:SetBackdropBorderColor(0.3, 0.3, 0.3, 0.8)
             self.text:SetTextColor(0.98, 0.82, 0.55)
         end)
@@ -1420,9 +1082,8 @@ function BuildShortLineButtons(rPanel, text)
             alpha:SetStartDelay(delay)
             ag:Play()
         else
-            -- Ingen animation: sikr at knappen er synlig og fuld alpha
-            if btn.SetAlpha then pcall(btn.SetAlpha, btn, 1) end
-            if btn.Show then pcall(btn.Show, btn) end
+            btn:SetAlpha(1)
+            btn:Show()
         end
 
         table.insert(rPanel.shortButtons, btn)
@@ -1434,51 +1095,31 @@ function BuildShortLineButtons(rPanel, text)
 end
 
 
--- --- Settings er i BossSettings.lua ---
--- Wrapper / fallback (kald BossSettings med kontekst)
-function ShowSettings()
+-- ============================================================
+-- PrepareForNavigation: fælles opsætning før enhver side
+-- (settings / info / generalNotes / affixes)
+-- ============================================================
+local function PrepareForNavigation()
     HideAffixesView()
     HideEditModeUI()
     BossHelperDB = BossHelperDB or {}
-
-    -- sikr UI er oprettet (hvis ShowSettings bliver kaldt før CreateUI)
     if not frame and BossUI and BossUI.CreateUI then BossUI:CreateUI() end
-
-    -- skjul normal start-content først, så settings ikke overlapper
-    if rightPanel then
-        pcall(function()
-            if rightPanel.rightShortScroll then rightPanel.rightShortScroll:Hide() end
-            if rightPanel.shortBtnScroll then rightPanel.shortBtnScroll:Hide() end
-            if rightPanel.rightShortText then rightPanel.rightShortText:SetText("") end
-            -- Skjul Discord knappen på indstillinger siden
-            if rightPanel.discordButton then rightPanel.discordButton:Hide() end
-            -- Skjul GitHub knappen på indstillinger siden
-            if rightPanel.githubButton then rightPanel.githubButton:Hide() end
-            -- Skjul Bug Report knappen på indstillinger siden
-            if rightPanel.bugReportButton then rightPanel.bugReportButton:Hide() end
-            if rightPanel.rightDetailText then rightPanel.rightDetailText:SetText("") end
-            if rightPanel.rightDetailScroll then rightPanel.rightDetailScroll:Hide() end
-            rightPanel.showingDetails = false
-            if rightPanel.postButton then rightPanel.postButton:Hide() end
-            if rightPanel.detailToggle then rightPanel.detailToggle:Hide() end
-            if rightPanel.bossNoteButton then rightPanel.bossNoteButton:Hide() end
-        end)
-    end
-    -- Hide Affixes button on settings page
+    ClearRightPanelContent(rightPanel)
     if leftPanel and leftPanel.affixButton then
         leftPanel.affixButton:Hide()
         leftPanel.affixButton.isAffixActive = false
         leftPanel.affixButton:SetSelected(false)
     end
-
-
-    -- ryd eventuelle gamle settings-widgets (ekstra sikkert)
     ClearRightPanelSettings()
-    ClearRightPanelNotes()
-    -- Luk Boss Note panelet hvis det var åbent
     CloseBossNotePanelIfOpen()
+end
 
-    -- sørg for at listen til settings-widgets findes, og giv BossSettings en helper til at tilføje widgets
+-- --- Settings er i BossSettings.lua ---
+function ShowSettings()
+    PrepareForNavigation()
+    ClearRightPanelNotes()
+    BossHelperDB.lastOpenPanel = "settings"
+
     if rightPanel then
         rightPanel.settingsWidgets = rightPanel.settingsWidgets or {}
     end
@@ -1486,9 +1127,6 @@ function ShowSettings()
         if rightPanel and w then table.insert(rightPanel.settingsWidgets, w) end
         return w
     end
-
-    -- marker at settings er åbnet (gem i savedvars så det huskes over /reload)
-    BossHelperDB.lastOpenPanel = "settings"
 
     if BossSettings and BossSettings.ShowSettings then
         BossSettings.ShowSettings{
@@ -1499,7 +1137,7 @@ function ShowSettings()
             CreateCustomButton = CreateCustomButton,
             BossHelper = BossHelper,
             BossHelperDB = BossHelperDB,
-            AddSettingsWidget = AddSettingsWidget, -- <<-- helper medsendes
+            AddSettingsWidget = AddSettingsWidget,
         }
     else
         print("|cffFF4500[BossUI]|r BossSettings not loaded!")
@@ -1507,56 +1145,9 @@ function ShowSettings()
 end
 
 -- --- Info er i BossInfo.lua ---
--- Wrapper / fallback (kald BossInfo med kontekst)
 function ShowInfo()
-    HideAffixesView()
-    HideEditModeUI()
-    BossHelperDB = BossHelperDB or {}
-
-    -- sikr UI er oprettet (hvis ShowInfo bliver kaldt før CreateUI)
-    if not frame and BossUI and BossUI.CreateUI then BossUI:CreateUI() end
-
-    -- skjul normal start-content først, så info ikke overlapper
-    if rightPanel then
-        pcall(function()
-            -- Skjul startpage elementer
-            if rightPanel.logo then rightPanel.logo:Hide() end
-            if rightPanel.mainTitle then rightPanel.mainTitle:SetText("") end
-            if rightPanel.mainDesc then rightPanel.mainDesc:SetText("") end
-            if rightPanel.footerText then rightPanel.footerText:SetText("") end
-            if rightPanel.footerText2 then rightPanel.footerText2:SetText("") end
-            
-            -- Skjul andre UI elementer
-            if rightPanel.rightShortScroll then rightPanel.rightShortScroll:Hide() end
-            if rightPanel.shortBtnScroll then rightPanel.shortBtnScroll:Hide() end
-            if rightPanel.rightShortText then rightPanel.rightShortText:SetText("") end
-            if rightPanel.rightDetailText then rightPanel.rightDetailText:SetText("") end
-            if rightPanel.rightDetailScroll then rightPanel.rightDetailScroll:Hide() end
-            rightPanel.showingDetails = false
-            if rightPanel.postButton then rightPanel.postButton:Hide() end
-            if rightPanel.detailToggle then rightPanel.detailToggle:Hide() end
-            -- Skjul Discord knappen på info siden
-            if rightPanel.discordButton then rightPanel.discordButton:Hide() end
-            -- Skjul GitHub knappen på info siden
-            if rightPanel.githubButton then rightPanel.githubButton:Hide() end
-            -- Skjul Bug Report knappen på info siden
-            if rightPanel.bugReportButton then rightPanel.bugReportButton:Hide() end
-        end)
-    end
-    -- Hide affix button on info page
-    if leftPanel and leftPanel.affixButton then
-        leftPanel.affixButton:Hide()
-        leftPanel.affixButton.isAffixActive = false
-        leftPanel.affixButton:SetSelected(false)
-    end
-
-    -- ryd eventuelle gamle settings-widgets (ekstra sikkert)
-    ClearRightPanelSettings()
+    PrepareForNavigation()
     ClearRightPanelNotes()
-    -- Luk Boss Note panelet hvis det var åbent
-    CloseBossNotePanelIfOpen()
-
-    -- marker at info er åbnet (gem i savedvars så det huskes over /reload)
     BossHelperDB.lastOpenPanel = "info"
 
     if BossInfo and BossInfo.ShowInfo then
@@ -1580,50 +1171,10 @@ function SelectInfoCategory(categoryName, btn)
     end
 end
 
--- (Notes top-level side fjernet: vi beholder kun boss-specifikke noter via bossNotePanelet)
--- Tilføjet: General Notes som en separat side med kategorier
-
+-- --- General Notes er i GeneralNotes.lua ---
 function ShowGeneralNotes()
-    HideAffixesView()
-    HideEditModeUI()
-    BossHelperDB = BossHelperDB or {}
-
-    -- ensure UI exists
-    if not frame and BossUI and BossUI.CreateUI then BossUI:CreateUI() end
-
-    -- hide other content on right panel
-    if rightPanel then
-        pcall(function()
-            if rightPanel.logo then rightPanel.logo:Hide() end
-            if rightPanel.mainTitle then rightPanel.mainTitle:SetText("") end
-            if rightPanel.mainDesc then rightPanel.mainDesc:SetText("") end
-            if rightPanel.footerText then rightPanel.footerText:SetText("") end
-            if rightPanel.footerText2 then rightPanel.footerText2:SetText("") end
-            if rightPanel.rightShortScroll then rightPanel.rightShortScroll:Hide() end
-            if rightPanel.shortBtnScroll then rightPanel.shortBtnScroll:Hide() end
-            if rightPanel.rightShortText then rightPanel.rightShortText:SetText("") end
-            if rightPanel.rightDetailText then rightPanel.rightDetailText:SetText("") end
-            if rightPanel.rightDetailScroll then rightPanel.rightDetailScroll:Hide() end
-            rightPanel.showingDetails = false
-            if rightPanel.postButton then rightPanel.postButton:Hide() end
-            if rightPanel.detailToggle then rightPanel.detailToggle:Hide() end
-            if rightPanel.discordButton then rightPanel.discordButton:Hide() end
-            if rightPanel.githubButton then rightPanel.githubButton:Hide() end
-            if rightPanel.bugReportButton then rightPanel.bugReportButton:Hide() end
-            if rightPanel.bossNoteButton then rightPanel.bossNoteButton:Hide() end
-        end)
-    end
-    -- Hide affix button on general notes page
-    if leftPanel and leftPanel.affixButton then
-        leftPanel.affixButton:Hide()
-        leftPanel.affixButton.isAffixActive = false
-        leftPanel.affixButton:SetSelected(false)
-    end
-
-    ClearRightPanelSettings()
-    -- Luk Boss Note panelet hvis det var åbent
-    CloseBossNotePanelIfOpen()
-
+    PrepareForNavigation()
+    -- Bemærk: ClearRightPanelNotes IKKE kaldt her – GeneralNotes bygger selv sin widget-liste
     BossHelperDB.lastOpenPanel = "notes"
 
     if GeneralNotes and GeneralNotes.ShowGeneralNotes then
@@ -1647,397 +1198,16 @@ function SelectNotesCategory(categoryName, btn)
     end
 end
 
--- CreateBossNoteContent - Opret indhold til BossNote panelet
+-- CreateBossNoteContent - delegerer til GeneralNotes.InitBossNotePanel
 function CreateBossNoteContent()
-    local panel = frame.bossNotePanel
-    if not panel then return end
-    
-    -- Titel
-    local title = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
-    title:SetPoint("TOP", panel, "TOP", 0, -15)
-    title:SetTextColor(0.8, 0.3, 1) -- lilla farve
-    title:SetText(Translate("BOSS_NOTES"))
-    
-    -- Scroll frame for noter (toppen af panelet) - justeret størrelse
-    local notesScroll = CreateFrame("ScrollFrame", nil, panel, "UIPanelScrollFrameTemplate")
-    notesScroll:SetSize(160, 310) -- bred nok til noter, reduceret højde lidt
-    notesScroll:SetPoint("TOP", title, "BOTTOM", -10, -8) -- justeret position
-    
-    local notesContent = CreateFrame("Frame", nil, notesScroll)
-    notesContent:SetSize(180, 1) -- lidt bredere end scroll frame
-    notesScroll:SetScrollChild(notesContent)
-    
-    -- Text frame for at vise noter
-    local notesText = notesContent:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    notesText:SetPoint("TOPLEFT", notesContent, "TOPLEFT", 5, -5)
-    notesText:SetWidth(160)
-    notesText:SetJustifyH("LEFT")
-    notesText:SetJustifyV("TOP")
-    notesText:SetWordWrap(true)
-    notesText:SetText("")
-    
-    -- Input EditBox i bunden - flyttet længere ned
-    local inputBox = CreateFrame("EditBox", nil, panel, "InputBoxTemplate")
-    inputBox:SetSize(170, 20)
-    inputBox:SetPoint("BOTTOM", panel, "BOTTOM", 0, 10)
-    inputBox:SetAutoFocus(false)
-    inputBox:SetFontObject("ChatFontNormal")
-    inputBox:SetText("")
-
-    -- Track current in-place edit (index in source list and button reference)
-    panel._editingRef = nil
-
-    -- Helper: start editing a given visible note button
-    local function BeginEditing(btn, idx, noteText)
-        -- restore any previous button visuals if present
-        if panel._editingRef and panel._editingRef.btn and panel._editingRef.btn ~= btn then
-            local pbtn = panel._editingRef.btn
-            pcall(function()
-                if pbtn._origAlpha then pbtn:SetAlpha(pbtn._origAlpha) end
-                if pbtn.text and pbtn.text._origColor then
-                    local c = pbtn.text._origColor
-                    pbtn.text:SetTextColor(c[1], c[2], c[3], c[4])
-                end
-                if pbtn.EnableMouse then pbtn:EnableMouse(true) end
-            end)
-        end
-
-        panel._editingRef = { index = idx, btn = btn }
-        if inputBox then
-            inputBox:SetText((noteText or ""):gsub("^• ", ""))
-            inputBox:SetFocus()
-        end
-        -- Apply grey/transparent visual
-        pcall(function()
-            btn._origAlpha = btn:GetAlpha() or 1
-            btn:SetAlpha(0.45)
-            if btn.text and btn.text.GetTextColor then
-                local r,g,b,a = btn.text:GetTextColor()
-                btn.text._origColor = {r,g,b,a}
-                btn.text:SetTextColor(0.7, 0.7, 0.7, 1)
-            end
-            if btn.EnableMouse then btn:EnableMouse(false) end
-        end)
+    if GeneralNotes and GeneralNotes.InitBossNotePanel then
+        GeneralNotes.InitBossNotePanel(frame.bossNotePanel, {
+            getFrame      = BossUI.GetFrame,
+            getRightPanel = BossUI.GetRightPanel,
+            getDungeon    = function() return currentDungeon end,
+            CreateCustomButton = CreateCustomButton,
+        })
     end
-    
-    -- Label for input
-    local inputLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    inputLabel:SetPoint("BOTTOM", inputBox, "TOP", 0, 3)
-    inputLabel:SetText(Translate("ADD_NOTE_TIP"))
-    inputLabel:SetTextColor(0.98, 0.82, 0.55)
-    
-    -- Array til at holde styr på note knapper
-    panel.noteButtons = panel.noteButtons or {}
-    
-    -- Funktion til at opdatere noter display
-    local function UpdateNotesDisplay(bossName, dungeonName)
-        if not (bossName and dungeonName) then 
-            -- Skjul alle gamle note knapper
-            if panel.noteButtons then
-                for _, btn in ipairs(panel.noteButtons) do
-                    btn:Hide()
-                    btn:SetParent(nil)
-                end
-            end
-            panel.noteButtons = {}
-            notesText:SetText("")
-            return 
-        end
-        
-        BossHelperDB = BossHelperDB or {}
-        BossHelperDB.bossNotes = BossHelperDB.bossNotes or {}
-        BossHelperDB.bossNotes[dungeonName] = BossHelperDB.bossNotes[dungeonName] or {}
-        BossHelperDB.bossNotes[dungeonName][bossName] = BossHelperDB.bossNotes[dungeonName][bossName] or {}
-        
-        local notesList = BossHelperDB.bossNotes[dungeonName][bossName]
-        if type(notesList) == "string" then
-            -- Konverter gamle string noter til array format
-            if notesList ~= "" then
-                BossHelperDB.bossNotes[dungeonName][bossName] = {notesList}
-                notesList = BossHelperDB.bossNotes[dungeonName][bossName]
-            else
-                BossHelperDB.bossNotes[dungeonName][bossName] = {}
-                notesList = {}
-            end
-        end
-        
-        -- Skjul og ryd op i alle gamle note knapper og deres børn
-        if panel.noteButtons then
-            for _, btn in ipairs(panel.noteButtons) do
-                -- Skjul og ryd børn (edit og delete knapper)
-                local children = {btn:GetChildren()}
-                for _, child in ipairs(children) do
-                    child:Hide()
-                    child:SetParent(nil)
-                end
-                -- Skjul og ryd hovedknappen
-                btn:Hide()
-                btn:SetParent(nil)
-            end
-        end
-        panel.noteButtons = {}
-        
-        -- Skjul text (vi bruger knapper i stedet)
-        notesText:SetText("")
-        
-        -- Lav knapper for hver note (nyeste øverst)
-        local totalY = 0
-        local btnWidth = 160 -- kortere note baggrund så scroll bar får plads
-        local minBtnH = 26
-        local paddingX = 8
-        local paddingTop = 6
-        local paddingBot = 6
-        local spacing = 6
-        local iconSpace = 0 -- ingen ekstra plads - teksten kan gå helt til højre
-        
-        for i = #notesList, 1, -1 do
-            if notesList[i] and notesList[i] ~= "" then
-                local btn = CreateCustomButton(notesContent, btnWidth, minBtnH, "")
-                btn:SetPoint("TOPLEFT", notesContent, "TOPLEFT", 0, -totalY)
-
-                -- Sæt tekst med bullet point
-                btn.text:ClearAllPoints()
-                btn.text:SetPoint("TOPLEFT", btn, "TOPLEFT", paddingX, -paddingTop)
-                btn.text:SetPoint("RIGHT", btn, "RIGHT", -paddingX, 0)
-                btn.text:SetJustifyH("LEFT")
-                btn.text:SetJustifyV("TOP")
-                btn.text:SetWordWrap(true)
-                btn.text:SetNonSpaceWrap(true)
-                btn.text:SetWidth(btnWidth - (paddingX * 2))
-                btn:SetText(notesList[i])
-
-                local textH = btn.text:GetStringHeight() or 0
-                if textH == 0 then
-                    btn.text:SetText(btn.text:GetText() or "")
-                    textH = btn.text:GetStringHeight() or 0
-                end
-
-                local neededH = math.max(minBtnH, math.ceil(textH + paddingTop + paddingBot))
-                btn:SetHeight(neededH)
-
-                btn.text:ClearAllPoints()
-                btn.text:SetPoint("TOPLEFT", btn, "TOPLEFT", paddingX, -paddingTop)
-                btn.text:SetPoint("RIGHT", btn, "RIGHT", -paddingX, 0) -- ingen iconSpace så teksten fylder hele bredden
-                btn.text:SetHeight(textH)
-
-                btn:SetScript("OnClick", function()
-                    if BossHelper and BossHelper.SafePlaySound then
-                        BossHelper:SafePlaySound(BossHelper.Sounds.POST_TO_CHAT)
-                    end
-                    BossHelper:SendSingleSmartMessage(notesList[i])
-                end)
-
-                local deleteIcon = btn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-                deleteIcon:SetText("X")
-                deleteIcon:SetFont("Fonts\\FRIZQT__.TTF", 10, "OUTLINE")
-                deleteIcon:SetTextColor(1, 0.2, 0.2)
-
-                local deleteBtn = CreateFrame("Button", nil, btn)
-                deleteBtn:SetSize(12, 12)
-                deleteBtn:EnableMouse(true)
-
-                local editIcon = btn:CreateTexture(nil, "OVERLAY")
-                editIcon:SetTexture("Interface\\AddOns\\BossHelper\\Media\\icon\\Pencil.png")
-                editIcon:SetSize(11, 11)
-                editIcon:SetVertexColor(0.98, 0.82, 0.55, 1)
-
-                local editBtn = CreateFrame("Button", nil, btn)
-                editBtn:SetSize(13, 13)
-                editBtn:EnableMouse(true)
-
-                -- Delete knappen helt til højre i toppen
-                deleteIcon:SetPoint("TOPRIGHT", btn, "TOPRIGHT", 2, -1)
-                deleteBtn:SetPoint("CENTER", deleteIcon, "CENTER", 0, 0)
-
-                -- Edit knappen lige under delete knappen
-                editIcon:SetPoint("TOPRIGHT", btn, "TOPRIGHT", -1, -14)
-                editBtn:SetPoint("CENTER", editIcon, "CENTER", 0, 0)
-
-                local noteText = notesList[i]
-                editBtn:SetScript("OnClick", function()
-                    -- In-place edit: do not remove, just mark visually and populate input
-                    BeginEditing(btn, i, noteText)
-                end)
-
-                deleteBtn:SetScript("OnClick", function()
-                    ConfirmDialog.Show({
-                        title   = (Translate and Translate("CONFIRM_DELETE_NOTE_TITLE")) or "Slet note",
-                        message = (Translate and Translate("CONFIRM_DELETE_NOTE")) or "Er du sikker på, at du vil slette denne boss note?",
-                        onOk    = function()
-                        local currentNotes = BossHelperDB.bossNotes[dungeonName][bossName]
-                        -- if deleting the one being edited, cancel edit state first
-                        if panel._editingRef and panel._editingRef.index == i then
-                            panel._editingRef = nil
-                            inputBox:SetText("")
-                        end
-                        table.remove(currentNotes, i)
-                        UpdateNotesDisplay(bossName, dungeonName)
-                        end,
-                    })
-                end)
-
-                -- Gør ikonerne gensidigt eksklusive på hover
-                editBtn:SetScript("OnEnter", function(self)
-                    editIcon:SetVertexColor(1, 1, 1, 1)
-                    deleteIcon:Hide(); deleteBtn:Hide()
-                end)
-                editBtn:SetScript("OnLeave", function(self)
-                    editIcon:SetVertexColor(0.98, 0.82, 0.55, 1)
-                    if not deleteBtn:IsMouseOver() then
-                        editIcon:Hide(); editBtn:Hide(); deleteIcon:Hide(); deleteBtn:Hide()
-                    end
-                end)
-
-                deleteBtn:SetScript("OnEnter", function(self)
-                    deleteIcon:SetTextColor(1, 1, 1)
-                    editIcon:Hide(); editBtn:Hide()
-                end)
-                deleteBtn:SetScript("OnLeave", function(self)
-                    deleteIcon:SetTextColor(1, 0.2, 0.2)
-                    if not editBtn:IsMouseOver() then
-                        editIcon:Hide(); editBtn:Hide(); deleteIcon:Hide(); deleteBtn:Hide()
-                    end
-                end)
-
-                -- Skjul edit og delete knapper som standard
-                editIcon:Hide()
-                deleteIcon:Hide()
-                editBtn:Hide()
-                deleteBtn:Hide()
-                
-                -- Vis knapperne når musen er over noten (og behold original hover effekt)
-                local originalOnEnter = btn:GetScript("OnEnter")
-                btn:SetScript("OnEnter", function(self)
-                    -- Kør original hover effekt først
-                    if originalOnEnter then originalOnEnter(self) end
-                    -- Vis edit/delete knapper
-                    editIcon:Show()
-                    deleteIcon:Show()
-                    editBtn:Show()
-                    deleteBtn:Show()
-                end)
-                
-                -- Skjul knapperne når musen forlader noten (og behold original hover effekt)
-                local originalOnLeave = btn:GetScript("OnLeave")
-                btn:SetScript("OnLeave", function(self)
-                    -- Tjek om musen er over edit eller delete knapper
-                    local mouseOverChild = false
-                    if editBtn:IsMouseOver() or deleteBtn:IsMouseOver() then
-                        mouseOverChild = true
-                    end
-                    
-                    -- Kun kør leave effekt hvis musen ikke er over børn
-                    if not mouseOverChild then
-                        -- Kør original hover effekt først
-                        if originalOnLeave then originalOnLeave(self) end
-                        -- Skjul edit/delete knapper
-                        editIcon:Hide()
-                        deleteIcon:Hide()
-                        editBtn:Hide()
-                        deleteBtn:Hide()
-                    end
-                end)
-
-                -- Re-apply edit visuals if this index is currently being edited
-                if panel._editingRef and panel._editingRef.index == i then
-                    -- update ref button pointer to this rebuilt button
-                    panel._editingRef.btn = btn
-                    pcall(function()
-                        btn._origAlpha = btn:GetAlpha() or 1
-                        btn:SetAlpha(0.45)
-                        if btn.text and btn.text.GetTextColor then
-                            local r,g,b,a = btn.text:GetTextColor()
-                            btn.text._origColor = {r,g,b,a}
-                            btn.text:SetTextColor(0.7, 0.7, 0.7, 1)
-                        end
-                        if btn.EnableMouse then btn:EnableMouse(false) end
-                    end)
-                end
-
-                table.insert(panel.noteButtons, btn)
-                table.insert(panel.noteButtons, editBtn)
-                table.insert(panel.noteButtons, deleteBtn)
-                btn.editIcon = editIcon
-                btn.deleteIcon = deleteIcon
-                totalY = totalY + neededH + spacing
-            end
-        end
-
-        
-        -- Opdater scroll content højde
-        notesContent:SetHeight(math.max(totalY - spacing, 250))
-    end
-    
-    -- Commit helper for both editing updates and adding new notes
-    local function CommitIfEditingOrAdd(self)
-        local noteText = (self:GetText() or ""):trim()
-        local currentBoss = frame.selectedBoss and frame.selectedBoss.encounterID
-        local currentDung = currentDungeon
-        if not (currentBoss and currentDung) then return false end
-
-        BossHelperDB = BossHelperDB or {}
-        BossHelperDB.bossNotes = BossHelperDB.bossNotes or {}
-        BossHelperDB.bossNotes[currentDung] = BossHelperDB.bossNotes[currentDung] or {}
-        BossHelperDB.bossNotes[currentDung][currentBoss] = BossHelperDB.bossNotes[currentDung][currentBoss] or {}
-        local list = BossHelperDB.bossNotes[currentDung][currentBoss]
-
-        if panel._editingRef then
-            local idx = panel._editingRef.index
-            if noteText ~= "" and type(list) == "table" and list[idx] ~= nil then
-                list[idx] = noteText
-            end
-            self:SetText("")
-            panel._editingRef = nil
-            UpdateNotesDisplay(currentBoss, currentDung)
-            return true
-        else
-            if noteText ~= "" then
-                table.insert(list, noteText)
-                self:SetText("")
-                UpdateNotesDisplay(currentBoss, currentDung)
-                return true
-            end
-        end
-        return false
-    end
-
-    -- Håndter Enter-tryk for at tilføje eller gemme redigering
-    inputBox:SetScript("OnEnterPressed", function(self)
-        CommitIfEditingOrAdd(self)
-        self:ClearFocus()
-    end)
-
-    -- Escape: annuller redigering/tilføjelse
-    inputBox:SetScript("OnEscapePressed", function(self)
-        self:SetText("")
-        panel._editingRef = nil
-        local currentBoss = frame.selectedBoss and frame.selectedBoss.encounterID
-        local currentDung = currentDungeon
-        if currentBoss and currentDung then
-            UpdateNotesDisplay(currentBoss, currentDung)
-        end
-        self:ClearFocus()
-    end)
-
-    -- Fokus tabt: gem redigering hvis muligt (tilføjer ikke tomme noter)
-    inputBox:SetScript("OnEditFocusLost", function(self)
-        CommitIfEditingOrAdd(self)
-    end)
-    
-    -- Load saved notes when boss changes
-    panel.LoadNotesForBoss = function(bossName, dungeonName)
-        UpdateNotesDisplay(bossName, dungeonName)
-    end
-    
-    -- Close button for panel
-    local closeBtn = CreateCustomButton(panel, 20, 20, "X")
-    closeBtn:SetPoint("TOPRIGHT", panel, "TOPRIGHT", -5, -5)
-    closeBtn.text:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
-    closeBtn:SetScript("OnClick", function()
-        rightPanel.bossNoteButton:GetScript("OnClick")() -- trigger samme logik som hovedknappen
-    end)
-    
-    panel.initialized = true
 end
 
 
@@ -2125,6 +1295,31 @@ function BossUI:RefreshUpdateBanner()
 end
 
 
+-- ============================================================
+-- Helpers for the top-right icon buttons (settings / info / notes)
+-- Must be called from within CreateUI after `frame` is assigned.
+-- ============================================================
+
+-- Factory: creates a 24x24 icon-only nav button anchored to TOPRIGHT of frame.
+-- enterBg / enterBorder = {r,g,b} hover colors.
+local function CreateNavIconButton(xOffset, icon, iconSize, enterBg, enterBorder, clickFn)
+    return BossHelper.Buttons.CreateNav(frame, xOffset, icon, iconSize, enterBg, enterBorder, clickFn)
+end
+
+-- Returns an OnClick that toggles a named panel open/closed.
+local function MakeNavToggle(panelKey, openFn)
+    return function()
+        BossHelperDB = BossHelperDB or {}
+        if BossHelperDB.lastOpenPanel == panelKey then
+            SafePlay(BossHelper.Sounds.CLOSE_SETTINGS)
+            backButton:GetScript("OnClick")()
+        else
+            SafePlay(BossHelper.Sounds.OPEN_SETTINGS)
+            openFn()
+        end
+    end
+end
+
 -- CreateUI
 function BossUI:CreateUI()
     -- Hvis UI allerede er oprettet, undgå at oprette igen
@@ -2155,14 +1350,7 @@ function BossUI:CreateUI()
     banner:SetFrameStrata(frame:GetFrameStrata() or "HIGH")
     banner:SetFrameLevel((frame:GetFrameLevel() or 0) + 20)
         banner:SetHeight(24)
-        banner:SetBackdrop({
-            bgFile   = "Interface/ChatFrame/ChatFrameBackground",
-            edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
-            tile = true, tileSize = 16, edgeSize = 12,
-            insets = { left = 4, right = 4, top = 4, bottom = 4 },
-        })
-        banner:SetBackdropColor(0.12, 0.08, 0.02, 0.95) -- dark amber
-        banner:SetBackdropBorderColor(1.0, 0.7, 0.2, 0.9)
+        BossHelper.UI.ApplyBackdrop(banner, "ITEM", {0.12, 0.08, 0.02, 0.95}, {1.0, 0.7, 0.2, 0.9})
         banner:Hide()
 
         local txt = banner:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -2200,26 +1388,28 @@ function BossUI:CreateUI()
             end
         end
         
-        if BossHelper and BossHelper.SafePlaySound and BossHelper.Sounds and BossHelper.Sounds.CLOSE_MENU then
-            if BossHelperDB and BossHelperDB.allowEscClose then
-                BossHelper:SafePlaySound(BossHelper.Sounds.CLOSE_MENU)
-            end
+        if BossHelperDB and BossHelperDB.allowEscClose then
+            SafePlay(BossHelper.Sounds.CLOSE_MENU)
         end
     end)
 
 
-    local closeButton = CreateCustomButton(frame, 24, 24, "X")
-    closeButton.text:ClearAllPoints()
-    closeButton.text:SetPoint("CENTER", closeButton, "CENTER", 2, 0)
+    local closeButton = CreateCustomButton(frame, 24, 24, "")
+    -- use X icon instead of text
+    closeButton:SetIcon("Interface\\AddOns\\BossHelper\\Media\\icon\\x2.png")
+    if closeButton.icon then
+        closeButton.icon:SetSize(16, 16)
+        closeButton.icon:ClearAllPoints()
+        closeButton.icon:SetPoint("CENTER", closeButton, "CENTER", 0, 0)
+        if BossHelper and BossHelper.UI and BossHelper.UI.C and BossHelper.UI.C.TEXT_ORANGE then
+            closeButton.icon:SetVertexColor(unpack(BossHelper.UI.C.TEXT_ORANGE))
+        end
+    end
+    if closeButton.text then closeButton.text:Hide() end
     closeButton:SetFrameStrata("HIGH")
     closeButton:SetFrameLevel(frame:GetFrameLevel() + 10)
     closeButton:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -17, -7)
-    closeButton.text:SetFont("Fonts\\FRIZQT__.TTF", 14, "OUTLINE")
     closeButton:SetScript("OnClick", function()
-        --if BossHelper and BossHelper.SafePlaySound and BossHelper.Sounds and BossHelper.Sounds.CLOSE_MENU then
-        --    BossHelper:SafePlaySound(BossHelper.Sounds.CLOSE_MENU)
-       -- end
-        -- Luk også bossNote panel når hele addonet lukkes
         if frame.bossNotePanel and frame.bossNotePanel:IsShown() then
             frame.bossNotePanel:Hide()
             if rightPanel.bossNoteButton then
@@ -2229,136 +1419,30 @@ function BossUI:CreateUI()
         frame:Hide()
     end)
     closeButton:SetScript("OnEnter", function(self)
-        self.bg:SetColorTexture(1, 0.1, 0.1, 1)
+        self:SetBackdropColor(1, 0.1, 0.1, 1)
         self:SetBackdropBorderColor(1, 0.6, 0.6, 1)
-        self.text:SetTextColor(1, 1, 1)
+        if self.icon then self.icon:SetVertexColor(1, 1, 1) end
     end)
     closeButton:SetScript("OnLeave", function(self)
-        self.bg:SetColorTexture(0.08, 0.09, 0.13, 0.95)
+        self:SetBackdropColor(0.08, 0.09, 0.13, 0.95)
         self:SetBackdropBorderColor(0.3, 0.3, 0.3, 0.8)
-        self.text:SetTextColor(0.98, 0.82, 0.55)
-    end)
-
-    -- Settings-knap
-    local settingsButton = CreateCustomButton(frame, 24, 24, "")
-    settingsButton:SetFrameStrata("HIGH")
-    settingsButton:SetFrameLevel(frame:GetFrameLevel() + 10)
-    settingsButton:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -42, -7) -- lidt til venstre for close-knappen
-
-    -- Tilføj ikon som en Texture (så vi kan styre placering/størrelse)
-    settingsButton.icon = settingsButton:CreateTexture(nil, "OVERLAY")
-    settingsButton.icon:SetTexture("Interface\\GossipFrame\\BinderGossipIcon") -- klassisk gear ikon
-    settingsButton.icon:SetSize(16, 16) -- gør ikonet mindre
-    settingsButton.icon:SetPoint("CENTER", settingsButton, "CENTER", 0, 0) -- centrer det
-
-    settingsButton:SetScript("OnClick", function()
-    BossHelperDB = BossHelperDB or {}
-
-    if BossHelperDB.lastOpenPanel == "settings" then
-        -- play close (vi går tilbage)
-        if BossHelper and BossHelper.SafePlaySound then BossHelper:SafePlaySound(BossHelper.Sounds.CLOSE_SETTINGS) end
-        backButton:GetScript("OnClick")()
-    else
-        -- play open settings
-        if BossHelper and BossHelper.SafePlaySound then BossHelper:SafePlaySound(BossHelper.Sounds.OPEN_SETTINGS) end
-        ShowSettings()
-    end
-end)
-
-
-
-
-
-    settingsButton:SetScript("OnEnter", function(self)
-        self.bg:SetColorTexture(0.1, 0.5, 1, 1)
-        self:SetBackdropBorderColor(0.6, 0.8, 1, 1)
-    end)
-
-    settingsButton:SetScript("OnLeave", function(self)
-        self.bg:SetColorTexture(0.08, 0.09, 0.13, 0.95)
-        self:SetBackdropBorderColor(0.3, 0.3, 0.3, 0.8)
-    end)
-
-    -- Info-knap (samme stil som Settings-knap)
-    local infoButton = CreateCustomButton(frame, 24, 24, "")
-    infoButton:SetFrameStrata("HIGH")
-    infoButton:SetFrameLevel(frame:GetFrameLevel() + 10)
-    infoButton:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -67, -7) -- til venstre for settings-knappen
-
-    -- Tilføj ikon som en Texture (info ikon)
-    infoButton.icon = infoButton:CreateTexture(nil, "OVERLAY")
-    infoButton.icon:SetTexture("Interface\\Common\\help-i") -- info ikon
-    infoButton.icon:SetSize(22, 22)
-    infoButton.icon:SetPoint("CENTER", infoButton, "CENTER", 0, 0) -- centrer det
-
-    infoButton:SetScript("OnClick", function()
-        BossHelperDB = BossHelperDB or {}
-
-        if BossHelperDB.lastOpenPanel == "info" then
-            -- play close (vi går tilbage)
-            if BossHelper and BossHelper.SafePlaySound then BossHelper:SafePlaySound(BossHelper.Sounds.CLOSE_SETTINGS) end
-            backButton:GetScript("OnClick")()
-        else
-            -- play open info
-            if BossHelper and BossHelper.SafePlaySound then BossHelper:SafePlaySound(BossHelper.Sounds.OPEN_SETTINGS) end
-            ShowInfo()
+        if self.icon and BossHelper and BossHelper.UI and BossHelper.UI.C and BossHelper.UI.C.TEXT_ORANGE then
+            self.icon:SetVertexColor(unpack(BossHelper.UI.C.TEXT_ORANGE))
         end
     end)
 
-    infoButton:SetScript("OnEnter", function(self)
-        self.bg:SetColorTexture(0.1, 0.8, 0.3, 1) -- grøn farve for info
-        self:SetBackdropBorderColor(0.3, 0.8, 0.6, 1)
-    end)
-
-    infoButton:SetScript("OnLeave", function(self)
-        self.bg:SetColorTexture(0.08, 0.09, 0.13, 0.95)
-        self:SetBackdropBorderColor(0.3, 0.3, 0.3, 0.8)
-    end)
-
-    -- Notes-knap (åbner General Notes)
-    local notesButton = CreateCustomButton(frame, 24, 24, "")
-    notesButton:SetFrameStrata("HIGH")
-    notesButton:SetFrameLevel(frame:GetFrameLevel() + 10)
-    notesButton:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -92, -7)
-
-    notesButton.icon = notesButton:CreateTexture(nil, "OVERLAY")
-    notesButton.icon:SetTexture("Interface\\GossipFrame\\WorkOrderGossipIcon") -- notes ikon
-    notesButton.icon:SetSize(18, 18)
-    notesButton.icon:SetPoint("CENTER", notesButton, "CENTER", 0, 0)
-
-    notesButton:SetScript("OnClick", function()
-        BossHelperDB = BossHelperDB or {}
-        if BossHelperDB.lastOpenPanel == "notes" then
-            if BossHelper and BossHelper.SafePlaySound then BossHelper:SafePlaySound(BossHelper.Sounds.CLOSE_SETTINGS) end
-            backButton:GetScript("OnClick")()
-        else
-            if BossHelper and BossHelper.SafePlaySound then BossHelper:SafePlaySound(BossHelper.Sounds.OPEN_SETTINGS) end
-            ShowGeneralNotes()
-        end
-    end)
-
-    notesButton:SetScript("OnEnter", function(self)
-        -- Lilla hover som matcher BossNotePanel kanten (0.8, 0.3, 1)
-        self.bg:SetColorTexture(0.45, 0.20, 0.70, 1)
-        self:SetBackdropBorderColor(0.8, 0.3, 1, 1)
-    end)
-    notesButton:SetScript("OnLeave", function(self)
-        self.bg:SetColorTexture(0.08, 0.09, 0.13, 0.95)
-        self:SetBackdropBorderColor(0.3, 0.3, 0.3, 0.8)
-    end)
+    local settingsButton = CreateNavIconButton(-42, "Interface\\AddOns\\BossHelper\\Media\\icon\\settings.png",    13,
+        {0.1, 0.5, 1},      {0.6, 0.8, 1},   MakeNavToggle("settings", ShowSettings))
+    local infoButton     = CreateNavIconButton(-67, "Interface\\AddOns\\BossHelper\\Media\\icon\\info.png",                  13,
+        {0.1, 0.8, 0.3},    {0.3, 0.8, 0.6}, MakeNavToggle("info",     ShowInfo))
+    local notesButton    = CreateNavIconButton(-92, "Interface\\AddOns\\BossHelper\\Media\\icon\\square-pen.png", 13,
+        {0.45, 0.20, 0.70}, {0.8, 0.3, 1},   MakeNavToggle("notes",    ShowGeneralNotes))
 
 
     leftPanel = CreateFrame("Frame", nil, frame, "BackdropTemplate")
     leftPanel:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, 0)
     leftPanel:SetSize(200, 400)
-    leftPanel:SetBackdrop({
-        bgFile = "Interface/ChatFrame/ChatFrameBackground",
-        edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
-        tile = true, tileSize = 16, edgeSize = 14,
-        insets = { left=4, right=4, top=4, bottom=4 }
-    })
-    leftPanel:SetBackdropColor(0.08, 0.08, 0.15, 0.9)
-    leftPanel:SetBackdropBorderColor(1, 0.5, 0, 0.8)
+    BossHelper.UI.ApplyBackdrop(leftPanel, "EDITBOX", BossHelper.UI.C.BG_PANEL, BossHelper.UI.C.BORDER_AMBER)
 
     -- Left panel title
     leftPanel.leftTitle = leftPanel:CreateFontString(nil, "OVERLAY")
@@ -2373,14 +1457,7 @@ end)
     rightPanel = CreateFrame("Frame", nil, frame, "BackdropTemplate")
     rightPanel:SetPoint("TOPLEFT", leftPanel, "TOPRIGHT", 10, 0)
     rightPanel:SetSize(580, 400)
-    rightPanel:SetBackdrop({
-        bgFile = "Interface/ChatFrame/ChatFrameBackground",
-        edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
-        tile = true, tileSize = 16, edgeSize = 14,
-        insets = { left=4, right=4, top=4, bottom=4 }
-    })
-    rightPanel:SetBackdropColor(0.08, 0.08, 0.15, 0.9)
-    rightPanel:SetBackdropBorderColor(1, 0.5, 0, 0.8)
+    BossHelper.UI.ApplyBackdrop(rightPanel, "EDITBOX", BossHelper.UI.C.BG_PANEL, BossHelper.UI.C.BORDER_AMBER)
 
     -- Initial banner refresh once panels exist
     C_Timer.After(0, function()
@@ -2395,17 +1472,12 @@ end)
 
     -- BossNote Panel (fast forbundet til hovedvinduet)
     local bossNotePanel = CreateFrame("Frame", "BossNoteWindow", frame, "BackdropTemplate")
-    bossNotePanel:SetSize(200, 400) -- samme størrelse som leftPanel
-    bossNotePanel:SetPoint("TOPLEFT", rightPanel, "TOPRIGHT", 10, 0) -- fast position ved siden af rightPanel
-    bossNotePanel:SetBackdrop({
-        bgFile = "Interface/ChatFrame/ChatFrameBackground",
-        edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
-        tile = true, tileSize = 16, edgeSize = 14,
-        insets = { left=4, right=4, top=4, bottom=4 }
-    })
-    bossNotePanel:SetBackdropColor(0.1, 0.08, 0.15, 0.9) -- lidt forskellig farve
-    bossNotePanel:SetBackdropBorderColor(0.8, 0.3, 1, 0.8) -- lilla kant
-    bossNotePanel:Hide() -- skjult som standard
+    bossNotePanel:SetSize(200, 400)
+    bossNotePanel:SetPoint("TOPLEFT", rightPanel, "TOPRIGHT", 10, 0)
+    BossHelper.UI.ApplyBackdrop(bossNotePanel, "EDITBOX", {0.1, 0.08, 0.15, 0.9}, {0.8, 0.3, 1, 0.8})
+    bossNotePanel:SetClipsChildren(true)
+    bossNotePanel._fullWidth = 200
+    bossNotePanel:Hide()
     frame.bossNotePanel = bossNotePanel
 
     rightPanel.rightTitle = rightPanel:CreateFontString(nil, "OVERLAY")
@@ -2473,70 +1545,26 @@ end)
     backButton = CreateCustomButton(leftPanel, 180, 30, "BACK")
     backButton:SetPoint("BOTTOM", leftPanel, "BOTTOM", 0, 10)
     backButton:SetScript("OnClick", function()
-        if BossHelper and BossHelper.SafePlaySound then BossHelper:SafePlaySound(BossHelper.Sounds.BACK_BUTTON) end
+        SafePlay(BossHelper.Sounds.BACK_BUTTON)
         HideAffixesView()
-        -- Reset selection state
-        if selectedButton then
-            selectedButton:SetSelected(false)
-            selectedButton = nil
-        end
+        HideEditModeUI()
+        if selectedButton then selectedButton:SetSelected(false); selectedButton = nil end
         frame.selectedBoss = nil
         currentDungeon = nil
-
-        -- brugeren er nu på start/ikke-settings, ryd evt. saved-flag
         BossHelperDB = BossHelperDB or {}
         BossHelperDB.lastOpenPanel = nil
 
-
-        -- Skjul dropdown og click-catcher (sikkert med pcall)
-        if rightPanel.phaseDropdown then pcall(rightPanel.phaseDropdown.Hide, rightPanel.phaseDropdown) end
-        if rightPanel.dropdownClickCatcher then pcall(rightPanel.dropdownClickCatcher.Hide, rightPanel.dropdownClickCatcher) end
-
-        -- Annuller edit mode hvis aktiv
-        HideEditModeUI()
-
-        -- Clear short-buttons area (scroll + content + knapper)
-        if rightPanel.shortBtnScroll then pcall(rightPanel.shortBtnScroll.Hide, rightPanel.shortBtnScroll) end
-        if rightPanel.shortBtnContent then pcall(rightPanel.shortBtnContent.SetHeight, rightPanel.shortBtnContent, 1) end
-        if rightPanel.shortButtons then
-            for _, b in ipairs(rightPanel.shortButtons) do
-                if b then
-                    pcall(b.Hide, b)
-                    pcall(b.SetParent, b, nil)
-                    if b.ClearAllPoints then pcall(b.ClearAllPoints, b) end
-                end
-            end
-        end
+        BossHelper.UI.hide(rightPanel.phaseDropdown)
+        BossHelper.UI.hide(rightPanel.dropdownClickCatcher)
+        for _, b in ipairs(rightPanel.shortButtons or {}) do BossHelper.UI.destroyWidget(b) end
         rightPanel.shortButtons = {}
+        if rightPanel.shortBtnContent then rightPanel.shortBtnContent:SetHeight(1) end
 
-        -- Skjul også det gamle scroll-text hvis det er vist
-        if rightPanel.rightShortScroll then pcall(rightPanel.rightShortScroll.Hide, rightPanel.rightShortScroll) end
-        if rightPanel.rightShortText then pcall(rightPanel.rightShortText.SetText, rightPanel.rightShortText, "") end
-
-        -- Reset titel / detaljer
-        if rightPanel.rightTitle then pcall(rightPanel.rightTitle.SetText, rightPanel.rightTitle, "") end
-        if rightPanel.rightDetailText then pcall(rightPanel.rightDetailText.SetText, rightPanel.rightDetailText, "") end
-        if rightPanel.rightDetailScroll then pcall(rightPanel.rightDetailScroll.Hide, rightPanel.rightDetailScroll) end
-        rightPanel.showingDetails = false
-        if rightPanel.detailToggle then pcall(rightPanel.detailToggle.SetText, rightPanel.detailToggle, Translate("SHOW_DETAILS")) end
-
-        -- Ryd op i settings-widgets hvis vi kom fra Settings
+        ClearRightPanelContent(rightPanel)
         ClearRightPanelSettings()
-    -- Ryd op i notes-widgets hvis vi kom fra GeneralNotes
-    ClearRightPanelNotes()
+        ClearRightPanelNotes()
+        CloseBossNotePanelIfOpen()
 
-        -- Luk automatisk bossNote panel når man går tilbage
-        if frame.bossNotePanel and frame.bossNotePanel:IsShown() then
-            frame.bossNotePanel:Hide()
-        end
-        
-        -- Skjul bossNote knappen når man forlader boss-visning
-        if rightPanel.bossNoteButton then
-            rightPanel.bossNoteButton:Hide()
-            rightPanel.bossNoteButton:SetText(Translate("BOSS_NOTES"))
-        end
-
-        -- Gem back-knappen og vis startside + dungeons
         backButton:Hide()
         ShowStartPage(frame, rightPanel)
         ShowDungeons()
@@ -2550,7 +1578,7 @@ end)
     rightPanel.detailToggle:SetPoint("BOTTOMLEFT", rightPanel, "BOTTOMLEFT", 10, 10)
     rightPanel.detailToggle:Hide()
     rightPanel.detailToggle:SetScript("OnClick", function()
-        if BossHelper and BossHelper.SafePlaySound then BossHelper:SafePlaySound(BossHelper.Sounds.NORMAL_BUTTON) end
+        SafePlay(BossHelper.Sounds.NORMAL_BUTTON)
         if not frame.selectedBoss or not currentDungeon then return end
         local boss = frame.selectedBoss  -- frame.selectedBoss er nu en direkte reference til boss-objektet
         if not boss then return end
@@ -2604,32 +1632,19 @@ end)
         rightPanel.bossNoteButton:Hide()
         
         -- BossNote knap funktionalitet
-        rightPanel.bossNoteButton:SetScript("OnClick", function()            if frame.bossNotePanel:IsShown() then
-                -- Luk bossNote panel
-                frame.bossNotePanel:Hide()
+        rightPanel.bossNoteButton:SetScript("OnClick", function()
+            if frame.bossNotePanel:IsShown() then
+                CloseBossNotePanel(true)
                 rightPanel.bossNoteButton:SetText(Translate("BOSS_NOTES"))
-                if BossHelper and BossHelper.SafePlaySound then 
-                    BossHelper:SafePlaySound(BossHelper.Sounds.CLOSE_SETTINGS) 
-                end
+                SafePlay(BossHelper.Sounds.CLOSE_SETTINGS)
             else
-                -- Åbn bossNote panel ved siden af hovedvinduet
-                frame.bossNotePanel:Show()
-
                 rightPanel.bossNoteButton:SetText(Translate("BOSS_CLOSE_NOTE"))
-                if BossHelper and BossHelper.SafePlaySound then
-                    BossHelper:SafePlaySound(BossHelper.Sounds.OPEN_SETTINGS)
-                end
-                
-                -- Opret indhold i bossNote panel hvis det ikke allerede eksisterer
-                if not frame.bossNotePanel.initialized then
-                    CreateBossNoteContent()
-                end
-                
-                -- Load notes for current boss
+                SafePlay(BossHelper.Sounds.OPEN_SETTINGS)
+                if not frame.bossNotePanel.initialized then CreateBossNoteContent() end
                 if frame.bossNotePanel.LoadNotesForBoss and frame.selectedBoss and currentDungeon then
-                    local bossKey = frame.selectedBoss.encounterID
-                    frame.bossNotePanel.LoadNotesForBoss(bossKey, currentDungeon)
+                    frame.bossNotePanel.LoadNotesForBoss(frame.selectedBoss.encounterID, currentDungeon)
                 end
+                OpenBossNotePanel(true)
             end
         end)
 
@@ -2781,9 +1796,7 @@ end)
                         rightPanel.postButton:_startFill(totalTime)
                     end
 
-                     -- spil en lyd
-                    if BossHelper and BossHelper.SafePlaySound then BossHelper:SafePlaySound(BossHelper.Sounds.POST_TO_CHAT) end
-
+                    SafePlay(BossHelper.Sounds.POST_TO_CHAT)
                     -- Luk vinduet med det samme hvis indstillingen er slået til
                     BossHelperDB = BossHelperDB or {}
                     if BossHelperDB.closeOnPost then

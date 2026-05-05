@@ -1,282 +1,139 @@
 -- StartPage.lua
--- ShowStartPage med robust fade + logo "pop" (scale -> normal)
-function ShowStartPage(frame, rightPanel)
-    if not rightPanel then return end
 
-    -- Helper: check om vi må animate (tjek global helper først, fallback til savedvar)
-    local function ShouldAnimate()
-        if _G.BossHelper_ShouldAnimateInCombat then
-            local ok, res = pcall(_G.BossHelper_ShouldAnimateInCombat)
-            if ok and type(res) == "boolean" then return res end
-        end
-        BossHelperDB = BossHelperDB or {}
-        if BossHelperDB.allowAnimationsInCombat then return true end
-        return not InCombatLockdown()
-    end
+-- ============================================================
+-- Hjælpefunktioner
+-- ============================================================
 
-    -- Opret elementer hvis nødvendigt (som før)
-    if not rightPanel.mainTitle then
-        rightPanel.mainTitle = rightPanel:CreateFontString(nil, "OVERLAY", "GameFontHighlightHuge")
-        rightPanel.mainTitle:SetPoint("TOP", rightPanel, "TOP", 0, -220)
-        rightPanel.mainTitle:SetTextColor(1, 0.5, 0)
-    end
+local ShouldAnimate    = BossHelper.Anim.ShouldAnimate
 
-    if not rightPanel.logo then
-        rightPanel.logo = rightPanel:CreateTexture(nil, "ARTWORK")
-        rightPanel.logo:SetSize(256, 256)
-        rightPanel.logo:SetPoint("TOP", rightPanel, "TOP", 0, -10)
-        rightPanel.logo:SetTexture("Interface\\AddOns\\BossHelper\\Media\\Mythic Mentor 512x512.tga")
-    end
+-- ============================================================
+-- Lokaliserede globals
+-- ============================================================
+local C = BossHelper.UI.C
+local type = type
 
-    if not rightPanel.mainDesc then
-        rightPanel.mainDesc = rightPanel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-        rightPanel.mainDesc:SetPoint("TOP", rightPanel.logo, "BOTTOM", 0, -20)
-        rightPanel.mainDesc:SetSize(500, 100)
-        rightPanel.mainDesc:SetJustifyH("CENTER")
-        rightPanel.mainDesc:SetJustifyV("TOP")
-    end
+-- Generisk knap med ikon, hover-farve og tooltip (via centralt Buttons-modul)
+local function CreateIconButton(parent, size, anchorFrame, xOffset, texturePath, hoverColor, tooltipKey, tooltipDescKey, onClickFn)
+    return BossHelper.Buttons.CreateIconOnly(parent, size, anchorFrame, xOffset, texturePath, hoverColor, tooltipKey, tooltipDescKey, onClickFn)
+end
 
-    if not rightPanel.footerText then
-        rightPanel.footerText = rightPanel:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-        rightPanel.footerText:SetPoint("BOTTOMRIGHT", rightPanel, "BOTTOMRIGHT", -10, 10)
-        rightPanel.footerText:SetTextColor(0.7, 0.7, 0.7)
-    end
+-- ============================================================
+-- Oprettelse af UI-elementer (køres kun én gang)
+-- ============================================================
 
-    if not rightPanel.footerText2 then
-        rightPanel.footerText2 = rightPanel:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-        rightPanel.footerText2:SetPoint("BOTTOMLEFT", rightPanel, "BOTTOMLEFT", 10, 10)
-        rightPanel.footerText2:SetTextColor(0.7, 0.7, 0.7)
-    end
+local function CreateStartPageElements(rightPanel)
+    rightPanel.mainTitle = rightPanel:CreateFontString(nil, "OVERLAY", "GameFontHighlightHuge")
+    rightPanel.mainTitle:SetPoint("TOP", rightPanel, "TOP", 0, -220)
+    rightPanel.mainTitle:SetTextColor(1, 0.5, 0)
 
-    -- Discord button
-    if not rightPanel.discordButton then
-        rightPanel.discordButton = CreateFrame("Button", nil, rightPanel)
-        rightPanel.discordButton:SetSize(25, 25)
-        rightPanel.discordButton:SetPoint("TOPLEFT", rightPanel, "TOPLEFT", 10, -10)
-        
-        -- Discord logo texture
-        local texture = rightPanel.discordButton:CreateTexture(nil, "ARTWORK")
-        texture:SetAllPoints()
-        texture:SetTexture("Interface\\AddOns\\BossHelper\\Media\\icon\\discord_logo.png")
-        
-        -- Hover effects
-        rightPanel.discordButton:SetScript("OnEnter", function(self)
-            texture:SetVertexColor(0.8, 0.8, 1)
-            GameTooltip:SetOwner(self, "ANCHOR_LEFT")
-            GameTooltip:SetText(Translate("JOIN_DISCORD", 1, 1, 1))
-            GameTooltip:AddLine(Translate("DISCORD_TOOLTIP", 0.8, 0.8, 0.8))
-            GameTooltip:Show()
-        end)
-        
-        rightPanel.discordButton:SetScript("OnLeave", function()
-            texture:SetVertexColor(1, 1, 1)
-            GameTooltip:Hide()
-        end)
-        
-        -- Click handler
-        rightPanel.discordButton:SetScript("OnClick", function()
+    rightPanel.logo = rightPanel:CreateTexture(nil, "ARTWORK")
+    rightPanel.logo:SetSize(256, 256)
+    rightPanel.logo:SetPoint("TOP", rightPanel, "TOP", 0, -10)
+    rightPanel.logo:SetTexture("Interface\\AddOns\\BossHelper\\Media\\Mythic Mentor 512x512.png")
+
+    rightPanel.mainDesc = rightPanel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    rightPanel.mainDesc:SetPoint("TOP", rightPanel.logo, "BOTTOM", 0, -20)
+    rightPanel.mainDesc:SetSize(500, 100)
+    rightPanel.mainDesc:SetJustifyH("CENTER")
+    rightPanel.mainDesc:SetJustifyV("TOP")
+
+    rightPanel.footerText = rightPanel:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    rightPanel.footerText:SetPoint("BOTTOMRIGHT", rightPanel, "BOTTOMRIGHT", -10, 10)
+    rightPanel.footerText:SetTextColor(0.7, 0.7, 0.7)
+
+    -- Keystone-widget (genbrugelig, placeres frit via widget.frame:SetPoint)
+    rightPanel.keystoneWidget = BossHelper.UI.CreateKeystoneWidget(rightPanel)
+    rightPanel.keystoneWidget.frame:SetPoint("BOTTOMLEFT", rightPanel, "BOTTOMLEFT", 8, 8)
+
+    rightPanel.discordButton = CreateIconButton(
+        rightPanel, 25, nil, 10,
+        "Interface\\AddOns\\BossHelper\\Media\\icon\\discord_logo.png",
+        { 0.8, 0.8, 1 }, "JOIN_DISCORD", "DISCORD_TOOLTIP",
+        function()
             if BossHelper and BossHelper.ShowDiscordLinkPopup then
                 BossHelper:ShowDiscordLinkPopup()
             end
-        end)
-        
-        rightPanel.discordButton:EnableMouse(true)
-    end
+        end
+    )
 
-    -- GitHub button
-    if not rightPanel.githubButton then
-        rightPanel.githubButton = CreateFrame("Button", nil, rightPanel)
-        rightPanel.githubButton:SetSize(22, 22)
-        rightPanel.githubButton:SetPoint("TOPLEFT", rightPanel.discordButton, "TOPRIGHT", 5, 0)
-        
-        -- GitHub logo texture
-        local texture = rightPanel.githubButton:CreateTexture(nil, "ARTWORK")
-        texture:SetAllPoints()
-        texture:SetTexture("Interface\\AddOns\\BossHelper\\Media\\icon\\github_logo.png")
-        
-        -- Hover effects
-        rightPanel.githubButton:SetScript("OnEnter", function(self)
-            texture:SetVertexColor(0.8, 0.8, 1)
-            GameTooltip:SetOwner(self, "ANCHOR_LEFT")
-            GameTooltip:SetText(Translate("VISIT_GITHUB", 1, 1, 1))
-            GameTooltip:AddLine(Translate("GITHUB_TOOLTIP", 0.8, 0.8, 0.8))
-            GameTooltip:Show()
-        end)
-        
-        rightPanel.githubButton:SetScript("OnLeave", function()
-            texture:SetVertexColor(1, 1, 1)
-            GameTooltip:Hide()
-        end)
-        
-        -- Click handler
-        rightPanel.githubButton:SetScript("OnClick", function()
+    rightPanel.githubButton = CreateIconButton(
+        rightPanel, 22, rightPanel.discordButton, 5,
+        "Interface\\AddOns\\BossHelper\\Media\\icon\\github_logo.png",
+        { 0.8, 0.8, 1 }, "VISIT_GITHUB", "GITHUB_TOOLTIP",
+        function()
             if BossHelper and BossHelper.ShowGitHubLinkPopup then
                 BossHelper:ShowGitHubLinkPopup()
             end
-        end)
-        
-        rightPanel.githubButton:EnableMouse(true)
-    end
+        end
+    )
 
-    -- Bug Report button
-    if not rightPanel.bugReportButton then
-        rightPanel.bugReportButton = CreateFrame("Button", nil, rightPanel)
-        rightPanel.bugReportButton:SetSize(22, 22)
-        rightPanel.bugReportButton:SetPoint("TOPLEFT", rightPanel.githubButton, "TOPRIGHT", 5, 0)
-        
-        -- Bug logo texture
-        local texture = rightPanel.bugReportButton:CreateTexture(nil, "ARTWORK")
-        texture:SetAllPoints()
-        texture:SetTexture("Interface\\AddOns\\BossHelper\\Media\\icon\\bug_logo.png")
-        
-        -- Hover effects
-        rightPanel.bugReportButton:SetScript("OnEnter", function(self)
-            texture:SetVertexColor(1, 0.6, 0.6)
-            GameTooltip:SetOwner(self, "ANCHOR_LEFT")
-            GameTooltip:SetText(Translate("REPORT_BUG", 1, 1, 1))
-            GameTooltip:AddLine(Translate("BUG_TOOLTIP", 0.8, 0.8, 0.8))
-            GameTooltip:Show()
-        end)
-        
-        rightPanel.bugReportButton:SetScript("OnLeave", function()
-            texture:SetVertexColor(1, 1, 1)
-            GameTooltip:Hide()
-        end)
-        
-        -- Click handler
-        rightPanel.bugReportButton:SetScript("OnClick", function()
+    rightPanel.bugReportButton = CreateIconButton(
+        rightPanel, 22, rightPanel.githubButton, 5,
+        "Interface\\AddOns\\BossHelper\\Media\\icon\\bug_logo.png",
+        { 1, 0.6, 0.6 }, "REPORT_BUG", "BUG_TOOLTIP",
+        function()
             if BossHelper and BossHelper.ShowBugReportPopup then
                 BossHelper:ShowBugReportPopup()
             end
-        end)
-        
-        rightPanel.bugReportButton:EnableMouse(true)
+        end
+    )
+end
+
+-- Lokale aliases til Animations.lua
+local ResetRegions         = BossHelper.Anim.ResetRegions
+local FadeInRegions        = BossHelper.Anim.FadeInRegions
+local PlayLogoPopAnimation = BossHelper.Anim.PlayLogoPop
+
+-- ============================================================
+-- Hovedfunktion
+-- ============================================================
+
+function ShowStartPage(frame, rightPanel)
+    if not rightPanel then return end
+
+    if not rightPanel.mainTitle then
+        CreateStartPageElements(rightPanel)
     end
 
-    -- Skjul knapperne på forsiden
+    -- Skjul boss-specifikke knapper
     if rightPanel.detailToggle then rightPanel.detailToggle:Hide() end
     if rightPanel.postButton then rightPanel.postButton:Hide() end
     rightPanel.showingDetails = false
 
-    -- Vis Discord knappen på forsiden
+    -- Vis social/utility-knapper
     if rightPanel.discordButton then rightPanel.discordButton:Show() end
-    
-    -- Vis GitHub knappen på forsiden
     if rightPanel.githubButton then rightPanel.githubButton:Show() end
-    
-    -- Vis Bug Report knappen på forsiden
     if rightPanel.bugReportButton then rightPanel.bugReportButton:Show() end
 
-    -- Indholdstekst
-    rightPanel.mainTitle:SetText("") -- indsæt titel hvis ønsket
+    -- Sæt indhold
+    rightPanel.mainTitle:SetText("")
     rightPanel.mainDesc:SetText(Translate("SELECT_DUNGEON_HINT"))
-    rightPanel.footerText:SetText("Burning Toast Studio")
-    local _ver = (BossHelper and BossHelper.VERSION_STRING)
+    local ver = (BossHelper and BossHelper.VERSION_STRING)
         or (C_AddOns and C_AddOns.GetAddOnMetadata and C_AddOns.GetAddOnMetadata("BossHelper", "Version"))
         or (GetAddOnMetadata and GetAddOnMetadata("BossHelper", "Version"))
         or "unknown"
-    rightPanel.footerText2:SetText("v" .. tostring(_ver))
+    rightPanel.footerText:SetText("Burning Toast Studio • v" .. tostring(ver))
 
-    -- Fjern evt. gamle fades/animationer (sikkerhed)
-    local regions = { rightPanel.logo, rightPanel.mainTitle, rightPanel.mainDesc, rightPanel.footerText, rightPanel.footerText2, rightPanel.discordButton, rightPanel.githubButton, rightPanel.bugReportButton }
-    for _, r in ipairs(regions) do
-        if r then
-            pcall(function() UIFrameFadeRemoveFrame(r) end)
-            if r.Show then pcall(r.Show, r) end
-            if r.SetAlpha then pcall(r.SetAlpha, r, 1) end
-            -- hvis tidligere skale-animationer er gemt, stop dem
-            if r._scaleAG and r._scaleAG.IsPlaying and r._scaleAG:IsPlaying() then
-                pcall(function() r._scaleAG:Stop() end)
-            end
-        end
+    local showKeys = not BossHelperDB or BossHelperDB.showKeysOnStartPage ~= false
+    rightPanel.keystoneWidget:SetEnabled(showKeys)
+
+    local regions = {
+        rightPanel.logo, rightPanel.mainTitle, rightPanel.mainDesc,
+        rightPanel.footerText,
+        rightPanel.discordButton, rightPanel.githubButton, rightPanel.bugReportButton,
+    }
+    if showKeys and rightPanel.keystoneWidget.frame:IsShown() then
+        table.insert(regions, rightPanel.keystoneWidget.frame)
     end
 
-    -- Hvis animationer ikke er tilladt (fx i combat eller brugeren har slået dem fra), vis straks og sæt skala 1
+    ResetRegions(regions)
+
     if not ShouldAnimate() then
         if rightPanel.logo and rightPanel.logo.SetScale then rightPanel.logo:SetScale(1) end
-        for _, r in ipairs(regions) do
-            if r and r.SetAlpha then pcall(r.SetAlpha, r, 1) end
-            if r and r.Show then pcall(r.Show, r) end
-        end
         return
     end
 
-    -- Fade ind (stabile UIFrameFadeIn calls)
     local fadeTime = 0.14
-    if rightPanel.logo then
-        rightPanel.logo:SetAlpha(0)
-        rightPanel.logo:Show()
-        UIFrameFadeIn(rightPanel.logo, fadeTime, 0, 1)
-    end
-    if rightPanel.mainTitle then
-        rightPanel.mainTitle:SetAlpha(0)
-        UIFrameFadeIn(rightPanel.mainTitle, fadeTime, 0, 1)
-    end
-    if rightPanel.mainDesc then
-        rightPanel.mainDesc:SetAlpha(0)
-        UIFrameFadeIn(rightPanel.mainDesc, fadeTime, 0, 1)
-    end
-    if rightPanel.footerText then
-        rightPanel.footerText:SetAlpha(0)
-        UIFrameFadeIn(rightPanel.footerText, fadeTime, 0, 1)
-    end
-    if rightPanel.footerText2 then
-        rightPanel.footerText2:SetAlpha(0)
-        UIFrameFadeIn(rightPanel.footerText2, fadeTime, 0, 1)
-    end
-    if rightPanel.discordButton then
-        rightPanel.discordButton:SetAlpha(0)
-        UIFrameFadeIn(rightPanel.discordButton, fadeTime, 0, 1)
-    end
-    if rightPanel.githubButton then
-        rightPanel.githubButton:SetAlpha(0)
-        UIFrameFadeIn(rightPanel.githubButton, fadeTime, 0, 1)
-    end
-    if rightPanel.bugReportButton then
-        rightPanel.bugReportButton:SetAlpha(0)
-        UIFrameFadeIn(rightPanel.bugReportButton, fadeTime, 0, 1)
-    end
-
-    -- Logo "pop" (scale op og tilbage til normal) med sikker fallback.
-    -- Vi starter pop'en kort efter faden starter, så det føles synkront.
-    pcall(function()
-        -- stop tidligere hvis eksisterer
-        if rightPanel.logo._scaleAG and rightPanel.logo._scaleAG.IsPlaying and rightPanel.logo._scaleAG:IsPlaying() then
-            rightPanel.logo._scaleAG:Stop()
-        end
-
-        -- create new animation group for scale
-        local ag = rightPanel.logo:CreateAnimationGroup()
-        ag:SetLooping("NONE")
-        local up = ag:CreateAnimation("Scale")
-        up:SetScale(1.18, 1.18)      -- skaler op ~18%
-        up:SetDuration(0.12)
-        up:SetSmoothing("OUT")
-        local down = ag:CreateAnimation("Scale")
-        down:SetScale(1/1.18, 1/1.18) -- skaler tilbage til 1
-        down:SetDuration(0.12)
-        down:SetSmoothing("IN")
-
-        -- sikre endelig skala = 1 (i tilfælde af rounding/afslutningsproblemer)
-        ag:SetScript("OnFinished", function()
-            if rightPanel and rightPanel.logo and rightPanel.logo.SetScale then
-                rightPanel.logo:SetScale(1)
-            end
-        end)
-
-        rightPanel.logo._scaleAG = ag
-
-        -- start efter lidt delay så faden er i gang (men ikke for lang)
-        local delay = math.max(fadeTime * 0.35, 0.06) -- lille synkronisering
-        C_Timer.After(delay, function()
-            -- double-check logo stadig eksisterer
-            if rightPanel and rightPanel.logo and rightPanel.logo._scaleAG then
-                local ok, err = pcall(function() rightPanel.logo._scaleAG:Play() end)
-                if not ok then
-                    -- fallback: sæt skala direkte hvis animation fejler
-                    pcall(function() rightPanel.logo:SetScale(1) end)
-                end
-            end
-        end)
-    end)
+    FadeInRegions(regions, fadeTime)
+    PlayLogoPopAnimation(rightPanel.logo, fadeTime)
 end

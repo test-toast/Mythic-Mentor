@@ -1,20 +1,21 @@
 Dungeon2 = {
-    instanceID = 0, -- TODO: EJ journal instanceID
+    instanceID = 0, -- instanceID
     bosses = {
         {
-            encounterID = 0, -- TODO: EJ encounterID
+            encounterID = 0, -- journalencounterID / ID
             short       = [[
 1. xxxx
 2. xxxx
 3. xxxx
 ]],
-            details     = ""
+            details     = [[
+]]
         },
 
 
 
         {
-            encounterID = 0, -- TODO: EJ encounterID
+            encounterID = 0, -- journalencounterID / ID
             phaseText = {
                 ["Phase 1"] = [[
 1.xxxx
@@ -27,8 +28,8 @@ Dungeon2 = {
 3.xxxx
 ]]
             },
-            details = ""
+            details = [[
+]]
         },
-    }
-    
+    } 
 }
