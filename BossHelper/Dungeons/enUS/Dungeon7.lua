@@ -36,7 +36,7 @@
             encounterID = 1982, -- L'ura
             short       = [[
 1. Point Discordant Beam at the notes around the room.
-2. the rotating beams of evil.
+2. Dodge the rotating beams of evil.
 3. Avoid big circle explosions.
 ]],
             details     = [[Coming soon

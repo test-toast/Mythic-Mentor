@@ -18,7 +18,7 @@ BossHelper.AffixData.Tiers = {
         maxLevel    = 4,
         colorBg     = { 0.05, 0.18, 0.05, 0.95 },   -- grøn
         colorBorder = { 0.30, 0.85, 0.30, 0.90 },
-        tierDesc    = "nil",
+        tierDesc    = nil,
     },
     {
         label       = "+5 to +6",
@@ -26,7 +26,7 @@ BossHelper.AffixData.Tiers = {
         maxLevel    = 6,
         colorBg     = { 0.14, 0.14, 0.04, 0.95 },   -- gul-grøn
         colorBorder = { 0.75, 0.80, 0.20, 0.90 },
-        tierDesc    = "nil",
+        tierDesc    = nil,
     },
     {
         label       = "+7 to +9",
@@ -34,7 +34,7 @@ BossHelper.AffixData.Tiers = {
         maxLevel    = 9,
         colorBg     = { 0.18, 0.10, 0.02, 0.95 },   -- orange
         colorBorder = { 0.95, 0.60, 0.15, 0.90 },
-        tierDesc    = "nil",
+        tierDesc    = nil,
     },
     {
         label       = "+10 to +11",
@@ -42,7 +42,7 @@ BossHelper.AffixData.Tiers = {
         maxLevel    = 11,
         colorBg     = { 0.22, 0.05, 0.03, 0.95 },   -- rød-orange
         colorBorder = { 0.95, 0.35, 0.15, 0.90 },
-        tierDesc    = "nil",
+        tierDesc    = nil,
     },
     {
         label       = "+12 and up",
@@ -50,7 +50,7 @@ BossHelper.AffixData.Tiers = {
         maxLevel    = 999,
         colorBg     = { 0.25, 0.03, 0.03, 0.95 },   -- dyb rød
         colorBorder = { 1.00, 0.15, 0.15, 0.90 },
-        tierDesc    = "nil",
+        tierDesc    = nil,
     },
 }
 

@@ -4,31 +4,31 @@
         {
             encounterID = 608,
             short = [[
-1. Прячься за Saronite Ores во время Glacial Overload.
+1. Прячься за рудой Саронита во время Glacial Overload.
 
-Healer. Dispel ASAP.
-Tank. Cryostomp → стой рядом с ore.
+Целитель. Диспеллируй как можно скорее.
+Танк. Cryostomp → стой рядом с рудой.
 ]],
             details = [[Скоро]]
         },
         {
             encounterID = 609,
             short = [[
-1. Prio kick Death Bolt.
-2. Interrupt & kill adds.
-3. Run при fixate.
+1. Приоритет прерывания Death Bolt.
+2. Прерывай и убивай адды.
+3. Беги при fixate.
 
-Tank. Не клади puddles на purple swirlies.
+Танк. Не оставляй лужи на фиолетовых спиралях.
 ]],
             details = [[Скоро]]
         },
         {
             encounterID = 610,
             short = [[
-1. Blue circles на green corpse piles.
-2. Kick & kill adds.
+1. Синие круги на кучи зелёных трупов.
+2. Прерывай и убивай адды.
 
-Tank. Перемести босса на corpse pile при cast Army of the Dead.
+Танк. Переместите босса на кучу трупов при касте Army of the Dead.
 ]],
             details = [[Скоро]]
         },

@@ -1,5 +1,5 @@
 ﻿Dungeon1 = {
-    instanceID = 1315, -- Maisara Canerns
+    instanceID = 1315, -- Maisara Caverns
     bosses = {
         {
             encounterID = 2810, -- Muro'jin and Nekraxx

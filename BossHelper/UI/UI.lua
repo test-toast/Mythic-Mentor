@@ -61,6 +61,8 @@ local ShowSettings, SelectSettingCategory, BuildSettingsCategoryUI
 local ShowGeneralNotes, SelectNotesCategory
 -- Forward: Boss Note panel slide animationer
 local OpenBossNotePanel, CloseBossNotePanel
+-- Forward: Settings Info panel slide animationer
+local OpenSettingsInfoPanel, CloseSettingsInfoPanel
 
 -- BossHelper.Sounds og SafePlaySound er defineret centralt i BossHelper.lua
 
@@ -167,9 +169,49 @@ end
 
 -- Helper: Luk Boss Note panelet hvis det er åbent (og nulstil knap-tekst)
 local function CloseBossNotePanelIfOpen()
-    CloseBossNotePanel(false)
+    CloseBossNotePanel(true)
     if rightPanel and rightPanel.bossNoteButton then
         rightPanel.bossNoteButton:SetText(Translate("BOSS_NOTES"))
+    end
+end
+
+-- Settings Info Panel: åbn med indhold, luk animeret
+local _sip_hideTimer = nil
+
+OpenSettingsInfoPanel = function(title, desc, image)
+    if not frame or not frame.settingsInfoPanel then return end
+    local sip = frame.settingsInfoPanel
+    if _sip_hideTimer then _sip_hideTimer:Cancel(); _sip_hideTimer = nil end
+    if sip.Load then sip.Load(title, desc, image) end
+    local fullW = sip._fullWidth or 240
+    if sip._widthTween then sip._widthTween.running = false end
+    if not sip:IsShown() then
+        local anim = BossHelper.Anim
+        if anim and anim.AnimateWidth and anim.ShouldAnimate() then
+            sip:SetWidth(0); sip:Show()
+            anim.AnimateWidth(sip, 0, fullW, 0.15)
+        else
+            sip:SetWidth(fullW); sip:Show()
+        end
+    else
+        sip:SetWidth(fullW)
+    end
+end
+
+CloseSettingsInfoPanel = function(animated)
+    if not frame or not frame.settingsInfoPanel then return end
+    local sip  = frame.settingsInfoPanel
+    if not sip:IsShown() then return end
+    local anim  = BossHelper.Anim
+    local fullW = sip._fullWidth or 240
+    if animated and anim and anim.AnimateWidth and anim.ShouldAnimate() then
+        if sip._widthTween then sip._widthTween.running = false end
+        local curW = sip:GetWidth() or fullW
+        anim.AnimateWidth(sip, curW, 0, 0.15, function()
+            sip:Hide(); sip:SetWidth(fullW)
+        end)
+    else
+        sip:Hide(); sip:SetWidth(fullW)
     end
 end
 
@@ -264,6 +306,11 @@ local function OpenCopyTextWindow(text)
     local scrollFrame = CreateFrame("ScrollFrame", nil, popup, "UIPanelScrollFrameTemplate")
     scrollFrame:SetPoint("TOPLEFT",     popup, "TOPLEFT",  16, -60)
     scrollFrame:SetPoint("BOTTOMRIGHT", popup, "BOTTOMRIGHT", -32, 12)
+    scrollFrame:SetScript("OnMouseWheel", function(self, delta)
+        local current = self:GetVerticalScroll()
+        local max = self:GetVerticalScrollRange()
+        self:SetVerticalScroll(math.max(0, math.min(current - delta * 20, max)))
+    end)
 
     -- EditBox — mirroring SimulationCraft addon setup exactly
     local ctrlDown = false
@@ -451,7 +498,7 @@ local function UpdateBossNotePanel(bossKey)
         end
         OpenBossNotePanel(true)
     else
-        frame.bossNotePanel:Hide()
+        CloseBossNotePanel(true)
         rightPanel.bossNoteButton:SetText(Translate("BOSS_NOTES"))
     end
 end
@@ -460,6 +507,7 @@ end
 local function SelectBoss(bossData, btn)
     HideAffixesView()
     HideEditModeUI()
+    CloseSettingsInfoPanel(true)
     ClearRightPanelContent(rightPanel)
     if selectedButton then selectedButton:SetSelected(false) end
     frame.selectedBoss = bossData
@@ -597,9 +645,7 @@ local function ShowDungeons()
         ShowStartPage(frame, rightPanel)
         
         -- Luk automatisk bossNote panel når man ikke ser en boss
-        if frame.bossNotePanel and frame.bossNotePanel:IsShown() then
-            frame.bossNotePanel:Hide()
-        end
+        CloseBossNotePanel(true)
         
         -- Skjul bossNote knappen når man ikke ser en boss
         if rightPanel.bossNoteButton then
@@ -656,6 +702,7 @@ end
 -- ShowBosses
 function ShowBosses(dungeonName)
     currentDungeon = dungeonName
+    CloseSettingsInfoPanel(true)
 
     -- Brugeren er ikke længere i settings når vi åbner boss-listen
     BossHelperDB = BossHelperDB or {}
@@ -977,6 +1024,11 @@ function BuildShortLineButtons(rPanel, text)
         scroll:SetPoint("TOPLEFT", rPanel, "TOPLEFT", 10, -40)
         scroll:SetPoint("RIGHT", rPanel, "RIGHT", -30, 0)
         scroll:SetHeight(300)
+        scroll:SetScript("OnMouseWheel", function(self, delta)
+            local current = self:GetVerticalScroll()
+            local max = self:GetVerticalScrollRange()
+            self:SetVerticalScroll(math.max(0, math.min(current - delta * 20, max)))
+        end)
 
         local content = CreateFrame("Frame", nil, scroll)
         content:SetSize(1, 1)
@@ -1112,6 +1164,7 @@ local function PrepareForNavigation()
     end
     ClearRightPanelSettings()
     CloseBossNotePanelIfOpen()
+    CloseSettingsInfoPanel(true)
 end
 
 -- --- Settings er i BossSettings.lua ---
@@ -1129,6 +1182,21 @@ function ShowSettings()
     end
 
     if BossSettings and BossSettings.ShowSettings then
+        -- Åbn info-panelet straks i tom tilstand
+        if frame and frame.settingsInfoPanel then
+            local sip = frame.settingsInfoPanel
+            if sip.Reset then sip.Reset() end
+            if not sip:IsShown() then
+                local anim = BossHelper.Anim
+                local fullW = sip._fullWidth or 220
+                if anim and anim.AnimateWidth and anim.ShouldAnimate() then
+                    sip:SetWidth(0); sip:Show()
+                    anim.AnimateWidth(sip, 0, fullW, 0.15)
+                else
+                    sip:SetWidth(fullW); sip:Show()
+                end
+            end
+        end
         BossSettings.ShowSettings{
             frame = frame,
             leftPanel = leftPanel,
@@ -1138,6 +1206,12 @@ function ShowSettings()
             BossHelper = BossHelper,
             BossHelperDB = BossHelperDB,
             AddSettingsWidget = AddSettingsWidget,
+            ShowSettingsInfo = function(title, desc, image)
+                OpenSettingsInfoPanel(title, desc, image)
+            end,
+            HideSettingsInfo = function()
+                -- Gør ingenting – panelet beholder det sidst viste indhold
+            end,
         }
     else
         print("|cffFF4500[BossUI]|r BossSettings not loaded!")
@@ -1480,6 +1554,117 @@ function BossUI:CreateUI()
     bossNotePanel:Hide()
     frame.bossNotePanel = bossNotePanel
 
+    -- Settings Info Panel (hover-forklaring ved settings)
+    do
+        local _C  = BossHelper.UI.C
+        local _BD = BossHelper.UI.ApplyBackdrop
+
+        local sip = CreateFrame("Frame", "BossSettingsInfoWindow", frame, "BackdropTemplate")
+        sip:SetSize(200, 400)
+        sip:SetPoint("TOPLEFT", rightPanel, "TOPRIGHT", 10, 0)
+        _BD(sip, "EDITBOX", _C.BG_PANEL, _C.BORDER_AMBER)
+        sip:SetClipsChildren(true)
+        sip._fullWidth = 200
+        sip:Hide()
+        frame.settingsInfoPanel = sip
+
+        -- Layout konstanter (matcher settings-cards)
+        local PAD = 8     -- ydre margin inde i sip
+        local IPH = 8     -- indre horisontal padding i kort
+        local IPV = 8     -- indre vertikal padding i kort
+        local CW  = 200 - PAD * 2    -- kortbredde = 184
+        local IW  = CW - IPH * 2     -- billed-/tekstbredde = 168
+
+        -- Titel (orange, øverst i panelet, over kortet)
+        local titleFS = sip:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
+        titleFS:SetPoint("TOP", sip, "TOP", 0, -14)
+        titleFS:SetWidth(CW)
+        titleFS:SetTextColor(1, 0.5, 0)
+        titleFS:SetJustifyH("CENTER")
+        titleFS:SetWordWrap(false)
+        sip._titleFS = titleFS
+
+        -- Én kombineret kort (BG_DARK + BORDER_ORANGE ligesom settings-cards)
+        local card = CreateFrame("Frame", nil, sip, "BackdropTemplate")
+        card:SetWidth(CW)
+        card:SetHeight(60)   -- justeres dynamisk i Load()
+        _BD(card, "FRAME", _C.BG_DARK, _C.BORDER_ORANGE)
+        card:Hide()
+        sip._card = card
+
+        -- Billede øverst inde i kortet
+        local imgTex = card:CreateTexture(nil, "ARTWORK")
+        imgTex:SetSize(IW, IW)
+        imgTex:SetPoint("TOP",  card, "TOP",  0,    -IPV)
+        imgTex:SetPoint("LEFT", card, "LEFT", IPH,   0)
+        imgTex:Hide()
+        if card.CreateMaskTexture and imgTex.AddMaskTexture then
+            local imgMask = card:CreateMaskTexture()
+            imgMask:SetTexture("Interface\\AddOns\\BossHelper\\Media\\Masks\\CoverFadeMask")
+            imgMask:SetAllPoints(imgTex)
+            imgTex:AddMaskTexture(imgMask)
+        end
+        sip._imgTex = imgTex
+
+        -- Beskrivelsestekst nedenunder billedet (eller øverst hvis intet billede)
+        local descFS = card:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        descFS:SetWidth(IW)
+        descFS:SetJustifyH("LEFT")
+        descFS:SetJustifyV("TOP")
+        descFS:SetWordWrap(true)
+        descFS:SetTextColor(0.98, 0.82, 0.55)
+        sip._descFS = descFS
+
+        -- Empty-state hint shown centered when no setting is hovered
+        local emptyHint = sip:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        emptyHint:SetWidth(IW)
+        emptyHint:SetJustifyH("CENTER")
+        emptyHint:SetJustifyV("MIDDLE")
+        emptyHint:SetWordWrap(true)
+        emptyHint:SetTextColor(0.98, 0.82, 0.55)
+        emptyHint:SetPoint("CENTER", sip, "CENTER", 0, -8)
+        emptyHint:Hide()
+        sip._emptyHint = emptyHint
+
+        sip.Load = function(title, desc, imagePath)
+            titleFS:SetText(title or "")
+            descFS:SetText(desc or "")
+
+            descFS:ClearAllPoints()
+            if imagePath then
+                imgTex:SetTexture(imagePath)
+                imgTex:Show()
+                -- tekst under billedet
+                descFS:SetPoint("TOPLEFT", imgTex, "BOTTOMLEFT", 0, -IPV)
+                local th = descFS:GetStringHeight()
+                card:SetHeight(IPV + IW + IPV + th + IPV)
+            else
+                imgTex:Hide()
+                -- tekst fra toppen af kortet
+                descFS:SetPoint("TOPLEFT", card, "TOPLEFT", IPH, -IPV)
+                local th = descFS:GetStringHeight()
+                card:SetHeight(math.max(40, th + IPV * 2))
+            end
+
+            card:ClearAllPoints()
+            card:SetPoint("TOPLEFT",  sip, "TOPLEFT",  PAD, -42)
+            card:SetPoint("TOPRIGHT", sip, "TOPRIGHT", -PAD, -42)
+            card:Show()
+            if sip._emptyHint then sip._emptyHint:Hide() end
+        end
+
+        sip.Reset = function()
+            -- Clear title and show centered hint in panel body
+            titleFS:SetText("")
+            imgTex:Hide()
+            card:Hide()
+            if sip._emptyHint then
+                sip._emptyHint:SetText(Translate("SETTINGS_HOVER_HINT") or "Hover over a setting to see info.")
+                sip._emptyHint:Show()
+            end
+        end
+    end
+
     rightPanel.rightTitle = rightPanel:CreateFontString(nil, "OVERLAY")
     --rightPanel.rightTitle:SetFont("Fonts\\FRIZQT__.TTF", 22, "OUTLINE")
     rightPanel.rightTitle:SetFont("Fonts\\FRIZQT___CYR.TTF", 22, "OUTLINE")
@@ -1493,6 +1678,11 @@ function BossUI:CreateUI()
         scroll:SetPoint("TOPLEFT", rightPanel, "TOPLEFT", 10, -40)
         scroll:SetPoint("RIGHT", rightPanel, "RIGHT", -30, 0)
         scroll:SetHeight(300) -- visningshøjde, juster efter ønske
+        scroll:SetScript("OnMouseWheel", function(self, delta)
+            local current = self:GetVerticalScroll()
+            local max = self:GetVerticalScrollRange()
+            self:SetVerticalScroll(math.max(0, math.min(current - delta * 20, max)))
+        end)
 
         local content = CreateFrame("Frame", nil, scroll)
         content:SetSize(1, 1)
@@ -1515,6 +1705,11 @@ function BossUI:CreateUI()
     rightPanel.rightDetailScroll:SetPoint("TOPLEFT", rightPanel, "TOPLEFT", 10, -40)
     rightPanel.rightDetailScroll:SetPoint("RIGHT", rightPanel, "RIGHT", -30, 0)
     rightPanel.rightDetailScroll:SetPoint("BOTTOM", rightPanel, "BOTTOM", 0, 60)
+    rightPanel.rightDetailScroll:SetScript("OnMouseWheel", function(self, delta)
+        local current = self:GetVerticalScroll()
+        local max = self:GetVerticalScrollRange()
+        self:SetVerticalScroll(math.max(0, math.min(current - delta * 20, max)))
+    end)
     
     local detailContent = CreateFrame("Frame", nil, rightPanel.rightDetailScroll)
     detailContent:SetSize(520, 1)
@@ -1564,6 +1759,7 @@ function BossUI:CreateUI()
         ClearRightPanelSettings()
         ClearRightPanelNotes()
         CloseBossNotePanelIfOpen()
+        CloseSettingsInfoPanel(true)
 
         backButton:Hide()
         ShowStartPage(frame, rightPanel)

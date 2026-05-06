@@ -114,14 +114,29 @@ function ShowStartPage(frame, rightPanel)
         or "unknown"
     rightPanel.footerText:SetText("Burning Toast Studio • v" .. tostring(ver))
 
-    local showKeys = not BossHelperDB or BossHelperDB.showKeysOnStartPage ~= false
+    -- Logo-placering og guide-synlighed baseret på indstilling
+    local hideGuide = BossHelperDB and BossHelperDB.hideStartPageGuide
+    if hideGuide then
+        rightPanel.mainDesc:Hide()
+        rightPanel.logo:ClearAllPoints()
+        rightPanel.logo:SetPoint("CENTER", rightPanel, "CENTER", 0, 0)
+    else
+        rightPanel.mainDesc:Show()
+        rightPanel.logo:ClearAllPoints()
+        rightPanel.logo:SetPoint("TOP", rightPanel, "TOP", 0, -10)
+    end
+
+    local showKeys = not BossHelperDB or (BossHelperDB.keyTrackerEnabled ~= false and BossHelperDB.showKeysOnStartPage ~= false)
     rightPanel.keystoneWidget:SetEnabled(showKeys)
 
     local regions = {
-        rightPanel.logo, rightPanel.mainTitle, rightPanel.mainDesc,
+        rightPanel.logo, rightPanel.mainTitle,
         rightPanel.footerText,
         rightPanel.discordButton, rightPanel.githubButton, rightPanel.bugReportButton,
     }
+    if not hideGuide then
+        table.insert(regions, rightPanel.mainDesc)
+    end
     if showKeys and rightPanel.keystoneWidget.frame:IsShown() then
         table.insert(regions, rightPanel.keystoneWidget.frame)
     end

@@ -30,6 +30,8 @@ BossHelper.GetKeystoneShortName = GetShortName
 
 -- LibKeystone callback: only store keys from current group members (not guild-wide)
 LibKeystone.Register(BossHelper, function(keyLevel, keyMapID, playerRating, playerName, channel)
+    -- Bail out when Key Tracker is disabled
+    if BossHelperDB and BossHelperDB.keyTrackerEnabled == false then return end
     -- Ignore guild broadcasts — only accept PARTY, RAID, INSTANCE_CHAT or direct whispers
     if channel == "GUILD" then return end
     if not playerName then return end
@@ -109,6 +111,9 @@ frame:RegisterEvent("CHALLENGE_MODE_COMPLETED")
 frame:RegisterEvent("WEEKLY_REWARDS_UPDATE")
 
 frame:SetScript("OnEvent", function(self, event)
+    -- Bail out completely when Key Tracker is disabled — no timers, no data work.
+    if BossHelperDB and BossHelperDB.keyTrackerEnabled == false then return end
+
     -- GROUP_LEFT: immediately wipe stale data, no combat guard needed
     if event == "GROUP_LEFT" then
         if GroupRosterTimer then GroupRosterTimer:Cancel() ; GroupRosterTimer = nil end

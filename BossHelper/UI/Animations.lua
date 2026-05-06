@@ -132,6 +132,121 @@ function Anim.ApplyButtonHover(btn)
 end
 
 -- ============================================================
+-- Knap border-slide hover
+-- Top- og bundlinjer glider fra centrum ud mod kanterne,
+-- akkurat som settings-rækker – men kun på borderen.
+-- Kalder:  BossHelper.Anim.ApplyBorderHover(btn)
+-- Gemmer:  btn._resetBorderAnim  btn._showBorderAnim
+-- ============================================================
+function Anim.ApplyBorderHover(btn)
+    local r, g, b       = 1, 0.6, 0.2   -- S.BORDER_HOVER farve
+    local SLIDE_IN_DUR  = 0.16
+    local SLIDE_OUT_DUR = 0.10
+
+    local btnH = btn:GetHeight() or 30
+
+    -- Venstre halvdel: TOPRIGHT fastgjort til knap-centrum; vokser mod venstre
+    local linesLeft = CreateFrame("Frame", nil, btn)
+    linesLeft:SetHeight(btnH)
+    linesLeft:SetWidth(1)
+    linesLeft:SetPoint("TOPRIGHT", btn, "TOP", 0, 0)
+    linesLeft:EnableMouse(false)
+    linesLeft:Hide()
+
+    -- Højre halvdel: TOPLEFT fastgjort til knap-centrum; vokser mod højre
+    local linesRight = CreateFrame("Frame", nil, btn)
+    linesRight:SetHeight(btnH)
+    linesRight:SetWidth(1)
+    linesRight:SetPoint("TOPLEFT", btn, "TOP", 0, 0)
+    linesRight:EnableMouse(false)
+    linesRight:Hide()
+
+    -- Byg top+bund linje med gradient i et halvt frame
+    local function BuildHalf(f, al, ar)
+        local top = f:CreateTexture(nil, "OVERLAY", nil, 7)
+        top:SetHeight(1)
+        top:SetTexture("Interface\\BUTTONS\\WHITE8X8")
+        top:SetPoint("TOPLEFT",  f, "TOPLEFT")
+        top:SetPoint("TOPRIGHT", f, "TOPRIGHT")
+        top:SetGradient("HORIZONTAL", CreateColor(r, g, b, al), CreateColor(r, g, b, ar))
+
+        local bot = f:CreateTexture(nil, "OVERLAY", nil, 7)
+        bot:SetHeight(1)
+        bot:SetTexture("Interface\\BUTTONS\\WHITE8X8")
+        bot:SetPoint("BOTTOMLEFT",  f, "BOTTOMLEFT")
+        bot:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT")
+        bot:SetGradient("HORIZONTAL", CreateColor(r, g, b, al), CreateColor(r, g, b, ar))
+    end
+    BuildHalf(linesLeft,  0, 0.9)   -- transparent → orange (ved centrum)
+    BuildHalf(linesRight, 0.9, 0)   -- orange (ved centrum) → transparent
+
+    local animState = "hidden"
+    local animT     = 0
+
+    btn:HookScript("OnUpdate", function(self, elapsed)
+        if animState ~= "sliding_in" and animState ~= "sliding_out" then return end
+        animT = animT + elapsed
+        local halfW = (self:GetWidth() or 180) * 0.5
+        if animState == "sliding_in" then
+            local p    = math.min(1, animT / SLIDE_IN_DUR)
+            local ease = 1 - (1 - p) * (1 - p)
+            local w    = math.max(1, ease * halfW)
+            linesLeft:SetWidth(w); linesRight:SetWidth(w)
+            if p >= 1 then animState = "shown" end
+        else
+            local p    = math.min(1, animT / SLIDE_OUT_DUR)
+            local ease = p * p
+            local w    = (1 - ease) * halfW
+            if w < 1 then
+                linesLeft:Hide(); linesRight:Hide()
+                animState = "hidden"
+            else
+                linesLeft:SetWidth(w); linesRight:SetWidth(w)
+            end
+        end
+    end)
+
+    local function Show()
+        if animState == "hidden" or animState == "sliding_out" then
+            animT = 0; animState = "sliding_in"
+            linesLeft:SetWidth(1);  linesRight:SetWidth(1)
+            linesLeft:Show();       linesRight:Show()
+        end
+    end
+
+    local function Hide()
+        if animState == "shown" or animState == "sliding_in" then
+            animT = 0; animState = "sliding_out"
+        end
+    end
+
+    local function Reset()
+        animState = "hidden"; animT = 0
+        linesLeft:Hide(); linesRight:Hide()
+    end
+
+    btn._resetBorderAnim = Reset
+    btn._showBorderAnim  = Show
+
+    btn:HookScript("OnEnter", function(self)
+        if self._isSelected or self._noBorderHover then return end
+        if not Anim.ShouldAnimate() then
+            local hw = (self:GetWidth() or 180) * 0.5
+            linesLeft:SetWidth(hw);  linesLeft:Show()
+            linesRight:SetWidth(hw); linesRight:Show()
+            animState = "shown"; return
+        end
+        Show()
+    end)
+
+    btn:HookScript("OnLeave", function(self)
+        if self._isSelected or self._noBorderHover then return end
+        if not Anim.ShouldAnimate() then Reset(); return end
+        Hide()
+    end)
+end
+
+-- ============================================================
 -- Dropdown åbner: slide ned + fade ind
 -- ============================================================
 function Anim.PlayDropdownOpen(panel)
@@ -439,4 +554,143 @@ function Anim.FlashArrow(fontString, normalR, normalG, normalB)
             fontString:SetTextColor(normalR or 0.98, normalG or 0.82, normalB or 0.55)
         end
     end)
+end
+
+-- ============================================================
+-- Settings-række hover: gradient-striber der slider fra venstre mod højre.
+-- Opretter ét frame (lines) forankret i venstre kant af rowFrame.
+-- Alle hover-scripts sættes på rowFrame, cb og labelBtn.
+--
+-- Parametre:
+--   rowFrame  – bredt hit-frame (allerede oprettet og placeret)
+--   cb        – checkbox-knap
+--   labelBtn  – usynlig label-klik-knap
+--   halfW     – halvdelen af rowFrames bredde i pixels
+--   r,g,b     – linje-farve (guldtoner: 0.98, 0.82, 0.55)
+--   onShow    – funktion() kaldt ved hover-ind (fx ShowSettingsInfo)
+--   onHide    – funktion() kaldt ved hover-ud  (fx HideSettingsInfo)
+-- ============================================================
+function Anim.ApplySettingsRowHover(rowFrame, cb, labelBtn, halfW, r, g, b, onShow, onHide)
+    local SLIDE_IN_DUR  = 0.15
+    local SLIDE_OUT_DUR = 0.12
+    local fullW = halfW * 2
+
+    -- PEAK_RATIO: hvor lang "fade ind"-delen er i forhold til total bredde.
+    -- 0.25 = peak sidder 25% fra venstre kant.
+    local PEAK_RATIO = 0.15
+
+    -- Container forankret i venstre kant; vokser mod højre
+    local lines = CreateFrame("Frame", nil, rowFrame)
+    lines:SetHeight(rowFrame:GetHeight())
+    lines:SetWidth(1)
+    lines:SetPoint("TOPLEFT", rowFrame, "TOPLEFT", 0, 0)
+    lines:EnableMouse(false)
+    lines:Hide()
+
+    -- linesIn  = "fade ind"-del  (0 → peak),  starter fra venstre
+    local linesIn = CreateFrame("Frame", nil, lines)
+    linesIn:SetHeight(rowFrame:GetHeight())
+    linesIn:SetWidth(1)
+    linesIn:SetPoint("TOPLEFT", lines, "TOPLEFT", 0, 0)
+    linesIn:EnableMouse(false)
+
+    -- linesOut = "fade ud"-del   (peak → 0),  følger direkte efter linesIn
+    local linesOut = CreateFrame("Frame", nil, lines)
+    linesOut:SetHeight(rowFrame:GetHeight())
+    linesOut:SetWidth(1)
+    linesOut:SetPoint("TOPLEFT", linesIn, "TOPRIGHT", 0, 0)
+    linesOut:EnableMouse(false)
+
+    -- Byg teksturer i linesIn (transparent → guld)
+    local topIn = linesIn:CreateTexture(nil, "OVERLAY")
+    topIn:SetHeight(1); topIn:SetTexture("Interface\\BUTTONS\\WHITE8X8")
+    topIn:SetPoint("TOPLEFT", linesIn, "TOPLEFT"); topIn:SetPoint("TOPRIGHT", linesIn, "TOPRIGHT")
+    topIn:SetGradient("HORIZONTAL", CreateColor(r, g, b, 0), CreateColor(r, g, b, 0.8))
+
+    local botIn = linesIn:CreateTexture(nil, "OVERLAY")
+    botIn:SetHeight(1); botIn:SetTexture("Interface\\BUTTONS\\WHITE8X8")
+    botIn:SetPoint("BOTTOMLEFT", linesIn, "BOTTOMLEFT"); botIn:SetPoint("BOTTOMRIGHT", linesIn, "BOTTOMRIGHT")
+    botIn:SetGradient("HORIZONTAL", CreateColor(r, g, b, 0), CreateColor(r, g, b, 0.8))
+
+    local bgIn = linesIn:CreateTexture(nil, "BACKGROUND")
+    bgIn:SetTexture("Interface\\BUTTONS\\WHITE8X8")
+    bgIn:SetPoint("TOPLEFT", linesIn, "TOPLEFT"); bgIn:SetPoint("BOTTOMRIGHT", linesIn, "BOTTOMRIGHT")
+    bgIn:SetGradient("HORIZONTAL", CreateColor(r, g, b, 0), CreateColor(r, g, b, 0.05))
+
+    -- Byg teksturer i linesOut (guld → transparent)
+    local topOut = linesOut:CreateTexture(nil, "OVERLAY")
+    topOut:SetHeight(1); topOut:SetTexture("Interface\\BUTTONS\\WHITE8X8")
+    topOut:SetPoint("TOPLEFT", linesOut, "TOPLEFT"); topOut:SetPoint("TOPRIGHT", linesOut, "TOPRIGHT")
+    topOut:SetGradient("HORIZONTAL", CreateColor(r, g, b, 0.8), CreateColor(r, g, b, 0))
+
+    local botOut = linesOut:CreateTexture(nil, "OVERLAY")
+    botOut:SetHeight(1); botOut:SetTexture("Interface\\BUTTONS\\WHITE8X8")
+    botOut:SetPoint("BOTTOMLEFT", linesOut, "BOTTOMLEFT"); botOut:SetPoint("BOTTOMRIGHT", linesOut, "BOTTOMRIGHT")
+    botOut:SetGradient("HORIZONTAL", CreateColor(r, g, b, 0.8), CreateColor(r, g, b, 0))
+
+    local bgOut = linesOut:CreateTexture(nil, "BACKGROUND")
+    bgOut:SetTexture("Interface\\BUTTONS\\WHITE8X8")
+    bgOut:SetPoint("TOPLEFT", linesOut, "TOPLEFT"); bgOut:SetPoint("BOTTOMRIGHT", linesOut, "BOTTOMRIGHT")
+    bgOut:SetGradient("HORIZONTAL", CreateColor(r, g, b, 0.05), CreateColor(r, g, b, 0))
+
+    -- Hjælper: opdater split-bredder ud fra total bredde w
+    local function SetLinesWidth(w)
+        lines:SetWidth(w)
+        local wIn  = math.max(1, math.floor(w * PEAK_RATIO))
+        local wOut = math.max(1, w - wIn)
+        linesIn:SetWidth(wIn)
+        linesOut:SetWidth(wOut)
+    end
+
+    -- Animation-state via OnUpdate på rowFrame
+    local animState = "hidden"
+    local animT     = 0
+
+    rowFrame:SetScript("OnUpdate", function(self, elapsed)
+        if animState ~= "sliding_in" and animState ~= "sliding_out" then return end
+        animT = animT + elapsed
+        if animState == "sliding_in" then
+            local p    = math.min(1, animT / SLIDE_IN_DUR)
+            local ease = 1 - (1 - p) * (1 - p)
+            local w    = math.max(1, ease * fullW)
+            SetLinesWidth(w)
+            if p >= 1 then animState = "shown" end
+        else
+            local p    = math.min(1, animT / SLIDE_OUT_DUR)
+            local ease = p * p
+            local w    = (1 - ease) * fullW
+            if w < 1 then
+                lines:Hide()
+                animState = "hidden"
+            else
+                SetLinesWidth(w)
+            end
+        end
+    end)
+
+    local function Show()
+        if animState == "hidden" or animState == "sliding_out" then
+            animT = 0; animState = "sliding_in"
+            SetLinesWidth(1)
+            lines:Show()
+        end
+        if onShow then onShow() end
+    end
+
+    local function Hide()
+        C_Timer.After(0.03, function()
+            if MouseIsOver(rowFrame) or MouseIsOver(cb) or MouseIsOver(labelBtn) then return end
+            if animState == "shown" or animState == "sliding_in" then
+                animT = 0; animState = "sliding_out"
+            end
+            if onHide then onHide() end
+        end)
+    end
+
+    rowFrame:HookScript("OnEnter", Show)
+    rowFrame:HookScript("OnLeave", Hide)
+    cb:HookScript("OnEnter",       Show)
+    cb:HookScript("OnLeave",       Hide)
+    labelBtn:HookScript("OnEnter", Show)
+    labelBtn:HookScript("OnLeave", Hide)
 end

@@ -23,14 +23,21 @@ Tank. Attirer le boss loin du groupe.
             details     = [[A venir
 ]]
         },
-
+        
         {
             encounterID = 2495,
-            short       = [[
+            phases = {"Phase 1", "Phase Vent", "Phase Feu"},
+            phaseText = {
+                ["Phase 1"] = [[
 1. Évitez les attaques frontales, dispersez les cercles, ne lancez pas de sorts pendant Cris stridents.
-Phase Vent : attrapez les orbes et esquivez les tornades.
-Phase Feu : le feu = mauvais.
 ]],
+                ["Phase Vent"] = [[
+1. attrapez les orbes et esquivez les tornades.
+]],
+                ["Phase Feu"] = [[
+1. le feu = mauvais.
+]]
+            },
             details     = [[A venir
 ]]
         },

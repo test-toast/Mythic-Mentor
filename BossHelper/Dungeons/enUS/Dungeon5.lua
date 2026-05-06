@@ -28,7 +28,7 @@ Tank. Point boss away from the group & dodge frontal.
 2. Run when fixated.
 3. Hide behind pillar during the Searing Quills attack.
 
-DPS. please don't stand on each side of det pillar.
+DPS. Please don't stand on each side of the pillar.
 ]],
             details     = [[Coming soon
 ]]

@@ -33,7 +33,7 @@ local function StartMessageProcessor()
                 local ok, err = pcall(SendChatMessage, entry.msg, entry.channel, nil, entry.target)
                 if not ok then
                     DEFAULT_CHAT_FRAME:AddMessage(
-                        BossHelper.CHAT_TAG_ERR .. " Chat send fejlede: " .. tostring(err)
+                        BossHelper.CHAT_TAG_ERR .. " " .. Translate("CHAT_SEND_FAILED") .. tostring(err)
                     )
                 end
             else
@@ -94,7 +94,7 @@ local function _QueueMessages(msg, includeFooter)
     local channel = _GetChatChannel()
     if not channel then
         DEFAULT_CHAT_FRAME:AddMessage(
-            BossHelper.CHAT_TAG_ERR .. " Not in a group – messages will only be shown to you."
+            BossHelper.CHAT_TAG_ERR .. " " .. Translate("CHAT_NOT_IN_GROUP")
         )
     end
 

@@ -1,11 +1,12 @@
-## Interface: 120001, 120000, 50503, 38000, 20505, 11508
+## Interface: 120001, 120000
 ## Title: Mythic Mentor
 ## Notes: Minimalistisk M+ Boss Helper
 ## Author: testtoast & QuteBytes / Burning Toast Studio
-## Version: 2.1.0
+## Version: 3.0.0
 ## SavedVariables: BossHelperDB
 ## IconTexture: Interface\AddOns\BossHelper\Media\Mythic Mentor no te 512x512.png
-## X-social: discord coming soon
+## Discord: https://discord.gg/sYFdZDPKr3
+## GitHub: https://github.com/test-toast/Mythic-Mentor
 
 
 #----------------------------------------
@@ -79,44 +80,44 @@ Dungeons\frFR\Dungeon7_frFR.lua
 Dungeons\frFR\Dungeon8_frFR.lua
 
 #----------------------------------------
-# Core Files
+# Core
 #----------------------------------------
-BossHelper.lua
-Chat.lua
-Version.lua
-EncounterIDLookup.lua
-BossData.lua
-AffixData.lua
-Functions.lua
+Core\BossHelper.lua
+Core\Version.lua
+Core\EncounterIDLookup.lua
+Core\BossData.lua
+Core\AffixData.lua
+Core\Functions.lua
 
 #----------------------------------------
 # UI
 #----------------------------------------
 UI\Animations.lua
+UI\MythicTeleport.lua
 UI\KeystoneWidget.lua
 UI\GroupFinderPanel.lua
-#---------------------------
-# Extra Features
-InviterAddon\Inviter.lua
-#---------------------------
 UI\Buttons.lua
 UI\ConfirmDialog.lua
 UI\StartPage.lua
-UI\BossSettings.lua
-UI\BossInfo.lua
+UI\Settings.lua
+UI\Info.lua
 UI\GeneralNotes.lua
-UI\BossUI.lua
+UI\UI.lua
 UI\EditTactics.lua
 UI\Affixes.lua
-UI\MiniWindow.lua
 
 #----------------------------------------
-# Keystone Tracker
+# Commands
 #----------------------------------------
-Keystone\KeystoneTracker.lua
+Core\Commands.lua
 
 #----------------------------------------
-# Extra Features
+# Modules
 #----------------------------------------
-BossHelperTitan.lua
+Modules\Chat.lua
+Modules\MiniWindow.lua
+Modules\DungeonCheckWindow.lua
+Modules\Inviter.lua
+Modules\KeystoneTracker.lua
+Modules\BossHelperTitan.lua
 

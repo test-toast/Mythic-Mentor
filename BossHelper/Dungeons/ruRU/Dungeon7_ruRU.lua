@@ -4,34 +4,34 @@
         {
             encounterID = 1979,
             short = [[
-1. Frontal dodge.
-2. Move out circle.
-3. Kill adds ASAP.
+1. Уклоняться от фронтального атаки.
+2. Выйти из круга.
+3. Убить адов как можно быстрее.
 ]],
             details = [[Скоро]]
         },
         {
             encounterID = 1980,
             short = [[
-1. Clear void bombs circles.
-2. Interrupt pet.
+1. Очистить круги пустотных бомб.
+2. Прервать питомца.
 ]],
             details = [[Скоро]]
         },
         {
             encounterID = 1981,
             short = [[
-1. Kick Mind Blast & nuke tentacles.
-2. At 100 energy stack on boss.
+1. Прервать Mind Blast и уничтожить щупальца.
+2. При 100 энергии собраться на босса.
 ]],
             details = [[Скоро]]
         },
         {
             encounterID = 1982,
             short = [[
-1. Beam på notes.
-2. Rotating beams = dodge.
-3. Big circles = dodge.
+1. Луч на заметки.
+2. Вращающиеся лучи = уклоняться.
+3. Большие круги = уклоняться.
 ]],
             details = [[Скоро]]
         },

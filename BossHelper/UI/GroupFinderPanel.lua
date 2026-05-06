@@ -1,6 +1,6 @@
 -- GroupFinderPanel.lua
 -- Viser KeystoneWidget i et flytbart panel forankret til PVEFrame (Group Finder).
--- Panelet er synligt på ALLE faner i Group Finder, ligesom MDungeonTeleports.
+-- Panelet er synligt på ALLE faner i Group Finder,
 -- Positionen gemmes i BossHelperDB.groupFinderPanelPos og gendannes ved næste åbning.
 
 local PANEL_PADDING = 8
@@ -17,7 +17,7 @@ local keystoneWidget = nil
 local initialized    = false
 
 -- ============================================================
--- Position gem / gendan  (scale-kompenseret, som MDungeonTeleports)
+-- Position gem / gendan
 -- ============================================================
 local function SavePosition()
     if not panel or not PVEFrame then return end
@@ -177,6 +177,11 @@ local function HidePanel()
 end
 
 local function ShowPanel()
+    -- Bail out when Key Tracker is disabled entirely
+    if BossHelperDB and BossHelperDB.keyTrackerEnabled == false then
+        HidePanel()
+        return
+    end
     if BossHelperDB and BossHelperDB.showKeysInGroupFinder == false then
         HidePanel()
         return
@@ -201,6 +206,10 @@ end
 -- ============================================================
 BossHelper.GroupFinderPanel = BossHelper.GroupFinderPanel or {}
 function BossHelper.GroupFinderPanel.UpdateVisibility()
+    if BossHelperDB and BossHelperDB.keyTrackerEnabled == false then
+        HidePanel()
+        return
+    end
     if PVEFrame and PVEFrame:IsShown() then
         if BossHelperDB and BossHelperDB.showKeysInGroupFinder == false then
             HidePanel()

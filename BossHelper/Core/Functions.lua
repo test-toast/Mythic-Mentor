@@ -6,7 +6,7 @@
 -- ================================================
 function BossHelper:RegisterEscClose(frame)
     if not frame or not frame.GetName then
-        print(BossHelper.CHAT_TAG_ERR .. " Kan ikke registrere frame til ESC-lukning (mangler navn)")
+        print(BossHelper.CHAT_TAG_ERR .. " " .. Translate("ESC_REGISTER_FAILED"))
         return
     end
 

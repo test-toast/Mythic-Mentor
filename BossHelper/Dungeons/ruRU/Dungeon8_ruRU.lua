@@ -4,39 +4,39 @@
         {
             encounterID = 2509,
             short = [[
-1. Soak orbs (1 each).
-2. Move out circle.
+1. Поглощай орбы (по 1 каждому).
+2. Выходи из круга.
 
-Tank. Frontal away.
+Танк. Уклонись от фронтальной атаки в сторону.
 ]],
             details = [[Скоро]]
         },
         {
             encounterID = 2512,
             short = [[
-1. Germinate adds close → nuke ASAP.
-2. Cleanse green circle.
-3. Interrupt Ancient Branch.
+1. Адов рядом → уничтожь срочно.
+2. Очищай зелёный круг.
+3. Прерывай Ancient Branch.
 ]],
             details = [[Скоро]]
         },
         {
             encounterID = 2495,
-            phases = {"Phase 1", "Wind Phase", "Fire Phase"},
+            phases = {"Фаза 1", "Фаза ветра", "Фаза огня"},
             phaseText = {
-                ["Phase 1"] = [[Frontal dodge, spread, no cast]],
-                ["Wind Phase"] = [[Soak orbs + dodge tornadoes]],
-                ["Fire Phase"] = [[Fire = плохо]]
+                ["Фаза 1"] = [[Уходи от фронтала, разбегайся, не кастуй]],
+                ["Фаза ветра"] = [[Поглощай орбы + уходи от торнадо]],
+                ["Фаза огня"] = [[Огонь = плохо]]
             },
             details = [[Скоро]]
         },
         {
             encounterID = 2514,
             short = [[
-1. Debuff stacks → move out at 3.
-2. Avoid orbs & run when sucked.
+1. Стаки дебафа на 3 выходи.
+2. Избегай орбов и убегай когда затягивает.
 
-Tank. Frontal away.
+Танк. Уклонись от фронтальной атаки в сторону.
 ]],
             details = [[Скоро]]
         },

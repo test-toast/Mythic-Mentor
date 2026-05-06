@@ -49,11 +49,16 @@ BossHelper.DB_DEFAULTS = {
     closeOnPost                = false,
     allowEscClose              = true,
     autoOpenBossNotes          = true,
--- Auto-invite settings    
+    hideStartPageGuide         = false,
+
+-- teleport settings
+    teleportOnMythicTab        = true,
+
+-- Auto-invite settings
     autoInviteEnabled          = false,
-    triggerWord                = "invite!",
 
 -- mini-window settings
+    miniWindowEnabled          = true,
     miniWindowTransparency     = 0.95,
     miniWindowNoBorder         = false,
     miniWindowHideSeparator    = false,
@@ -61,11 +66,24 @@ BossHelper.DB_DEFAULTS = {
     miniWindowAutoExpand       = false,
 
 -- Key tracking settings    
+    keyTrackerEnabled          = true,
     showKeysOnStartPage        = true,
     showKeysInGroupFinder      = true,
+    teleportOnKeyCards         = true,
+    teleportOnKeyList          = true,
     gfPanelTransparency        = 0.95,
     gfNoBorder                 = false,
     gfHideTitle                = false,
+
+-- Dungeon Check Window settings
+    dcwEnabled                 = true,
+    dcwNoBorder                = false,
+    dcwTransparency            = 0.95,
+    dcwShowSpec                = true,
+    dcwShowDurability          = true,
+    dcwShowFlask               = true,
+    dcwShowFood                = true,
+    dcwShowButtons             = true,
 }
 
 function BossHelper:ApplyDefaults()
@@ -436,33 +454,6 @@ _loader:RegisterEvent("GROUP_ROSTER_UPDATE")
 _loader:RegisterEvent("CHAT_MSG_ADDON")
 
 -- BroadcastVersion / HandleIncomingVersion / ShowUpdatePopup er flyttet til Version.lua
-
---------------------------------------------------------------------------------
--- Slash command til at åbne addonet
---------------------------------------------------------------------------------
-SLASH_BOSSHELPER1 = "/mm"
-SLASH_BOSSHELPER2 = "/mythicmentor"
-SlashCmdList["BOSSHELPER"] = function(msg)
-    if BossUI and BossUI.GetFrame then
-        local frame = BossUI:GetFrame()
-        if frame then
-            if frame:IsShown() then
-                frame:Hide()
-            else
-                frame:Show()
-                -- Auto-select current dungeon when opening fresh (no previous dungeon/boss selected)
-                if BossUI.GetCurrentDungeon and BossUI:GetCurrentDungeon() == nil
-                   and BossUI.OpenFreshWithAutoSelect then
-                    BossUI:OpenFreshWithAutoSelect()
-                end
-            end
-        else
-            print(BossHelper.CHAT_TAG_ERR .. " UI not ready yet. Try again in a moment.")
-        end
-    else
-        print(BossHelper.CHAT_TAG_ERR .. " BossUI not loaded.")
-    end
-end
 
 --------------------------------------------------------------------------------
 -- Toggle the main UI frame

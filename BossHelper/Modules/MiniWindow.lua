@@ -957,6 +957,11 @@ end
 -- ---------------------------------------------------------------------------
 local function ApplyMiniWindowSettings()
     if not miniFrame then return end
+    -- Hide the frame entirely if the setting is disabled
+    if BossHelperDB and BossHelperDB.miniWindowEnabled == false then
+        miniFrame:Hide()
+        return
+    end
     local noBorder = BossHelperDB and BossHelperDB.miniWindowNoBorder
 
     local bg = C.BG_PANEL_DARK
@@ -1051,6 +1056,19 @@ local function CreateMiniWindow()
     ApplyMiniWindowSettings()
 end
 
+-- Offentlig funktion: opret vinduet (hvis nødvendigt) og vis det for den
+-- aktuelle dungeon. Bruges når brugeren aktiverer indstillingen midt i et run.
+-- Falder tilbage på sidst-kendt dungeon, eller første dungeon i listen.
+function MiniWindow.ShowIfInDungeon()
+    CreateMiniWindow()
+    local key = GetCurrentDungeonKey()
+        or currentDungeonKey
+        or (BossData and BossData.DungeonOrder and BossData.DungeonOrder[1])
+    if key then
+        OpenForDungeon(key)
+    end
+end
+
 -- ---------------------------------------------------------------------------
 -- Event-handler: auto-åbn ved dungeon-entry + auto-skift ved boss-kill
 -- ---------------------------------------------------------------------------
@@ -1060,6 +1078,12 @@ eventFrame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
 eventFrame:RegisterEvent("ENCOUNTER_START")
 eventFrame:RegisterEvent("ENCOUNTER_END")
 eventFrame:SetScript("OnEvent", function(self, event, ...)
+    -- Bail out completely when Mini Window is disabled — no timers, no frame work.
+    if BossHelperDB and BossHelperDB.miniWindowEnabled == false then
+        if miniFrame then miniFrame:Hide() end
+        return
+    end
+
     if event == "ENCOUNTER_START" then
         -- Auto-expand mini window at boss pull (if setting enabled)
         if BossHelperDB and BossHelperDB.miniWindowAutoExpand then
@@ -1107,11 +1131,12 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
         end
 
         -- må ikke fjernes, vigtigt for at kunne debugge og forbedre match-logikken i fremtiden
-        DEFAULT_CHAT_FRAME:AddMessage(string.format(
-            "|cff00ff00[BossHelper]|r ENCOUNTER_END %q (id=%d) → match=%s via %s",
-            tostring(encounterName), encounterID,
-            tostring(matchedIndex), tostring(matchMethod)
-        ))
+        -- Debug
+        --DEFAULT_CHAT_FRAME:AddMessage(string.format(
+        --    "|cff00ff00[BossHelper]|r ENCOUNTER_END %q (id=%d) → match=%s via %s",
+        --    tostring(encounterName), encounterID,
+        --    tostring(matchedIndex), tostring(matchMethod)
+        --))
 
         -- Auto-collapse mini window on boss kill (if setting enabled)
         if BossHelperDB and BossHelperDB.miniWindowAutoExpand then
@@ -1135,6 +1160,11 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
     -- PLAYER_ENTERING_WORLD / ZONE_CHANGED_NEW_AREA:
     -- Vent lidt så GetInstanceInfo er fuldt opdateret
     C_Timer.After(LAYOUT.ZONE_DELAY, function()
+        -- Re-check after the delay (setting may have changed)
+        if BossHelperDB and BossHelperDB.miniWindowEnabled == false then
+            if miniFrame then miniFrame:Hide() end
+            return
+        end
         CreateMiniWindow()
         local key = GetCurrentDungeonKey()
         if key then
@@ -1146,24 +1176,24 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
 end)
 
 -- ---------------------------------------------------------------------------
--- Slash-kommando: /mmw
+-- Public API: MiniWindow.Toggle() -- bruges af Commands.lua
 -- ---------------------------------------------------------------------------
-SLASH_BOSSHELPER_MMW1 = "/mmw"
-SlashCmdList["BOSSHELPER_MMW"] = function()
+function MiniWindow.Toggle()
     CreateMiniWindow()
     local key = GetCurrentDungeonKey()
     if key then
         -- Re-check: åbn (eller genåbn) med korrekt dungeon
         OpenForDungeon(key)
     else
-        -- Ikke i en dungeon – toggle synlighed af vinduet
-        if miniFrame then
-            if miniFrame:IsShown() then
-                miniFrame:Hide()
-            elseif currentDungeonKey then
-                -- Vis med sidst kendte dungeon
-                RefreshContent()
-                miniFrame:Show()
+        -- Ikke i en dungeon
+        if miniFrame and miniFrame:IsShown() then
+            miniFrame:Hide()
+        else
+            -- Brug sidst-kendt dungeon, ellers første dungeon i listen
+            local fallback = currentDungeonKey
+                or (BossData and BossData.DungeonOrder and BossData.DungeonOrder[1])
+            if fallback then
+                OpenForDungeon(fallback)
             end
         end
     end
