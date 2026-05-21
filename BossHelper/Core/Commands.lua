@@ -52,6 +52,16 @@ SlashCmdList["BOSSHELPER_MMC"] = function()
 end
 
 --------------------------------------------------------------------------------
+-- /mmbr  --  åbn/luk Battle Res tracker
+--------------------------------------------------------------------------------
+SLASH_BOSSHELPER_MMBR1 = "/mmbr"
+SlashCmdList["BOSSHELPER_MMBR"] = function()
+    if BattleResTracker and BattleResTracker.Toggle then
+        BattleResTracker.Toggle()
+    end
+end
+
+--------------------------------------------------------------------------------
 -- /mminv  --  auto-invite styring
 --------------------------------------------------------------------------------
 SLASH_MMINV1 = "/mminv"

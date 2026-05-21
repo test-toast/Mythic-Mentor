@@ -64,13 +64,14 @@ BossHelper.DB_DEFAULTS = {
     miniWindowHideSeparator    = false,
     miniWindowHideButtonChrome = false,
     miniWindowAutoExpand       = false,
+    miniWindowLockMove         = false,
 
 -- Key tracking settings    
     keyTrackerEnabled          = true,
     showKeysOnStartPage        = true,
     showKeysInGroupFinder      = true,
-    teleportOnKeyCards         = true,
     teleportOnKeyList          = true,
+    teleportOnKeyCard          = true,
     gfPanelTransparency        = 0.95,
     gfNoBorder                 = false,
     gfHideTitle                = false,
@@ -84,6 +85,14 @@ BossHelper.DB_DEFAULTS = {
     dcwShowFlask               = true,
     dcwShowFood                = true,
     dcwShowButtons             = true,
+    dcwLockMove                = false,
+
+-- Battle Res Tracker settings
+    brtEnabled                 = true,
+    brtNoBorder                = false,
+    brtTransparency            = 0.95,
+    brtHideTitle               = false,
+    brtLockMove                = false,
 }
 
 function BossHelper:ApplyDefaults()

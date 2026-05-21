@@ -28,7 +28,8 @@ function BossHelper.GetTeleportSpell(mapID)
     return BossHelper.TeleportSpells[mapID]
 end
 
--- Opdatér CooldownFrame på en teleport-knap (bruges af KeystoneWidget og denne fil)
+-- Opdatér CooldownFrame på en teleport-knap (bruges af KeystoneWidget og denne fil).
+-- Sender duration direkte til SetCooldown frem for at sammenligne det (kan være en secret value).
 function BossHelper.UpdateTeleportCooldown(btn)
     if not btn.cooldown then return end
     if not btn.spellID then
@@ -36,7 +37,7 @@ function BossHelper.UpdateTeleportCooldown(btn)
         return
     end
     local info = C_Spell.GetSpellCooldown(btn.spellID)
-    if info and info.duration > 0 then
+    if info then
         btn.cooldown:SetCooldown(info.startTime, info.duration)
     else
         btn.cooldown:Clear()
@@ -48,8 +49,13 @@ end
 -- Returnerer tidligt hvis i kamp (SecureActionButtons kan ikke ændres i combat lockdown).
 function BossHelper.ApplyTeleportButton(btn, spellID, tpEnabled)
     if InCombatLockdown() then return end
+    
     local effective = (tpEnabled and spellID) or nil
+    
+    -- Tilføjelse for at forhindre action blocked under beskyttet lockdown: 
+    -- Hvis knappen netop er ved at blive trykket på / evalueret til macro-kørsel, undgå SetAttribute.
     if btn._appliedSpellID == effective then return end  -- ingen ændring
+    
     btn._appliedSpellID = effective
     if effective then
         btn:SetAttribute("type", "spell")
@@ -80,7 +86,10 @@ BossHelper.MythicTeleport = BossHelper.MythicTeleport or {}
 function BossHelper.MythicTeleport.UpdateVisibility()
     local show = not (BossHelperDB and BossHelperDB.teleportOnMythicTab == false)
     for _, btn in pairs(iconButtons) do
-        btn:SetShown(show)
+        -- Check if combat lockdown is active before showing/hiding secure buttons
+        if not InCombatLockdown() then
+            btn:SetShown(show)
+        end
     end
 end
 
@@ -88,11 +97,16 @@ end
 -- Opret en knap oven på et dungeon-ikon
 -- ============================================================
 local function CreateTeleportButton(parent, spellID)
-    local btn = CreateFrame("Button", nil, parent, "SecureActionButtonTemplate")
+    local btn = CreateFrame("Button", nil, parent, "InsecureActionButtonTemplate")
     btn:SetAllPoints(parent)
     btn:RegisterForClicks("AnyDown", "AnyUp")
-    btn:SetAttribute("type", "spell")
-    btn:SetAttribute("spell", spellID)
+    
+    -- Teleportation action setup delayed/handled by the same logic used elsewhere.
+    -- If created during combat (rare but possible), we shouldn't attempt SetAttribute.
+    if not InCombatLockdown() then
+        btn:SetAttribute("type", "spell")
+        btn:SetAttribute("spell", spellID)
+    end
     btn.spellID = spellID
 
     -- Mørkening ved hover
@@ -100,19 +114,17 @@ local function CreateTeleportButton(parent, spellID)
     hover:SetAllPoints()
     hover:SetColorTexture(0, 0, 0, 0.45)
 
-    -- Lille dungeon-badge i hjørnet så spilleren ved at knappen er klikbar
-    -- teleport icon
-    
-    -- local badge = btn:CreateTexture(nil, "OVERLAY")
-    -- badge:SetAtlas("Dungeon", true)
-    -- badge:SetPoint("BOTTOMLEFT", -4, -4)
-    -- badge:SetSize(26, 26)
-
     -- Tooltip
     btn:SetScript("OnEnter", function(self)
         -- Kald forælderens OnEnter så Blizzards tooltip stadig vises
         local parentEnter = parent:GetScript("OnEnter")
         if parentEnter then parentEnter(parent) end
+
+        -- Opdater SpellAttribute så længe vi ikke er i combat (for at være sikre på at den er castbar hvis oprettet under combat)
+        if not InCombatLockdown() and not self:GetAttribute("spell") then
+            self:SetAttribute("type", "spell")
+            self:SetAttribute("spell", self.spellID)
+        end
 
         GameTooltip:AddLine(" ")
 
@@ -148,6 +160,29 @@ local function CreateTeleportButton(parent, spellID)
 
     btn:SetScript("OnLeave", function()
         if GameTooltip:IsOwned(parent) then GameTooltip:Hide() end
+    end)
+
+    -- Cooldown display
+    btn.cooldown = CreateFrame("Cooldown", nil, btn, "CooldownFrameTemplate")
+    btn.cooldown:SetAllPoints()
+    btn.cooldown:SetDrawEdge(false)
+    btn.cooldown:SetDrawSwipe(true)
+    
+    -- Opdater cooldown
+    BossHelper.UpdateTeleportCooldown(btn)
+    
+    btn:RegisterEvent("SPELLS_CHANGED")
+    btn:RegisterEvent("PLAYER_REGEN_DISABLED")
+    btn:RegisterEvent("PLAYER_REGEN_ENABLED")
+    btn:SetScript("OnEvent", function(self, event)
+        if event == "SPELLS_CHANGED" then
+            BossHelper.UpdateTeleportCooldown(self)
+        elseif event == "PLAYER_REGEN_DISABLED" then
+            self:UnregisterEvent("SPELLS_CHANGED")
+        elseif event == "PLAYER_REGEN_ENABLED" then
+            self:RegisterEvent("SPELLS_CHANGED")
+            BossHelper.UpdateTeleportCooldown(self)
+        end
     end)
 
     return btn

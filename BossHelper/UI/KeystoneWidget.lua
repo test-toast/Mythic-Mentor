@@ -59,39 +59,20 @@ end
 local classColorCache = {}
 BossHelper.ClearKeystoneColorCache = function() wipe(classColorCache) end
 
-local function GetUnitClassColor(playerName)
+local function GetUnitClassColor(playerName, targetUnit)
     local cached = classColorCache[playerName]
     if cached then return cached[1], cached[2], cached[3] end
 
-    local function tryUnit(unit)
-        local name, realm = UnitName(unit)
-        if not name then return end
-        local full = (realm and realm ~= "") and (name.."-"..realm) or name
-        if full == playerName or name == playerName then
-            local _, class = UnitClass(unit)
-            if class then
-                local col = C_ClassColor.GetClassColor(class)
-                if col then
-                    classColorCache[playerName] = { col.r, col.g, col.b }
-                    return col.r, col.g, col.b
-                end
+    if targetUnit then
+        local _, class = UnitClass(targetUnit)
+        if class then
+            local col = C_ClassColor.GetClassColor(class)
+            if col then
+                classColorCache[playerName] = { col.r, col.g, col.b }
+                return col.r, col.g, col.b
             end
         end
     end
-
-    if IsInRaid() then
-        for i = 1, GetNumGroupMembers() do
-            local r, g, b = tryUnit("raid"..i)
-            if r then return r, g, b end
-        end
-    elseif IsInGroup() then
-        for i = 1, GetNumGroupMembers() - 1 do
-            local r, g, b = tryUnit("party"..i)
-            if r then return r, g, b end
-        end
-    end
-    local r, g, b = tryUnit("player")
-    if r then return r, g, b end
     return 1, 1, 1
 end
 
@@ -109,7 +90,7 @@ local function BuildKeystoneCard(parent)
     card.dungeonTex:SetTexCoord(0, 1, 0, 1)
 
     -- Teleport-knap: klik på dungeon-billedet for at teleportere
-    card.teleportBtn = CreateFrame("Button", nil, card, "SecureActionButtonTemplate")
+    card.teleportBtn = CreateFrame("Button", nil, card, "InsecureActionButtonTemplate")
     card.teleportBtn:SetSize(CARD_W - 8, 40)
     card.teleportBtn:SetPoint("TOP", card, "TOP", 0, -4)
     card.teleportBtn:RegisterForClicks("AnyDown", "AnyUp")
@@ -122,37 +103,48 @@ local function BuildKeystoneCard(parent)
     card.teleportBtn.cooldown:SetDrawSwipe(false)
     card.teleportBtn.cooldown:SetHideCountdownNumbers(false)
     card.teleportBtn.cooldown:SetFrameLevel(card.teleportBtn:GetFrameLevel() + 1)
-    local cdFont = card.teleportBtn.cooldown:GetRegions()
-    if cdFont and cdFont.SetFont then
-        cdFont:SetFont(cdFont:GetFont(), 9, "OUTLINE")
-        cdFont:ClearAllPoints()
-        cdFont:SetPoint("TOPLEFT", card.teleportBtn.cooldown, "TOPLEFT", 2, -2)
-        cdFont:SetJustifyH("LEFT")
+    local cdFontCard = card.teleportBtn.cooldown:GetRegions()
+    if cdFontCard and cdFontCard.SetFont then
+        cdFontCard:SetFont(cdFontCard:GetFont(), 10, "OUTLINE")
+        cdFontCard:ClearAllPoints()
+        cdFontCard:SetPoint("TOPLEFT", card.teleportBtn.cooldown, "TOPLEFT", 2, -2)
+        cdFontCard:SetJustifyH("LEFT")
     end
 
-    -- Hover-mørkening (HIGHLIGHT-laget vises automatisk ved hover)
-    local cardHighlight = card.teleportBtn:CreateTexture(nil, "HIGHLIGHT")
-    cardHighlight:SetAllPoints(card.teleportBtn)
-    cardHighlight:SetColorTexture(0, 0, 0, 0.5)
-    card.teleportBtn.highlightTex = cardHighlight
+    -- Hover-mørkening
+    local hover = card.teleportBtn:CreateTexture(nil, "HIGHLIGHT")
+    hover:SetAllPoints(card.teleportBtn)
+    hover:SetColorTexture(0, 0, 0, 0.5)
+    card.teleportBtn.highlightTex = hover
 
     card.teleportBtn:SetScript("OnEnter", function(self)
-        if self.spellID and BossHelperDB and BossHelperDB.teleportOnKeyCards ~= false then
-            GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        if self.spellID and BossHelperDB and BossHelperDB.teleportOnKeyCard ~= false then
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
             GameTooltip:SetSpellByID(self.spellID)
             GameTooltip:Show()
         end
     end)
-    card.teleportBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    card.teleportBtn:SetScript("OnLeave", function(self)
+        if GameTooltip:IsOwned(self) then GameTooltip:Hide() end
+    end)
     card.teleportBtn:RegisterEvent("SPELLS_CHANGED")
+    card.teleportBtn:RegisterEvent("PLAYER_REGEN_DISABLED")
+    card.teleportBtn:RegisterEvent("PLAYER_REGEN_ENABLED")
     card.teleportBtn:SetScript("OnEvent", function(self, event)
-        if event == "SPELLS_CHANGED" then BossHelper.UpdateTeleportCooldown(self) end
+        if event == "SPELLS_CHANGED" then
+            BossHelper.UpdateTeleportCooldown(self)
+        elseif event == "PLAYER_REGEN_DISABLED" then
+            self:UnregisterEvent("SPELLS_CHANGED")
+        elseif event == "PLAYER_REGEN_ENABLED" then
+            self:RegisterEvent("SPELLS_CHANGED")
+            BossHelper.UpdateTeleportCooldown(self)
+        end
     end)
 
-    -- Top-lag over teleportBtn så levelText og crownIcon aldrig dækkes af hover-mørkening
+    -- Top-lag over teleportBtn så levelText og crownIcon altid er øverst
     card.topLayer = CreateFrame("Frame", nil, card)
     card.topLayer:SetAllPoints(card.dungeonTex)
-    card.topLayer:SetFrameLevel(card.teleportBtn:GetFrameLevel() + 10)
+    card.topLayer:SetFrameLevel(card.teleportBtn:GetFrameLevel() + 5)
 
     -- Halvgennemsigtig gradient i bunden af billedet så teksten er læselig
     local fade = card:CreateTexture(nil, "OVERLAY")
@@ -209,7 +201,7 @@ local function BuildKeystoneRow(parent)
     row.dungeonTex:SetTexCoord(0.07, 0.93, 0.07, 0.93)
 
     -- Teleport-knap: klik på dungeon-ikonet for at teleportere
-    row.teleportBtn = CreateFrame("Button", nil, row, "SecureActionButtonTemplate")
+    row.teleportBtn = CreateFrame("Button", nil, row, "InsecureActionButtonTemplate")
     row.teleportBtn:SetSize(ICON_SZ, ICON_SZ)
     row.teleportBtn:SetPoint("LEFT", row, "LEFT", 5, 0)
     row.teleportBtn:RegisterForClicks("AnyDown", "AnyUp")
@@ -243,10 +235,21 @@ local function BuildKeystoneRow(parent)
             GameTooltip:Show()
         end
     end)
-    row.teleportBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    row.teleportBtn:SetScript("OnLeave", function(self)
+        if GameTooltip:IsOwned(self) then GameTooltip:Hide() end
+    end)
     row.teleportBtn:RegisterEvent("SPELLS_CHANGED")
+    row.teleportBtn:RegisterEvent("PLAYER_REGEN_DISABLED")
+    row.teleportBtn:RegisterEvent("PLAYER_REGEN_ENABLED")
     row.teleportBtn:SetScript("OnEvent", function(self, event)
-        if event == "SPELLS_CHANGED" then BossHelper.UpdateTeleportCooldown(self) end
+        if event == "SPELLS_CHANGED" then
+            BossHelper.UpdateTeleportCooldown(self)
+        elseif event == "PLAYER_REGEN_DISABLED" then
+            self:UnregisterEvent("SPELLS_CHANGED")
+        elseif event == "PLAYER_REGEN_ENABLED" then
+            self:RegisterEvent("SPELLS_CHANGED")
+            BossHelper.UpdateTeleportCooldown(self)
+        end
     end)
 
     -- Top-lag over teleportBtn så levelText og crownIcon aldrig dækkes af hover-mørkening
@@ -345,6 +348,21 @@ function BossHelper.UI.CreateKeystoneWidget(parent, layout)
     section:Hide()
 
     local cards = {}
+
+    -- Pre-byg alle 5 kort/rækker med det samme (maks. M+ gruppe-størrelse).
+    -- InsecureActionButtonTemplate-frames bør bygges uden at skabe "taint", men vi bygger 
+    -- dem alligevel på forhånd for ydeevnen og for at have dem klar under combat.
+    do
+        local precount = 5
+        for i = 1, precount do
+            if isList then
+                cards[i] = BuildKeystoneRow(section)
+            else
+                cards[i] = BuildKeystoneCard(section)
+            end
+            cards[i]:Hide()
+        end
+    end
 
     -- --------------------------------------------------------
     -- Card-layout: samle/udfolde-tilstand  (kun brugt i card-mode)
@@ -476,14 +494,15 @@ function BossHelper.UI.CreateKeystoneWidget(parent, layout)
 
         -- Cache bruger-indstillinger én gang per Refresh-kald
         local db = BossHelperDB
-        local tpCardsOn = not (db and db.teleportOnKeyCards == false)
         local tpListOn  = not (db and db.teleportOnKeyList  == false)
+        local tpCardOn  = not (db and db.teleportOnKeyCard  == false)
 
         -- Hjælper: byg entry for ét unit-slot
         local function AddSlot(unit)
             local name, realm = UnitName(unit)
             if not name then return end
-            local shortName = name:match("^([^%-]+)") or name
+            -- Brug cachen fra KeystoneTracker hvis mulig for at undgå garbage collection allocations på regex
+            local shortName = BossHelper.GetKeystoneShortName and BossHelper.GetKeystoneShortName(name) or (name:match("^([^%-]+)") or name)
             local fullName  = (realm and realm ~= "") and (name.."-"..realm) or name
 
             -- Slå keystone op: lokal spiller via C_MythicPlus, andre via BossHelper.Keystones
@@ -547,11 +566,11 @@ function BossHelper.UI.CreateKeystoneWidget(parent, layout)
                 card:SetPoint("TOP", section, "TOP", 0, -((i-1) * (ROW_H + ROW_GAP)))
                 card:Show()
 
-                card.dungeonTex:SetDesaturated(entry.noKey and true or false)
+                card.dungeonTex:SetDesaturated(entry.noKey)
                 if entry.noKey then
                     if card._lastMapID ~= "NO_KEY" then
                         card.dungeonTex:SetTexture("Interface\\Icons\\INV_Misc_QuestionMark")
-                        card.dungeonName:SetText(Translate("NO_KEY") or "No key")
+                        card.dungeonName:SetText((type(Translate) == "function" and Translate("NO_KEY")) or "No key")
                         card._lastMapID = "NO_KEY"
                     end
                     if card._lastLevel ~= 0 then
@@ -574,9 +593,8 @@ function BossHelper.UI.CreateKeystoneWidget(parent, layout)
                 end
 
                 BossHelper.UpdateTeleportCooldown(card.teleportBtn)
-                local shortName = entry.shortName or (entry.playerName:match("^([^%-]+)") or entry.playerName)
-                local r, g, b = GetUnitClassColor(entry.playerName)
-                card.playerName:SetText(shortName)
+                local r, g, b = GetUnitClassColor(entry.playerName, entry.unit)
+                card.playerName:SetText(entry.playerName)
                 card.playerName:SetTextColor(r, g, b)
                 card.crownIcon:SetShown(entry.unit ~= nil and UnitIsGroupLeader(entry.unit) == true)
             end
@@ -590,11 +608,11 @@ function BossHelper.UI.CreateKeystoneWidget(parent, layout)
                 local card = cards[i]
                 card:Show()
 
-                card.dungeonTex:SetDesaturated(entry.noKey and true or false)
+                card.dungeonTex:SetDesaturated(entry.noKey)
                 if entry.noKey then
                     if card._lastMapID ~= "NO_KEY" then
                         card.dungeonTex:SetTexture("Interface\\Icons\\INV_Misc_QuestionMark")
-                        card.dungeonName:SetText(Translate("NO_KEY") or "No key")
+                        card.dungeonName:SetText((type(Translate) == "function" and Translate("NO_KEY")) or "No key")
                         card._lastMapID = "NO_KEY"
                     end
                     if card._lastLevel ~= 0 then
@@ -609,7 +627,7 @@ function BossHelper.UI.CreateKeystoneWidget(parent, layout)
                         card.dungeonName:SetText(info.name)
                         card._lastMapID = entry.keyMapID
                     end
-                    BossHelper.ApplyTeleportButton(card.teleportBtn, BossHelper.GetTeleportSpell(entry.keyMapID), tpCardsOn)
+                    BossHelper.ApplyTeleportButton(card.teleportBtn, BossHelper.GetTeleportSpell(entry.keyMapID), tpCardOn)
                     if card._lastLevel ~= entry.keyLevel then
                         card.levelText:SetText("+"..entry.keyLevel)
                         card._lastLevel = entry.keyLevel
@@ -617,9 +635,8 @@ function BossHelper.UI.CreateKeystoneWidget(parent, layout)
                 end
 
                 BossHelper.UpdateTeleportCooldown(card.teleportBtn)
-                local shortName = entry.shortName or (entry.playerName:match("^([^%-]+)") or entry.playerName)
-                local r, g, b = GetUnitClassColor(entry.playerName)
-                card.playerName:SetText(shortName)
+                local r, g, b = GetUnitClassColor(entry.playerName, entry.unit)
+                card.playerName:SetText(entry.playerName)
                 card.playerName:SetTextColor(r, g, b)
                 card.crownIcon:SetShown(entry.unit ~= nil and UnitIsGroupLeader(entry.unit) == true)
             end
@@ -639,7 +656,10 @@ function BossHelper.UI.CreateKeystoneWidget(parent, layout)
         frame = section,
 
         Refresh = function(self)
-            if not enabled or not visAllowed then section:Hide(); return end
+            if not enabled or not visAllowed then
+                C_Timer.After(0, function() section:Hide() end)
+                return
+            end
             Refresh()
         end,
 

@@ -480,7 +480,37 @@ function BossInfo.BuildInfoCategoryUI(rPanel, category, ctx)
     elseif category == "Changelog" then
         do
             local ver = BossHelper.VERSION_STRING or "unknown"
-            local _, add, fin = MakeCard("v" .. ver .. "  —  May 6, 2026", {collapsible=true, startExpanded=true})
+            local _, add, fin = MakeCard("v" .. ver .. "  —  May 20, 2026", {collapsible=true, startExpanded=true})
+            add("header", "New")
+            add("bullet", "Battle Res Tracker:")
+            add("subbullet", "Compact window showing BR count and next-charge timer.")
+            add("subbullet", "Auto-opens in dungeons and closes automatically on exit. Use `/mmbr` to toggle the window manually.")
+            add("spacer", 6)
+            add("bullet", "Settings:")
+            add("subbullet", "Added \"Lock position\" setting to Mini Window: When enabled, the window frame becomes click-through and requires holding Shift to move.")
+            add("subbullet", "Added \"Lock position\" setting to Dungeon Check: When enabled, the window frame becomes click-through and requires holding Shift to move.")
+            add("spacer", 8)
+            add("header", "Changed")
+            add("bullet", "Settings:")
+            add("subbullet", "Rewrote settings info/tooltips into a clear \"On / Off\" format for better readability.")
+            add("spacer", 6)
+            add("bullet", "Key Tracker:")
+            add("subbullet", "Rewrote and optimized the underlying logic for unified timers and roster updates, ensuring more reliable and efficient performance.")
+            add("spacer", 8)
+            add("header", "Fixed")
+            add("bullet", "Key Tracker:")
+            add("subbullet", "Fixed interface blockages and combat errors (ADDON_ACTION_FORBIDDEN) when using teleport buttons (Key Card, Key List, and Mythic+ dungeon icons).")
+            add("subbullet", "Reduced background updates and potential lag spikes from teleport buttons during combat.")
+            add("spacer", 6)
+            add("bullet", "Dungeon Check:")
+            add("subbullet", "Fixed a bug causing Lua errors (\"attempt to index/compare local 'name'\") during combat when the game hides or protects certain buff and item names.")
+            fin()
+        end
+
+
+        do
+            local ver = BossHelper.VERSION_STRING or "unknown"
+            local _, add, fin = MakeCard("v3.0.0  —  May 6, 2026", {collapsible=true})
             add("header", "New")
             add("bullet", "Dungeon Check Window:")
             add("subbullet", "Appears automatically when entering a dungeon and auto-closes when dungeon starts.")
@@ -719,6 +749,7 @@ function BossInfo.BuildInfoCategoryUI(rPanel, category, ctx)
             add("keyval", "/MythicMentor", "Open / close the addon window")
             add("keyval", "/mmw",          "Open the Mini Window")
             add("keyval", "/mmc",          "Open the Dungeon Check Window")
+            add("keyval", "/mmbt",         "Show Battle Res Tracker")
             fin()
         end
         do

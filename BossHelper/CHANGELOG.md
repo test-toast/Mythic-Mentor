@@ -1,6 +1,33 @@
 ### Changelog ###
 
-#### v3.0.0 - May 6, 2026
+#### v3.1.0 - May 20, 2026
+## New
+- Battle Res Tracker: 
+    - Compact, window showing BR count and next-charge timer.
+    - Auto-opens in dungeons and closes automatically on exit. Use `/mmbr` to toggle the window manually.
+
+- Settings:
+    - Added "Lock position" setting to Mini Window: When enabled, the window frame becomes click-through and requires holding **Shift** to move.
+    - Added "Lock position" setting to Dungeon Check: When enabled, the window frame becomes click-through and requires holding **Shift** to move.
+    
+
+## Changed
+- Settings: 
+    - Rewrote settings info/tooltips into a clear "On / Off" format for better readability.
+
+- Key Tracker:
+    - Rewrote and optimized the underlying logic for unified timers and roster updates, ensuring more reliable and efficient performance.
+
+## Fixed
+- Key Tracker:
+    - Fixed interface blockages and combat errors (ADDON_ACTION_FORBIDDEN) when using teleport buttons (Key Card, Key List, and Mythic+ dungeon icons).
+    - Reduced background updates and potential lag spikes from teleport buttons during combat.
+
+ - Dungeon Check:
+    - Fixed a bug causing Lua errors ("attempt to index/compare local 'name'") during combat when the game hides or protects certain buff and item names.
+
+
+# v3.0.0 - May 6, 2026
 ## New
 - Dungeon Check Window:
     - Appears automatically when entering a dungeon and auto-closes when dungeon starts.

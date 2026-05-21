@@ -364,6 +364,7 @@ local function CreateScrollbar(parent, scroll, content)
     sbThumb:EnableMouse(true)
     sbThumb:SetScript("OnEnter", function() sbThumbTex:SetColorTexture(unpack(MC.SBAR_THUMB_HOVER)) end)
     sbThumb:SetScript("OnLeave", function() sbThumbTex:SetColorTexture(unpack(MC.SBAR_THUMB))       end)
+    parent.sbThumb = sbThumb
 
     local function UpdateScrollThumb()
         local maxScroll = scroll:GetVerticalScrollRange()
@@ -1006,6 +1007,17 @@ local function ApplyMiniWindowSettings()
             end
         end
     end
+    -- Lock-move: opdater mus-tilstand baseret på indstilling
+    -- Kun selve rammen toggler; knapper forbliver altid klikbare.
+    local lockMove = BossHelperDB and BossHelperDB.miniWindowLockMove
+    if lockMove then
+        local shiftHeld = IsShiftKeyDown()
+        miniFrame:EnableMouse(shiftHeld)
+        miniFrame._mouseEnabled = shiftHeld
+    else
+        miniFrame:EnableMouse(true)
+        miniFrame._mouseEnabled = true
+    end
 end
 
 MiniWindow.ApplySettings = ApplyMiniWindowSettings
@@ -1031,7 +1043,10 @@ local function CreateMiniWindow()
     miniFrame:SetMovable(true)
     miniFrame:EnableMouse(true)
     miniFrame:RegisterForDrag("LeftButton")
-    miniFrame:SetScript("OnDragStart", function(self) self:StartMoving() end)
+    miniFrame:SetScript("OnDragStart", function(self)
+        local lockMove = BossHelperDB and BossHelperDB.miniWindowLockMove
+        if (not lockMove) or IsShiftKeyDown() then self:StartMoving() end
+    end)
     miniFrame:SetScript("OnDragStop", function(self)
         self:StopMovingOrSizing()
         -- Gem position i SavedVariables
@@ -1039,6 +1054,18 @@ local function CreateMiniWindow()
         local scale = self:GetEffectiveScale() / UIParent:GetEffectiveScale()
         BossHelperDB.miniWindowX = self:GetLeft() * scale
         BossHelperDB.miniWindowY = self:GetTop() * scale
+    end)
+    miniFrame:SetScript("OnUpdate", function(self)
+        -- Shift-tjek: aktiver/deaktiver mus for drag vs. click-through (kun i lock-mode)
+        -- Kun selve rammen toggler; knapper forbliver altid klikbare.
+        local lockMove = BossHelperDB and BossHelperDB.miniWindowLockMove
+        if lockMove then
+            local shiftHeld = IsShiftKeyDown()
+            if shiftHeld ~= self._mouseEnabled then
+                self:EnableMouse(shiftHeld)
+                self._mouseEnabled = shiftHeld
+            end
+        end
     end)
     miniFrame:SetClampedToScreen(true)
     miniFrame:Hide()

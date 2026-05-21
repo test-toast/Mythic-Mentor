@@ -106,7 +106,6 @@ function BossSettings.BuildSettingsCategoryUI(rPanel, category, ctx)
         MINI          = SIMG .. "mini.window\\mini-window.blp",
         KEY_CARD      = SIMG .. "key-tracker\\key-card.blp",
         KEY_LIST      = SIMG .. "key-tracker\\key-list.blp",
-        KEY_TELEPORT  = SIMG .. "key-tracker\\teleport\\key-card-teleport.blp",
         DCW           = SIMG .. "dungeon-check\\check-w.blp",
     }
 
@@ -1087,6 +1086,11 @@ function BossSettings.BuildSettingsCategoryUI(rPanel, category, ctx)
                 function(v) BossHelperDB.miniWindowHideButtonChrome = v; ApplyMiniWindow() end, IMG.MINI)
             Adv(28)
 
+            CardCheck(card, CY(), Translate("MINI_WINDOW_LOCK_MOVE_TITLE"), Translate("MINI_WINDOW_LOCK_MOVE_TOOLTIP"),
+                BossHelperDB.miniWindowLockMove,
+                function(v) BossHelperDB.miniWindowLockMove = v; ApplyMiniWindow() end, IMG.MINI)
+            Adv(28)
+
             Fin()
             miniAppearanceCard = card
         end
@@ -1141,16 +1145,18 @@ function BossSettings.BuildSettingsCategoryUI(rPanel, category, ctx)
                 BossHelperDB.showKeysOnStartPage ~= false,
                 function(v)
                     BossHelperDB.showKeysOnStartPage = v
-                    if rPanel and rPanel.keystoneWidget then rPanel.keystoneWidget:SetEnabled(v) end
+                    if rPanel and rPanel.keystoneWidget then
+                        rPanel.keystoneWidget:SetEnabled(v and (BossHelperDB.keyTrackerEnabled ~= false))
+                    end
                 end, IMG.KEY_CARD)
             Adv(28)
-
-            CardCheck(card, CY(), Translate("TELEPORT_KEY_CARDS_TITLE"), Translate("TELEPORT_KEY_CARDS_TOOLTIP"),
-                BossHelperDB.teleportOnKeyCards ~= false,
+            
+            CardCheck(card, CY(), Translate("TELEPORT_KEY_CARD_TITLE"), Translate("TELEPORT_KEY_CARD_TOOLTIP"),
+                BossHelperDB.teleportOnKeyCard ~= false,
                 function(v)
-                    BossHelperDB.teleportOnKeyCards = v
+                    BossHelperDB.teleportOnKeyCard = v
                     BossHelper.RefreshAllKeystoneWidgets()
-                end, IMG.KEY_TELEPORT)
+                end, IMG.KEY_CARD)
             Adv(28)
 
             Fin()
@@ -1290,6 +1296,11 @@ function BossSettings.BuildSettingsCategoryUI(rPanel, category, ctx)
                 function(v) BossHelperDB.dcwNoBorder = v; ApplyDCW() end, IMG.DCW)
             Adv(28)
 
+            CardCheck(card, CY(), Translate("DCW_LOCK_MOVE_TITLE"), Translate("DCW_LOCK_MOVE_TOOLTIP"),
+                BossHelperDB.dcwLockMove,
+                function(v) BossHelperDB.dcwLockMove = v; ApplyDCW() end, IMG.DCW)
+            Adv(28)
+
             Fin()
             dcwAppearanceCard = card
         end
@@ -1299,6 +1310,84 @@ function BossSettings.BuildSettingsCategoryUI(rPanel, category, ctx)
             GrayCard(dcwAppearanceCard, not enabled)
         end
         updateDCWSubCards(BossHelperDB.dcwEnabled ~= false)
+
+    -- ===========================================================================
+    -- CATEGORY: BATTLE RES TRACKER
+    -- ===========================================================================
+    elseif category == Translate("BRT_CATE") then
+
+        local function ApplyBRT()
+            if BattleResTracker and BattleResTracker.ApplySettings then
+                BattleResTracker.ApplySettings()
+            end
+        end
+
+        local updateBRTSubCards
+        do
+            local card, CY, Adv, Fin = MakeCard(Translate("BRT_CATE"), "full")
+            local rowY       = CY()
+            local SIDE_BTN_W = 160
+
+            CardCheck(card, rowY, Translate("BRT_ENABLED_TITLE"), Translate("BRT_ENABLED_TOOLTIP"),
+                BossHelperDB.brtEnabled ~= false,
+                function(v)
+                    BossHelperDB.brtEnabled = v
+                    if v then
+                        ApplyBRT()
+                        if BattleResTracker and BattleResTracker.Show then
+                            BattleResTracker.Show()
+                        end
+                    else
+                        if BattleResTracker and BattleResTracker.Hide then
+                            BattleResTracker.Hide()
+                        end
+                    end
+                    if updateBRTSubCards then updateBRTSubCards(v) end
+                end, nil, SIDE_BTN_W + CARD_PH + 4)
+
+            local openBtn = W(CreateCustomButton(card, SIDE_BTN_W, 30, Translate("BRT_OPEN_BTN")))
+            openBtn:SetPoint("TOPRIGHT", card, "TOPRIGHT", -CARD_PH, rowY + 6)
+            AttachInfoHover(openBtn, Translate("BRT_OPEN_BTN"), Translate("BRT_OPEN_BTN_TOOLTIP"), nil)
+            openBtn:SetScript("OnClick", function()
+                if BattleResTracker and BattleResTracker.Show then BattleResTracker.Show() end
+            end)
+            Adv(24)
+            Fin()
+        end
+
+        local brtAppearanceCard
+        do
+            local card, CY, Adv, Fin = MakeCard(Translate("DCW_SETTINGS_APPEARANCE"))
+
+            PctSlider(card, CY(),
+                "BRT_TRANSPARENT_TITLE",
+                { "BRT_TRANSPARENT_TITLE", "BRT_TRANSPARENT_TOOLTIP" },
+                "brtTransparency", ApplyBRT, nil)
+            Adv(44)
+
+            CardCheck(card, CY(), Translate("BRT_NO_BORDER_TITLE"), Translate("BRT_NO_BORDER_TOOLTIP"),
+                BossHelperDB.brtNoBorder,
+                function(v) BossHelperDB.brtNoBorder = v; ApplyBRT() end, nil)
+            Adv(28)
+
+            CardCheck(card, CY(), Translate("BRT_HIDE_TITLE_TITLE"), Translate("BRT_HIDE_TITLE_TOOLTIP"),
+                BossHelperDB.brtHideTitle,
+                function(v) BossHelperDB.brtHideTitle = v; ApplyBRT() end, nil)
+            Adv(28)
+
+            CardCheck(card, CY(), Translate("BRT_LOCK_MOVE_TITLE"), Translate("BRT_LOCK_MOVE_TOOLTIP"),
+                BossHelperDB.brtLockMove ~= false,
+                function(v) BossHelperDB.brtLockMove = v; ApplyBRT() end, nil)
+            Adv(28)
+
+            Fin()
+            brtAppearanceCard = card
+        end
+
+        updateBRTSubCards = function(enabled)
+            GrayCard(brtAppearanceCard, not enabled)
+        end
+        updateBRTSubCards(BossHelperDB.brtEnabled ~= false)
 
     end
 
@@ -1407,8 +1496,9 @@ function BossSettings.ShowSettings(ctx)
         Translate("GENERAL_CATE"),
         Translate("AUTO_INVITE_CATE"),
         Translate("MINI_WINDOW_CATE"),
-        Translate("KEY_TRACKER_CATE"),
         Translate("DCW_CATE"),
+        Translate("KEY_TRACKER_CATE"),
+        Translate("BRT_CATE"),
     }
 
     local y = -39

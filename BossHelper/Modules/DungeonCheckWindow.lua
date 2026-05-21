@@ -108,8 +108,12 @@ local function GetFlaskBuff()
             and C_UnitAuras.GetBuffDataByIndex("player", i)
         if not aura then break end
         local name = aura.name
-        if name and (name:find("Phial") or name:find("Flask")) then
-            return name
+        if name and type(name) == "string" then
+            local ok, hasPhial = pcall(string.find, name, "Phial")
+            local ok2, hasFlask = pcall(string.find, name, "Flask")
+            if (ok and hasPhial) or (ok2 and hasFlask) then
+                return name
+            end
         end
         i = i + 1
     end
@@ -124,7 +128,10 @@ local function GetFoodBuff()
             and C_UnitAuras.GetBuffDataByIndex("player", i)
         if not aura then break end
         local name = aura.name
-        if name == "Well Fed" then return name end
+        if type(name) == "string" then
+            local ok, isEqual = pcall(function() return name == "Well Fed" end)
+            if ok and isEqual then return name end
+        end
         i = i + 1
     end
     return nil
@@ -141,8 +148,12 @@ local function HasFlaskInBags()
                 local _, _, _, _, _, classID, subclassID = GetItemInfoInstant(itemInfo.itemID)
                 if classID == 0 and (subclassID == 1 or subclassID == 2 or subclassID == 3) then
                     local name = GetItemInfo(itemInfo.itemID)
-                    if name and (name:find("Phial") or name:find("Flask")) then
-                        return true
+                    if name and type(name) == "string" then
+                        local ok, hasPhial = pcall(string.find, name, "Phial")
+                        local ok2, hasFlask = pcall(string.find, name, "Flask")
+                        if (ok and hasPhial) or (ok2 and hasFlask) then
+                            return true
+                        end
                     end
                 end
             end
@@ -163,8 +174,12 @@ local function CountFlaskInBags()
                 local _, _, _, _, _, classID, subclassID = GetItemInfoInstant(itemInfo.itemID)
                 if classID == 0 and (subclassID == 1 or subclassID == 2 or subclassID == 3) then
                     local name = GetItemInfo(itemInfo.itemID)
-                    if name and (name:find("Phial") or name:find("Flask")) then
-                        count = count + (itemInfo.stackCount or 1)
+                    if name and type(name) == "string" then
+                        local ok, hasPhial = pcall(string.find, name, "Phial")
+                        local ok2, hasFlask = pcall(string.find, name, "Flask")
+                        if (ok and hasPhial) or (ok2 and hasFlask) then
+                            count = count + (itemInfo.stackCount or 1)
+                        end
                     end
                 end
             end
@@ -269,13 +284,28 @@ local function CreateDungeonCheckWindow()
     dcwFrame:SetMovable(true)
     dcwFrame:EnableMouse(true)
     dcwFrame:RegisterForDrag("LeftButton")
-    dcwFrame:SetScript("OnDragStart", function(self) self:StartMoving() end)
+    dcwFrame:SetScript("OnDragStart", function(self)
+        local lockMove = BossHelperDB and BossHelperDB.dcwLockMove
+        if (not lockMove) or IsShiftKeyDown() then self:StartMoving() end
+    end)
     dcwFrame:SetScript("OnDragStop", function(self)
         self:StopMovingOrSizing()
         BossHelperDB = BossHelperDB or {}
         local scale = self:GetEffectiveScale() / UIParent:GetEffectiveScale()
         BossHelperDB.dcwX = self:GetLeft()  * scale
         BossHelperDB.dcwY = self:GetTop()   * scale
+    end)
+    dcwFrame:SetScript("OnUpdate", function(self)
+        -- Shift-tjek: aktiver/deaktiver mus for drag vs. click-through (kun i lock-mode)
+        -- Kun selve rammen toggler; knapper forbliver altid klikbare.
+        local lockMove = BossHelperDB and BossHelperDB.dcwLockMove
+        if lockMove then
+            local shiftHeld = IsShiftKeyDown()
+            if shiftHeld ~= self._mouseEnabled then
+                self:EnableMouse(shiftHeld)
+                self._mouseEnabled = shiftHeld
+            end
+        end
     end)
     dcwFrame:SetClampedToScreen(true)
     dcwFrame:Hide()
@@ -526,7 +556,7 @@ local function GetCurrentLoadoutName(specID)
     if not info and C_Traits and C_Traits.GetConfigInfo then
         info = C_Traits.GetConfigInfo(configID)
     end
-    if info and info.name and info.name ~= "" then
+    if info and info.name and type(info.name) == "string" and info.name ~= "" then
         return info.name
     end
     return nil
@@ -621,6 +651,17 @@ local function ApplySettings()
         if dcwFrame.rdyBtn then dcwFrame.rdyBtn:Hide() end
         if dcwFrame.cdBtn  then dcwFrame.cdBtn:Hide()  end
         dcwFrame:SetHeight(baseH)
+    end
+    -- Lock-move: opdater mus-tilstand baseret på indstilling
+    -- Kun selve rammen toggler; knapper forbliver altid klikbare.
+    local lockMove = db.dcwLockMove
+    if lockMove then
+        local shiftHeld = IsShiftKeyDown()
+        dcwFrame:EnableMouse(shiftHeld)
+        dcwFrame._mouseEnabled = shiftHeld
+    else
+        dcwFrame:EnableMouse(true)
+        dcwFrame._mouseEnabled = true
     end
 end
 

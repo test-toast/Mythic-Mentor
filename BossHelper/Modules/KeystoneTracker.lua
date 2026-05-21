@@ -1,6 +1,7 @@
 -- KeystoneTracker.lua
 -- Tracks party members' keystones using LibKeystone.
 -- Data is stored in BossHelper.Keystones and auto-requested when joining a group.
+-- Redesigned for better efficiency, avoiding duplicated timers and custom addon sync messages.
 
 local LibKeystone = LibStub and LibStub("LibKeystone", true)
 if not LibKeystone then return end
@@ -10,6 +11,7 @@ local IsInGroup          = IsInGroup
 local IsInRaid           = IsInRaid
 local GetNumGroupMembers = GetNumGroupMembers
 local UnitName           = UnitName
+local UnitGUID           = UnitGUID
 local InCombatLockdown   = InCombatLockdown
 local wipe, pairs        = wipe, pairs
 
@@ -28,40 +30,47 @@ end
 -- Export so other modules (e.g. StartPage) can use it
 BossHelper.GetKeystoneShortName = GetShortName
 
--- LibKeystone callback: only store keys from current group members (not guild-wide)
-LibKeystone.Register(BossHelper, function(keyLevel, keyMapID, playerRating, playerName, channel)
-    -- Bail out when Key Tracker is disabled
+-- LibKeystone callback: only store keys from current group members
+LibKeystone.Register(BossHelper, function(keyLevel, keyMapID, _playerRating, playerName, channel)
     if BossHelperDB and BossHelperDB.keyTrackerEnabled == false then return end
-    -- Ignore guild broadcasts — only accept PARTY, RAID, INSTANCE_CHAT or direct whispers
-    if channel == "GUILD" then return end
-    if not playerName then return end
+    if channel == "GUILD" or channel == "RAID" or not playerName then return end
 
     BossHelper.Keystones[playerName] = {
-        keyLevel     = keyLevel,
-        keyMapID     = keyMapID,
-        playerRating = playerRating,
+        keyLevel = keyLevel,
+        keyMapID = keyMapID,
     }
+    
     if BossHelper.RefreshAllKeystoneWidgets then
         BossHelper.RefreshAllKeystoneWidgets()
     end
 end)
 
--- Reused table to avoid GC allocations on every roster event
 local currentNames = {}
+local updateTimer = nil
+
+local function RefreshWidgetsSafe()
+    if InCombatLockdown() then return end
+    if BossHelper.RefreshAllKeystoneWidgets then
+        BossHelper.RefreshAllKeystoneWidgets()
+    end
+end
 
 local function PruneAndRequest()
+    if BossHelperDB and BossHelperDB.keyTrackerEnabled == false then return end
+    updateTimer = nil
+    
+    if InCombatLockdown() then return end
+
     wipe(currentNames)
-    if IsInRaid() then
-        for i = 1, GetNumGroupMembers() do
-            local name = UnitName("raid"..i)
-            if name then currentNames[name] = true end
-        end
-    elseif IsInGroup() then
+    
+    -- M+ foregår kun i party-størrelse, så vi ignorerer raids for keys
+    if not IsInRaid() and IsInGroup() then
         for i = 1, GetNumGroupMembers() - 1 do
             local name = UnitName("party"..i)
             if name then currentNames[name] = true end
         end
     end
+    
     local myName = UnitName("player")
     if myName then currentNames[myName] = true end
 
@@ -73,34 +82,43 @@ local function PruneAndRequest()
         end
     end
 
-    if InCombatLockdown() then return end
-
-    LibKeystone.Request("PARTY")
+    if not IsInRaid() and IsInGroup() then
+        LibKeystone.Request("PARTY")
+    end
 
     -- Clear class colour cache so new members get the correct colour
     if BossHelper.ClearKeystoneColorCache then
         BossHelper.ClearKeystoneColorCache()
     end
 
-    if BossHelper.RefreshAllKeystoneWidgets then
-        BossHelper.RefreshAllKeystoneWidgets()
-    end
+    RefreshWidgetsSafe()
 end
 
-local function ClearAndRefresh()
+local function ClearKeystones()
     wipe(BossHelper.Keystones)
     wipe(shortNameCache)
-    if BossHelper.RefreshAllKeystoneWidgets then
-        BossHelper.RefreshAllKeystoneWidgets()
-    end
+    RefreshWidgetsSafe()
 end
 
--- Named timer references prevent timers from stacking when events fire rapidly
-local GroupRosterTimer
-local WeeklyRewardsTimer
-local GroupJoinedTimer
-local ChallengeModeTimer
-local previousGroupSize = GetNumGroupMembers()
+-- Replaces all the separate named timers from before with a unified debounced update
+local function RequestUpdate(delay)
+    if updateTimer then
+        updateTimer:Cancel()
+    end
+    updateTimer = C_Timer.NewTimer(delay or 2, PruneAndRequest)
+end
+
+local gossipNPCID
+local KEYSTONE_VENDOR_NPC_ID = 197711
+local KEYSTONE_REROLL_NPC_ID = 197915
+
+local function GetNPCIDFromGUID(guid)
+    if not guid or (issecretvalue and issecretvalue(guid)) then return nil end
+    local unitType, _, _, _, _, id = strsplit("-", guid)
+    if unitType == "Creature" or unitType == "Vehicle" then
+        return tonumber(id)
+    end
+end
 
 local frame = CreateFrame("Frame")
 frame:RegisterEvent("PLAYER_ENTERING_WORLD")
@@ -109,86 +127,40 @@ frame:RegisterEvent("GROUP_LEFT")
 frame:RegisterEvent("GROUP_JOINED")
 frame:RegisterEvent("CHALLENGE_MODE_COMPLETED")
 frame:RegisterEvent("WEEKLY_REWARDS_UPDATE")
+frame:RegisterEvent("PLAYER_REGEN_ENABLED")
+frame:RegisterEvent("GOSSIP_SHOW")
+frame:RegisterEvent("GOSSIP_CLOSED")
+frame:RegisterEvent("BAG_UPDATE_DELAYED")
 
-frame:SetScript("OnEvent", function(self, event)
-    -- Bail out completely when Key Tracker is disabled — no timers, no data work.
+frame:SetScript("OnEvent", function(self, event, ...)
     if BossHelperDB and BossHelperDB.keyTrackerEnabled == false then return end
 
-    -- GROUP_LEFT: immediately wipe stale data, no combat guard needed
-    if event == "GROUP_LEFT" then
-        if GroupRosterTimer then GroupRosterTimer:Cancel() ; GroupRosterTimer = nil end
-        previousGroupSize = 0
-        ClearAndRefresh()
-        return
-    end
-
-    -- GROUP_JOINED: short delay so the roster is populated first
-    if event == "GROUP_JOINED" then
-        if not GroupJoinedTimer then
-            GroupJoinedTimer = C_Timer.NewTimer(1, function()
-                GroupJoinedTimer = nil
-                if not InCombatLockdown() then
-                    previousGroupSize = GetNumGroupMembers()
-                    PruneAndRequest()
-                end
-            end)
+    if event == "PLAYER_REGEN_ENABLED" then
+        RefreshWidgetsSafe()
+        
+    elseif event == "GROUP_LEFT" then
+        ClearKeystones()
+        
+    elseif event == "GROUP_JOINED" then
+        RequestUpdate(1)
+        
+    elseif event == "GROUP_ROSTER_UPDATE" then
+        RequestUpdate(3)
+        
+    elseif event == "CHALLENGE_MODE_COMPLETED" or event == "WEEKLY_REWARDS_UPDATE" or event == "PLAYER_ENTERING_WORLD" then
+        RequestUpdate(3)
+        
+    elseif event == "BAG_UPDATE_DELAYED" then
+        -- Reliably tracks native bag updates to keystone (creation, level changes, rerolls)
+        RequestUpdate(2)
+        
+    elseif event == "GOSSIP_SHOW" then
+        gossipNPCID = GetNPCIDFromGUID(UnitGUID("target"))
+        
+    elseif event == "GOSSIP_CLOSED" then
+        if gossipNPCID == KEYSTONE_VENDOR_NPC_ID or gossipNPCID == KEYSTONE_REROLL_NPC_ID then
+            RequestUpdate(2)
         end
-        return
+        gossipNPCID = nil
     end
-
-    -- GROUP_ROSTER_UPDATE fires many times in a row — use a named timer so
-    -- only ONE request fires after the roster has settled (5 s, same as MDT).
-    if event == "GROUP_ROSTER_UPDATE" then
-        if not GroupRosterTimer then
-            GroupRosterTimer = C_Timer.NewTimer(5, function()
-                GroupRosterTimer = nil
-                if InCombatLockdown() then return end
-                local currentSize = GetNumGroupMembers()
-                if currentSize ~= previousGroupSize then
-                    previousGroupSize = currentSize
-                    PruneAndRequest()
-                end
-            end)
-        end
-        return
-    end
-
-    -- CHALLENGE_MODE_COMPLETED: keys are redistributed after a run
-    if event == "CHALLENGE_MODE_COMPLETED" then
-        if not ChallengeModeTimer then
-            ChallengeModeTimer = C_Timer.NewTimer(3, function()
-                ChallengeModeTimer = nil
-                if not InCombatLockdown() then
-                    PruneAndRequest()
-                end
-            end)
-        end
-        return
-    end
-
-    -- WEEKLY_REWARDS_UPDATE: player may have collected a new key from the Great Vault
-    if event == "WEEKLY_REWARDS_UPDATE" then
-        if not WeeklyRewardsTimer then
-            WeeklyRewardsTimer = C_Timer.NewTimer(3, function()
-                WeeklyRewardsTimer = nil
-                if InCombatLockdown() then return end
-                if IsInGroup() then
-                    LibKeystone.Request("PARTY")
-                end
-                if BossHelper.RefreshAllKeystoneWidgets then
-                    BossHelper.RefreshAllKeystoneWidgets()
-                end
-            end)
-        end
-        return
-    end
-
-    -- PLAYER_ENTERING_WORLD
-    C_Timer.After(3, function()
-        if InCombatLockdown() then return end
-        if IsInGroup() then
-            previousGroupSize = GetNumGroupMembers()
-            PruneAndRequest()
-        end
-    end)
 end)
