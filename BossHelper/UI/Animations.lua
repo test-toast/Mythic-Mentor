@@ -7,6 +7,15 @@ BossHelper.Anim  = BossHelper.Anim or {}
 
 local Anim = BossHelper.Anim
 
+local math_abs = math.abs
+local math_min = math.min
+local math_max = math.max
+local math_floor = math.floor
+local math_cos = math.cos
+local math_pi  = math.pi
+local GetTime  = GetTime
+local pcall    = pcall
+
 -- ============================================================
 -- Tuning-konstanter  (juster her for at ændre "følelsen")
 -- ============================================================
@@ -188,13 +197,13 @@ function Anim.ApplyBorderHover(btn)
         animT = animT + elapsed
         local halfW = (self:GetWidth() or 180) * 0.5
         if animState == "sliding_in" then
-            local p    = math.min(1, animT / SLIDE_IN_DUR)
+            local p    = math_min(1, animT / SLIDE_IN_DUR)
             local ease = 1 - (1 - p) * (1 - p)
-            local w    = math.max(1, ease * halfW)
+            local w    = math_max(1, ease * halfW)
             linesLeft:SetWidth(w); linesRight:SetWidth(w)
             if p >= 1 then animState = "shown" end
         else
-            local p    = math.min(1, animT / SLIDE_OUT_DUR)
+            local p    = math_min(1, animT / SLIDE_OUT_DUR)
             local ease = p * p
             local w    = (1 - ease) * halfW
             if w < 1 then
@@ -353,7 +362,7 @@ function Anim.PlayLogoPop(logo, fadeTime)
 
         logo._scaleAG = ag
 
-        local delay = math.max(fadeTime * cfg.LOGO_POP_DELAY_FRAC, cfg.LOGO_POP_DELAY_MIN)
+        local delay = math_max(fadeTime * cfg.LOGO_POP_DELAY_FRAC, cfg.LOGO_POP_DELAY_MIN)
         C_Timer.After(delay, function()
             if logo and logo._scaleAG then
                 local ok = pcall(function() logo._scaleAG:Play() end)
@@ -395,7 +404,7 @@ function Anim.AnimateHeight(frame, fromH, toH, duration, onComplete)
             frame._heightTween.running = false
             if onComplete then pcall(onComplete) end
         else
-            local eased = (1 - math.cos(t * math.pi)) / 2
+            local eased = (1 - math_cos(t * math_pi)) / 2
             local h = fromH + (toH - fromH) * eased
             if frame.SetHeight then pcall(function() frame:SetHeight(h) end) end
         end
@@ -417,11 +426,11 @@ function Anim.AnimateAlpha(widget, fromA, toA, duration)
     if widget.SetAlpha then pcall(function() widget:SetAlpha(fromA) end) end
     if widget.Show then pcall(function() widget:Show() end) end
     widget:SetScript("OnUpdate", function(self)
-        local t = (GetTime() - start) / duration
         if not widget._alphaTween.running then
             self:SetScript("OnUpdate", nil)
             return
         end
+        local t = (GetTime() - start) / duration
         if t >= 1 then
             self:SetScript("OnUpdate", nil)
             if widget.SetAlpha then pcall(function() widget:SetAlpha(toA) end) end
@@ -452,18 +461,18 @@ function Anim.AnimateWidth(frame, fromW, toW, duration, onComplete)
     local start = GetTime()
     if frame.SetWidth then pcall(function() frame:SetWidth(fromW) end) end
     frame:SetScript("OnUpdate", function(self)
-        local t = (GetTime() - start) / duration
         if not frame._widthTween.running then
             self:SetScript("OnUpdate", nil)
             return
         end
+        local t = (GetTime() - start) / duration
         if t >= 1 then
             self:SetScript("OnUpdate", nil)
             if frame.SetWidth then pcall(function() frame:SetWidth(toW) end) end
             frame._widthTween.running = false
             if onComplete then pcall(onComplete) end
         else
-            local eased = (1 - math.cos(t * math.pi)) / 2
+            local eased = (1 - math_cos(t * math_pi)) / 2
             local w = fromW + (toW - fromW) * eased
             if frame.SetWidth then pcall(function() frame:SetWidth(w) end) end
         end
@@ -636,8 +645,8 @@ function Anim.ApplySettingsRowHover(rowFrame, cb, labelBtn, halfW, r, g, b, onSh
     -- Hjælper: opdater split-bredder ud fra total bredde w
     local function SetLinesWidth(w)
         lines:SetWidth(w)
-        local wIn  = math.max(1, math.floor(w * PEAK_RATIO))
-        local wOut = math.max(1, w - wIn)
+        local wIn  = math_max(1, math_floor(w * PEAK_RATIO))
+        local wOut = math_max(1, w - wIn)
         linesIn:SetWidth(wIn)
         linesOut:SetWidth(wOut)
     end
@@ -650,13 +659,13 @@ function Anim.ApplySettingsRowHover(rowFrame, cb, labelBtn, halfW, r, g, b, onSh
         if animState ~= "sliding_in" and animState ~= "sliding_out" then return end
         animT = animT + elapsed
         if animState == "sliding_in" then
-            local p    = math.min(1, animT / SLIDE_IN_DUR)
+            local p    = math_min(1, animT / SLIDE_IN_DUR)
             local ease = 1 - (1 - p) * (1 - p)
-            local w    = math.max(1, ease * fullW)
+            local w    = math_max(1, ease * fullW)
             SetLinesWidth(w)
             if p >= 1 then animState = "shown" end
         else
-            local p    = math.min(1, animT / SLIDE_OUT_DUR)
+            local p    = math_min(1, animT / SLIDE_OUT_DUR)
             local ease = p * p
             local w    = (1 - ease) * fullW
             if w < 1 then

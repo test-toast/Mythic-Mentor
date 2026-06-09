@@ -14,6 +14,8 @@
 
 ConfirmDialog = ConfirmDialog or {}
 
+local math_max = math.max
+
 local DIALOG_W = 360
 local DIALOG_H = 180  -- udvides automatisk til teksten
 
@@ -130,6 +132,24 @@ local function BuildDialog()
     dlg.okBtn:SetPoint("BOTTOMRIGHT", dlg, "BOTTOM",    -6, 12)
     dlg.cancelBtn:SetPoint("BOTTOMLEFT", dlg, "BOTTOM",  6, 12)
 
+    -- Input felt (valgfri)
+    if not dlg.inputBox then
+        dlg.inputBox = CreateFrame("EditBox", nil, dlg, "InputBoxTemplate")
+        dlg.inputBox:SetSize(DIALOG_W - 40, 24)
+        dlg.inputBox:SetAutoFocus(false)
+        dlg.inputBox:SetPoint("TOPLEFT", dlg.msgText, "BOTTOMLEFT", 6, -10)
+        
+        dlg.inputBox:SetScript("OnEnterPressed", function(self)
+            if dlg.okBtn:IsShown() and dlg.okBtn:IsEnabled() then
+                dlg.okBtn:Click()
+            end
+        end)
+        dlg.inputBox:SetScript("OnEscapePressed", function(self)
+            self:ClearFocus()
+            dlg.cancelBtn:Click()
+        end)
+    end
+
     dlg:Hide()
     overlay:Hide()
 end
@@ -149,10 +169,20 @@ function ConfirmDialog.Show(opts)
     local msgStr = opts.message or ""
     dlg.msgText:SetText(msgStr)
 
+    -- Vis evt. inputboks
+    if opts.isInput then
+        dlg.inputBox:SetText("")
+        dlg.inputBox:Show()
+        C_Timer.After(0.05, function() dlg.inputBox:SetFocus() end)
+    else
+        dlg.inputBox:Hide()
+    end
+
     -- Tilpas dialog-højde til teksten
     dlg.msgText:SetWidth(DIALOG_W - 28)
     local textH = dlg.msgText:GetStringHeight()
-    local totalH = math.max(DIALOG_H, 44 + textH + 16 + 40 + 12)
+    local inputH = opts.isInput and 34 or 0
+    local totalH = math_max(DIALOG_H, 44 + textH + 16 + inputH + 40 + 12)
     dlg:SetHeight(totalH)
 
     -- Callbacks
@@ -166,7 +196,13 @@ function ConfirmDialog.Show(opts)
             BossHelper:SafePlaySound(BossHelper.Sounds.NORMAL_BUTTON)
         end
         closeAll()
-        if opts.onOk then opts.onOk() end
+        if opts.onOk then 
+            if opts.isInput then
+                opts.onOk(dlg.inputBox:GetText())
+            else
+                opts.onOk()
+            end
+        end
     end)
 
     dlg.cancelBtn:SetScript("OnClick", function()

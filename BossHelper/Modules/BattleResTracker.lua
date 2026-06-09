@@ -5,6 +5,11 @@
 
 BattleResTracker = BattleResTracker or {}
 
+local math_floor = math.floor
+local tostring = tostring
+local GetTime = GetTime
+local unpack = unpack
+
 -- ---------------------------------------------------------------------------
 -- Modul-tilstand
 -- ---------------------------------------------------------------------------
@@ -64,12 +69,16 @@ local function CreateBattleResTracker()
     brtFrame = CreateFrame("Frame", "BossHelper_BattleResFrame", UIParent, "BackdropTemplate")
     brtFrame:SetSize(LAYOUT.W, LAYOUT.H)
 
+    local initScale = (BossHelperDB and tonumber(BossHelperDB.brtScale)) or 1.0
+    brtFrame:SetScale(initScale)
+
     -- Gendan gemt position, ellers placer midt-højre på skærmen
-    if BossHelperDB and BossHelperDB.brtX and BossHelperDB.brtY then
-        brtFrame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT",
-            BossHelperDB.brtX, BossHelperDB.brtY)
+    if BossHelperDB and BossHelperDB.brtCenterX and BossHelperDB.brtCenterY then
+        brtFrame:SetPoint("CENTER", UIParent, "BOTTOMLEFT", BossHelperDB.brtCenterX / initScale, BossHelperDB.brtCenterY / initScale)
+    elseif BossHelperDB and BossHelperDB.brtX and BossHelperDB.brtY then
+        brtFrame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", BossHelperDB.brtX / initScale, BossHelperDB.brtY / initScale)
     else
-        brtFrame:SetPoint("CENTER", UIParent, "CENTER", 240, 80)
+        brtFrame:SetPoint("CENTER", UIParent, "CENTER", 240 / initScale, 80 / initScale)
     end
 
     brtFrame:SetFrameStrata("HIGH")
@@ -82,9 +91,14 @@ local function CreateBattleResTracker()
     brtFrame:SetScript("OnDragStop", function(self)
         self:StopMovingOrSizing()
         BossHelperDB = BossHelperDB or {}
-        local scale = self:GetEffectiveScale() / UIParent:GetEffectiveScale()
-        BossHelperDB.brtX = self:GetLeft()  * scale
-        BossHelperDB.brtY = self:GetTop()   * scale
+        local scale = self:GetScale()
+        local cx, cy = self:GetCenter()
+        if cx and cy then
+            BossHelperDB.brtCenterX = cx * scale
+            BossHelperDB.brtCenterY = cy * scale
+            self:ClearAllPoints()
+            self:SetPoint("CENTER", UIParent, "BOTTOMLEFT", cx, cy)
+        end
     end)
     brtFrame:SetClampedToScreen(true)
     brtFrame:Hide()
@@ -182,8 +196,8 @@ local function CreateBattleResTracker()
         if charges < maxCharges and duration and duration > 0 and started and started > 0 then
             local remaining = duration - (GetTime() - started)
             if remaining < 0 then remaining = 0 end
-            local m = math.floor(remaining / 60)
-            local s = math.floor(remaining % 60)
+            local m = math_floor(remaining / 60)
+            local s = math_floor(remaining % 60)
             self.timerVal:SetFormattedText("%d:%02d", m, s)
         else
             self.timerVal:SetText("")
@@ -217,6 +231,26 @@ local function ApplySettings()
     end
 
     local CC = BossHelper.UI.C
+
+    -- Skalering
+    local scale = tonumber(db.brtScale) or 1.0
+    local oldScale = brtFrame:GetScale()
+    brtFrame:SetScale(scale)
+
+    if scale ~= oldScale then
+        if db.brtCenterX and db.brtCenterY then
+            brtFrame:ClearAllPoints()
+            brtFrame:SetPoint("CENTER", UIParent, "BOTTOMLEFT", db.brtCenterX / scale, db.brtCenterY / scale)
+        else
+            local cx, cy = brtFrame:GetCenter()
+            if cx and cy then
+                db.brtCenterX = cx * scale
+                db.brtCenterY = cy * scale
+                brtFrame:ClearAllPoints()
+                brtFrame:SetPoint("CENTER", UIParent, "BOTTOMLEFT", cx, cy)
+            end
+        end
+    end
 
     -- Baggrunds-alpha og border
     local alpha = (db.brtTransparency ~= nil) and db.brtTransparency or 0.95

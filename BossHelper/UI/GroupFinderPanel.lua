@@ -9,6 +9,9 @@ local PANEL_MIN_H   = 60   -- minimum højde
 local DEFAULT_X     = 4    -- standard offset fra PVEFrame TOPRIGHT
 local DEFAULT_Y     = 0
 
+local math_max = math.max
+local math_min = math.min
+
 -- ============================================================
 -- Intern state
 -- ============================================================
@@ -66,8 +69,8 @@ local function AdjustPanelSize()
     local fw = keystoneWidget.frame:GetWidth()  or 0
     local fh = keystoneWidget.frame:GetHeight() or 0
     local headerH = 22
-    local newW = math.max(PANEL_MIN_W, fw + PANEL_PADDING * 2)
-    local newH = math.max(PANEL_MIN_H, fh + headerH + PANEL_PADDING)
+    local newW = math_max(PANEL_MIN_W, fw + PANEL_PADDING * 2)
+    local newH = math_max(PANEL_MIN_H, fh + headerH + PANEL_PADDING)
     panel:SetWidth(newW)
     panel:SetHeight(newH)
 end
@@ -144,7 +147,7 @@ local function ApplyPanelSettings()
     local bg     = BossHelper.UI.C.BG_PANEL_DARK
     local stored = BossHelperDB and BossHelperDB.gfPanelTransparency
     local bgAlpha = tonumber(stored) or bg[4]
-    bgAlpha = math.max(0, math.min(1, bgAlpha))
+    bgAlpha = math_max(0, math_min(1, bgAlpha))
     panel:SetBackdropColor(bg[1], bg[2], bg[3], bgAlpha)
 
     local border      = BossHelper.UI.C.BORDER_AMBER

@@ -12,6 +12,17 @@
 
 if not BossInfo then BossInfo = {} end
 
+local math_max = math.max
+local math_min = math.min
+local math_abs = math.abs
+local math_cos = math.cos
+local math_pi  = math.pi
+local table_insert = table.insert
+local ipairs = ipairs
+local type = type
+local tostring = tostring
+local GetTime = GetTime
+
 local deps = {}  -- populated by Init / ShowInfo
 
 function BossInfo.Init(d)
@@ -76,7 +87,7 @@ function BossInfo.BuildInfoCategoryUI(rPanel, category, ctx)
         sf:SetScript("OnMouseWheel", function(self, delta)
             local current = self:GetVerticalScroll()
             local max = self:GetVerticalScrollRange()
-            self:SetVerticalScroll(math.max(0, math.min(current - delta * 20, max)))
+            self:SetVerticalScroll(math_max(0, math_min(current - delta * 20, max)))
         end)
         rPanel.infoScrollFrame = sf
     end
@@ -93,7 +104,7 @@ function BossInfo.BuildInfoCategoryUI(rPanel, category, ctx)
 
     local _C  = BossHelper.UI.C
     local _BD = BossHelper.UI.ApplyBackdrop
-    local function W(w) table.insert(rPanel.settingsWidgets, w); return w end
+    local function W(w) table_insert(rPanel.settingsWidgets, w); return w end
 
     -- ---- Card layout constants (matches BossSettings) -----------------
     local CARD_W   = 540   -- card width
@@ -117,7 +128,7 @@ function BossInfo.BuildInfoCategoryUI(rPanel, category, ctx)
             entry.frame:SetPoint("TOPLEFT", content, "TOPLEFT", CARD_X, y)
             y = y - entry.frame:GetHeight() - CARD_GAP
         end
-        content:SetHeight(math.max(math.abs(y) + 20, 100))
+        content:SetHeight(math_max(math_abs(y) + 20, 100))
     end
 
     -- Animate card height + arrow rotation + body-element alpha simultaneously (cosine-ease)
@@ -126,7 +137,7 @@ function BossInfo.BuildInfoCategoryUI(rPanel, category, ctx)
         local fromH = f:GetHeight()
         local toH   = targetCollapsed and CARD_HEADER_H or cardEntry.fullHeight
 
-        local ROT_COLLAPSED = math.pi  -- arrow points up   (collapsed)
+        local ROT_COLLAPSED = math_pi  -- arrow points up   (collapsed)
         local ROT_EXPANDED  = 0        -- arrow points down (expanded, ▼)
         local fromRot = cardEntry._arrowRot or (targetCollapsed and ROT_EXPANDED or ROT_COLLAPSED)
         local toRot   = targetCollapsed and ROT_COLLAPSED or ROT_EXPANDED
@@ -169,8 +180,8 @@ function BossInfo.BuildInfoCategoryUI(rPanel, category, ctx)
         f:SetHeight(fromH)
         f:SetScript("OnUpdate", function(self)
             if not f._heightTween.running then self:SetScript("OnUpdate", nil); return end
-            local t     = math.min((GetTime() - start) / duration, 1)
-            local eased = (1 - math.cos(t * math.pi)) * 0.5
+            local t     = math_min((GetTime() - start) / duration, 1)
+            local eased = (1 - math_cos(t * math_pi)) * 0.5
             -- height
             f:SetHeight(fromH + (toH - fromH) * eased)
             -- arrow rotation
@@ -237,17 +248,17 @@ function BossInfo.BuildInfoCategoryUI(rPanel, category, ctx)
             arrowTex:SetVertexColor(1, 0.5, 0, 0.9)
             arrowTex:SetSize(20, 10)
             arrowTex:SetPoint("TOPRIGHT", card, "TOPRIGHT", -CARD_PH, -(CARD_PV - 1))
-            local initRot = startCollapsed and math.pi or 0
+            local initRot = startCollapsed and math_pi or 0
             arrowTex:SetRotation(initRot)
-            table.insert(rPanel.settingsWidgets, arrowTex)
+            table_insert(rPanel.settingsWidgets, arrowTex)
         end
 
         -- bodyElements: FontStrings/Textures created by add() + the rule;
         -- all are shown/hidden together on collapse.
         local bodyElements = {}
         local function WB(w)
-            table.insert(bodyElements, w)
-            table.insert(rPanel.settingsWidgets, w)
+            table_insert(bodyElements, w)
+            table_insert(rPanel.settingsWidgets, w)
             return w
         end
 
@@ -354,7 +365,7 @@ function BossInfo.BuildInfoCategoryUI(rPanel, category, ctx)
                 vfs:SetText(tostring(val or ""))
                 vfs:SetTextColor(_C.TEXT_GOLD[1], _C.TEXT_GOLD[2], _C.TEXT_GOLD[3])
 
-                local lineH = math.max(kfs:GetStringHeight() or 16, vfs:GetStringHeight() or 16)
+                local lineH = math_max(kfs:GetStringHeight() or 16, vfs:GetStringHeight() or 16)
                 cy = cy - lineH - 6
                 return
             end
@@ -366,9 +377,9 @@ function BossInfo.BuildInfoCategoryUI(rPanel, category, ctx)
             bodyElements = bodyElements,
             collapsed    = startCollapsed,
             fullHeight   = nil,
-            _arrowRot    = startCollapsed and math.pi or 0,
+            _arrowRot    = startCollapsed and math_pi or 0,
         }
-        table.insert(allCards, cardEntry)
+        table_insert(allCards, cardEntry)
 
         -- Clickable header for collapsible cards
         if collapsible then
@@ -383,7 +394,7 @@ function BossInfo.BuildInfoCategoryUI(rPanel, category, ctx)
         end
 
         local function fin()
-            local fullH = math.abs(cy) + CARD_PVB
+            local fullH = math_abs(cy) + CARD_PVB
             cardEntry.fullHeight = fullH
             if startCollapsed then
                 for _, el in ipairs(bodyElements) do el:Hide() end
@@ -393,7 +404,7 @@ function BossInfo.BuildInfoCategoryUI(rPanel, category, ctx)
                 card:SetHeight(fullH)
                 cardY = cardY - fullH - CARD_GAP
             end
-            content:SetHeight(math.max(math.abs(cardY) + 20, 100))
+            content:SetHeight(math_max(math_abs(cardY) + 20, 100))
         end
 
         return card, add, fin
@@ -480,7 +491,42 @@ function BossInfo.BuildInfoCategoryUI(rPanel, category, ctx)
     elseif category == "Changelog" then
         do
             local ver = BossHelper.VERSION_STRING or "unknown"
-            local _, add, fin = MakeCard("v" .. ver .. "  —  May 20, 2026", {collapsible=true, startExpanded=true})
+            local _, add, fin = MakeCard("v" .. ver .. "  —  Jun 8, 2026", {collapsible=true, startExpanded=true})
+            add("header", "New")
+            add("bullet", " Mini Window")
+            add("subbullet", "Added a resizable drag handle in the bottom-right of the Mini Window.")
+            add("spacer", 6)
+            add("bullet", "Setup Wizard:")
+            add("subbullet", "Added a Setup Wizard with two modes:")
+            add("subbullet", "Standard — applies a clean default configuration focused on tactics with minimal extra features.")
+            add("subbullet", "Custom — walks users step-by-step to configure individual features and options.")
+            add("spacer", 6)
+            add("bullet", "Settings:")
+            add("subbullet", "Added `Auto-Fade (25%)` for the Mini Window (dims to 25% opacity when not hovered).")
+            add("subbullet", "Added `Tactic text font size` for the Mini Window.")
+            add("subbullet", "Added `Window scale` settings for Dungeon Check, Mini Window, and Battle Res Tracker (50%–200%).")
+            add("spacer", 8)
+            add("header", "Changed")
+            add("bullet", "Settings:")
+            add("subbullet", "Reorganized \"General\" settings into two sections: `Appearance` (right column) and `Behavior` (left column).")
+            add("spacer", 6)
+            add("bullet", "Edit Mode:")
+            add("subbullet", "Replaced the previous phase drop-down with a new phase drop-down.")
+            add("spacer", 8)
+            add("header", "Fixed")
+            add("bullet", "Edit Mode:")
+            add("subbullet", "Fixed an issue preventing deletion of standard phases.")
+            add("spacer", 6)
+            add("bullet", "Performance:")
+            add("subbullet", "Massive CPU optimizations across the codebase to reduce FPS drops and micro-stuttering.")
+            add("subbullet", "Optimized OnUpdate scripts and event handlers with debouncing and throttling to reduce CPU usage during combat.")
+            fin()
+        end
+
+
+        do
+            local ver = BossHelper.VERSION_STRING or "unknown"
+            local _, add, fin = MakeCard("v3.1.0  —  May 20, 2026", {collapsible=true})
             add("header", "New")
             add("bullet", "Battle Res Tracker:")
             add("subbullet", "Compact window showing BR count and next-charge timer.")
@@ -796,7 +842,7 @@ function BossInfo.BuildInfoCategoryUI(rPanel, category, ctx)
     end
 
     -- Final content height guard
-    content:SetHeight(math.max(math.abs(cardY) + 20, 100))
+    content:SetHeight(math_max(math_abs(cardY) + 20, 100))
 end
 
 -- ============================================================
@@ -910,7 +956,7 @@ function BossInfo.ShowInfo(ctx)
             })
             psafesound(856)
         end)
-        table.insert(frame.bossButtons, btn)
+        table_insert(frame.bossButtons, btn)
         y = y - 35
     end
 

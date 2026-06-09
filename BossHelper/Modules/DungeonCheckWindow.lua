@@ -5,6 +5,18 @@
 
 DungeonCheckWindow = DungeonCheckWindow or {}
 
+local math_max  = math.max
+local math_min  = math.min
+local math_ceil = math.ceil
+local math_floor = math.floor
+local string_lower = string.lower
+local string_find = string.find
+local string_format = string.format
+local tostring  = tostring
+local ipairs    = ipairs
+local unpack    = unpack
+local GetTime   = GetTime
+
 -- ---------------------------------------------------------------------------
 -- Modul-tilstand
 -- ---------------------------------------------------------------------------
@@ -93,7 +105,7 @@ local function GetOverallDurabilityPct()
         end
     end
     if totalMax == 0 then return nil end
-    return math.floor((totalCur / totalMax) * 100)
+    return math_floor((totalCur / totalMax) * 100)
 end
 
 -- ---------------------------------------------------------------------------
@@ -109,8 +121,8 @@ local function GetFlaskBuff()
         if not aura then break end
         local name = aura.name
         if name and type(name) == "string" then
-            local ok, hasPhial = pcall(string.find, name, "Phial")
-            local ok2, hasFlask = pcall(string.find, name, "Flask")
+            local ok, hasPhial = pcall(string_find, name, "Phial")
+            local ok2, hasFlask = pcall(string_find, name, "Flask")
             if (ok and hasPhial) or (ok2 and hasFlask) then
                 return name
             end
@@ -149,8 +161,8 @@ local function HasFlaskInBags()
                 if classID == 0 and (subclassID == 1 or subclassID == 2 or subclassID == 3) then
                     local name = GetItemInfo(itemInfo.itemID)
                     if name and type(name) == "string" then
-                        local ok, hasPhial = pcall(string.find, name, "Phial")
-                        local ok2, hasFlask = pcall(string.find, name, "Flask")
+                        local ok, hasPhial = pcall(string_find, name, "Phial")
+                        local ok2, hasFlask = pcall(string_find, name, "Flask")
                         if (ok and hasPhial) or (ok2 and hasFlask) then
                             return true
                         end
@@ -175,8 +187,8 @@ local function CountFlaskInBags()
                 if classID == 0 and (subclassID == 1 or subclassID == 2 or subclassID == 3) then
                     local name = GetItemInfo(itemInfo.itemID)
                     if name and type(name) == "string" then
-                        local ok, hasPhial = pcall(string.find, name, "Phial")
-                        local ok2, hasFlask = pcall(string.find, name, "Flask")
+                        local ok, hasPhial = pcall(string_find, name, "Phial")
+                        local ok2, hasFlask = pcall(string_find, name, "Flask")
                         if (ok and hasPhial) or (ok2 and hasFlask) then
                             count = count + (itemInfo.stackCount or 1)
                         end
@@ -272,12 +284,16 @@ local function CreateDungeonCheckWindow()
     dcwFrame = CreateFrame("Frame", "BossHelper_DungeonCheckFrame", UIParent, "BackdropTemplate")
     dcwFrame:SetSize(LAYOUT.W_MIN, LAYOUT.H)
 
+    local initScale = (BossHelperDB and tonumber(BossHelperDB.dcwScale)) or 1.0
+    dcwFrame:SetScale(initScale)
+
     -- Gendan gemt position, ellers placer til venstre for midten
-    if BossHelperDB and BossHelperDB.dcwX and BossHelperDB.dcwY then
-        dcwFrame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT",
-            BossHelperDB.dcwX, BossHelperDB.dcwY)
+    if BossHelperDB and BossHelperDB.dcwCenterX and BossHelperDB.dcwCenterY then
+        dcwFrame:SetPoint("CENTER", UIParent, "BOTTOMLEFT", BossHelperDB.dcwCenterX / initScale, BossHelperDB.dcwCenterY / initScale)
+    elseif BossHelperDB and BossHelperDB.dcwX and BossHelperDB.dcwY then
+        dcwFrame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", BossHelperDB.dcwX / initScale, BossHelperDB.dcwY / initScale)
     else
-        dcwFrame:SetPoint("CENTER", UIParent, "CENTER", -320, 0)
+        dcwFrame:SetPoint("CENTER", UIParent, "CENTER", -320 / initScale, 0)
     end
 
     dcwFrame:SetFrameStrata("HIGH")
@@ -291,11 +307,21 @@ local function CreateDungeonCheckWindow()
     dcwFrame:SetScript("OnDragStop", function(self)
         self:StopMovingOrSizing()
         BossHelperDB = BossHelperDB or {}
-        local scale = self:GetEffectiveScale() / UIParent:GetEffectiveScale()
-        BossHelperDB.dcwX = self:GetLeft()  * scale
-        BossHelperDB.dcwY = self:GetTop()   * scale
+        local scale = self:GetScale()
+        local cx, cy = self:GetCenter()
+        if cx and cy then
+            BossHelperDB.dcwCenterX = cx * scale
+            BossHelperDB.dcwCenterY = cy * scale
+            self:ClearAllPoints()
+            self:SetPoint("CENTER", UIParent, "BOTTOMLEFT", cx, cy)
+        end
     end)
-    dcwFrame:SetScript("OnUpdate", function(self)
+    local updateTimer = 0
+    dcwFrame:SetScript("OnUpdate", function(self, elapsed)
+        updateTimer = updateTimer + elapsed
+        if updateTimer < 0.25 then return end
+        updateTimer = 0
+        
         -- Shift-tjek: aktiver/deaktiver mus for drag vs. click-through (kun i lock-mode)
         -- Kun selve rammen toggler; knapper forbliver altid klikbare.
         local lockMove = BossHelperDB and BossHelperDB.dcwLockMove
@@ -444,12 +470,12 @@ local function CreateDungeonCheckWindow()
     -- Hjælper: kør countdown (samme logik som PortalAuthority:KeystoneUtility_DoPull10)
     local function DoCountdown(sec)
         if InCombatLockdown and InCombatLockdown() then return end
-        local s = math.floor(math.max(1, math.min(60, sec or 10)))
+        local s = math_floor(math_max(1, math_min(60, sec or 10)))
         -- Prøv Blizzard's native API først, derefter /cd makro som fallback
         if C_PartyInfo and type(C_PartyInfo.DoCountdown) == "function" then
             pcall(C_PartyInfo.DoCountdown, s)
         elseif RunMacroText then
-            pcall(RunMacroText, string.format("/cd %d", s))
+            pcall(RunMacroText, string_format("/cd %d", s))
         end
     end
 
@@ -582,6 +608,29 @@ local function ApplySettings()
     local alpha = (db.dcwTransparency ~= nil) and db.dcwTransparency or 0.95
     local bgC = CC.BG_PANEL_DARK
     dcwFrame:SetBackdropColor(bgC[1], bgC[2], bgC[3], alpha)
+    
+    -- Skalering
+    local scale = tonumber(db.dcwScale) or 1.0
+    local oldScale = dcwFrame:GetScale()
+    dcwFrame:SetScale(scale)
+
+    if scale ~= oldScale then
+        if db.dcwCenterX and db.dcwCenterY then
+            -- SetPoint with CENTER avoids moving the visual anchor point of the frame when scaled
+            dcwFrame:ClearAllPoints()
+            dcwFrame:SetPoint("CENTER", UIParent, "BOTTOMLEFT", db.dcwCenterX / scale, db.dcwCenterY / scale)
+        else
+            -- If first time scaling since update, calculate and cache the current center
+            local cx, cy = dcwFrame:GetCenter()
+            if cx and cy then
+                db.dcwCenterX = cx * scale
+                db.dcwCenterY = cy * scale
+                dcwFrame:ClearAllPoints()
+                dcwFrame:SetPoint("CENTER", UIParent, "BOTTOMLEFT", cx, cy)
+            end
+        end
+    end
+
     if db.dcwNoBorder then
         dcwFrame:SetBackdropBorderColor(0, 0, 0, 0)
     else
@@ -636,7 +685,7 @@ local function ApplySettings()
 
     -- Beregn ny højde
     local absContentTop = LAYOUT.HEADER_H + LAYOUT.INNER_PAD + specGap
-    local baseH = math.max(60, absContentTop + nVisible * LAYOUT.ROW_H + 14)
+    local baseH = math_max(60, absContentTop + nVisible * LAYOUT.ROW_H + 14)
 
     -- Knapper (kun for leader OG dcwShowButtons)
     local showBtns  = db.dcwShowButtons ~= false
@@ -681,8 +730,8 @@ local function RefreshDCW()
             dcwFrame.specNameVal:SetText(specInfo.name or "-")
             -- Tilpas vinduets bredde automatisk til spec-navnets længde
             local textX = LAYOUT.PADDING + LAYOUT.SPEC_ICON_SIZE + LAYOUT.INNER_PAD
-            local newW = math.max(LAYOUT.W_MIN,
-                math.ceil(textX + dcwFrame.specNameVal:GetStringWidth() + LAYOUT.PADDING + 4))
+            local newW = math_max(LAYOUT.W_MIN,
+                math_ceil(textX + dcwFrame.specNameVal:GetStringWidth() + LAYOUT.PADDING + 4))
             dcwFrame:SetWidth(newW)
         end
         if dcwFrame.roleIconVal then
@@ -787,16 +836,18 @@ end
 -- ---------------------------------------------------------------------------
 local refreshPending = false
 
+local function _doScheduleRefresh()
+    refreshPending = false
+    if dcwFrame and dcwFrame:IsShown() then
+        RefreshDCW()
+    end
+end
+
 local function ScheduleRefresh()
     if not dcwFrame or not dcwFrame:IsShown() then return end
     if refreshPending then return end
     refreshPending = true
-    C_Timer.After(0.5, function()
-        refreshPending = false
-        if dcwFrame and dcwFrame:IsShown() then
-            RefreshDCW()
-        end
-    end)
+    C_Timer.After(0.5, _doScheduleRefresh)
 end
 
 local updateFrame = CreateFrame("Frame")

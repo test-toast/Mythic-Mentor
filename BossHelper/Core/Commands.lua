@@ -70,3 +70,13 @@ SlashCmdList["MMINV"] = function(msg)
         Inviter.HandleCommand(msg)
     end
 end
+
+--------------------------------------------------------------------------------
+-- /mmqs  --  åbn Quick Start-guiden
+--------------------------------------------------------------------------------
+SLASH_BOSSHELPER_MMQS1 = "/mmqs"
+SlashCmdList["BOSSHELPER_MMQS"] = function()
+    if BossHelper.QuickStart and BossHelper.QuickStart.Show then
+        BossHelper.QuickStart.Show()
+    end
+end

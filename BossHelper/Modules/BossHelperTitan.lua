@@ -63,7 +63,8 @@ function TitanPanelRightClickMenu_PrepareBossHelperMenu()
 TitanPanelRightClickMenu_AddTitle(BossHelper:GetDungeonName(dungeonData.instanceID) or value.key, level)
 
         -- Tilføj bosser
-        for bossIdx, boss in ipairs(dungeonData.bosses) do
+        local orderedBosses = BossHelper:GetOrderedBosses(value.key, dungeonData)
+        for bossIdx, boss in ipairs(orderedBosses) do
             local bossName = BossHelper:GetBossName(boss.encounterID) or "?"
             local info = UIDropDownMenu_CreateInfo()
             info.text = bossName
@@ -81,14 +82,15 @@ TitanPanelRightClickMenu_AddTitle(BossHelper:GetDungeonName(dungeonData.instance
 
     elseif level == 3 and value and value.type == "boss" then
         local dungeonData = BossData[value.dungeon]
+        local orderedBosses = BossHelper:GetOrderedBosses(value.dungeon, dungeonData)
         local boss
         -- Prefer index-based lookup (handles encounterID = 0 placeholder)
         if value.bossIndex then
-            boss = dungeonData.bosses[value.bossIndex]
+            boss = orderedBosses[value.bossIndex]
         end
         -- Fallback: match by encounterID when non-zero
         if not boss and value.boss and value.boss > 0 then
-            for _, b in ipairs(dungeonData.bosses) do
+            for _, b in ipairs(orderedBosses) do
                 if b.encounterID == value.boss then boss = b; break end
             end
         end

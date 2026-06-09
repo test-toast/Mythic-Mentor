@@ -3,8 +3,14 @@
 
 if not GeneralNotes then GeneralNotes = {} end
 
+local string_format = string.format
+local string_gsub = string.gsub
+local pairs = pairs
+local table_insert = table.insert
+local table_remove = table.remove
+
 local deps = {}
-local function trim(s) return (s or ""):gsub("^%s+", ""):gsub("%s+$", "") end
+local function trim(s) return string_gsub(string_gsub(s or "", "^%s+", ""), "%s+$", "") end
 
 function GeneralNotes.Init(d)
 	if not d then return end
@@ -23,7 +29,7 @@ end
 local function ShowDeleteCategoryConfirm(catName, onConfirm)
 	ConfirmDialog.Show({
 		title   = Translate("CONFIRM_DELETE_CATEGORY_TITLE"),
-		message = string.format(Translate("CONFIRM_DELETE_CATEGORY"), catName or ""),
+		message = string_format(Translate("CONFIRM_DELETE_CATEGORY"), catName or ""),
 		onOk    = onConfirm,
 	})
 end

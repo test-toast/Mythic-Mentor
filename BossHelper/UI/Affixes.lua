@@ -11,6 +11,11 @@ local TIERS       = BossHelper.AffixData.Tiers
 local NUM_TIERS   = #TIERS
 local C           = BossHelper.UI.C
 
+local math_max = math.max
+local math_min = math.min
+local math_floor = math.floor
+local table_insert = table.insert
+
 local OUTER_PAD   = 8    -- horizontal padding of the whole column area
 local COL_GAP     = 5    -- gap between adjacent columns
 local HEADER_H    = 26   -- tier label row height
@@ -66,7 +71,7 @@ local function GetAffixesForTier(tier, affixList)
         end
 
         if aMin and aMax and aMin <= tier.maxLevel and aMax >= tier.minLevel then
-            table.insert(result, a)
+            table_insert(result, a)
         end
     end
     return result
@@ -143,7 +148,7 @@ local function BuildColumn(container, tier, tierIdx, colX, colW, panelH, tierAff
             local name, desc, fileID = C_ChallengeMode.GetAffixInfo(affixId)
 
             -- Affix kort (keystone-stil): billede i boks + navn nedenunder --
-            local imgSz  = math.min(iconW - 6, 68)   -- max 68 px bred
+            local imgSz  = math_min(iconW - 6, 68)   -- max 68 px bred
             local cardW  = imgSz + 8                  -- 4 px padding i hver side
             local cardH  = imgSz + 24                 -- billedet + 2 px gap + 18 px tekst
 
@@ -242,13 +247,13 @@ local function BuildAllColumns(container, rightPanel, animate)
         and C_MythicPlus.GetCurrentAffixes()) or {}
 
     local availW = panelW - OUTER_PAD * 2
-    local colW   = math.max(60, math.floor((availW - (NUM_TIERS - 1) * COL_GAP) / NUM_TIERS))
+    local colW   = math_max(60, math_floor((availW - (NUM_TIERS - 1) * COL_GAP) / NUM_TIERS))
 
     for i, tier in ipairs(TIERS) do
         local tierAffixes = GetAffixesForTier(tier, affixes)
         local colX = OUTER_PAD + (i - 1) * (colW + COL_GAP)
         local col  = BuildColumn(container, tier, i, colX, colW, panelH, tierAffixes)
-        table.insert(_colFrames, col)
+        table_insert(_colFrames, col)
     end
 
     if animate then

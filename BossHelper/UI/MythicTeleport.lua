@@ -8,6 +8,8 @@
 
 BossHelper = BossHelper or {}
 
+local math_ceil = math.ceil
+
 -- ============================================================
 -- Spell IDs: mapID → teleport-spell  (enkelt kilde til sandheden)
 -- Opdatér disse når en ny M+ sæson starter.
@@ -145,7 +147,7 @@ local function CreateTeleportButton(parent, spellID)
                 if cd.duration == 0 then
                     GameTooltip:AddLine("|cFF00FF00" .. Translate("TELEPORT_READY") .. "|r")
                 else
-                    local remaining = math.ceil(cd.startTime + cd.duration - GetTime())
+                    local remaining = math_ceil(cd.startTime + cd.duration - GetTime())
                     GameTooltip:AddLine("|cFFFF4444" .. Translate("TELEPORT_COOLDOWN") .. SecondsToTime(remaining) .. "|r")
                 end
             end

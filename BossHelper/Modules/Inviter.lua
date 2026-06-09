@@ -11,6 +11,7 @@ local strlower             = strlower
 local strfind              = string.find
 local tinsert              = table.insert
 local tremove              = table.remove
+local table_concat         = table.concat
 local wipe                 = wipe
 
 local triggersFriendly = {}
@@ -249,8 +250,8 @@ function Inviter.HandleCommand(msg)
         end
 
     elseif cmd == "list" or cmd == "" then
-        local fStr = #triggersFriendly > 0 and table.concat(triggersFriendly, ", ") or "(none)"
-        local oStr = #triggersOther    > 0 and table.concat(triggersOther,    ", ") or "(none)"
+        local fStr = #triggersFriendly > 0 and table_concat(triggersFriendly, ", ") or "(none)"
+        local oStr = #triggersOther    > 0 and table_concat(triggersOther,    ", ") or "(none)"
         print("|cff00ff00[AutoInvite]|r Friendly triggers: " .. fStr)
         print("|cff00ff00[AutoInvite]|r Other triggers:    " .. oStr)
 

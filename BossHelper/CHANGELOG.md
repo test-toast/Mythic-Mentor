@@ -1,6 +1,41 @@
 ### Changelog ###
 
-#### v3.1.0 - May 20, 2026
+#### v3.2.0 - Jun 8, 2026
+## New
+- Mini Window:
+    - Added a resizable drag handle in the bottom-right of the Mini Window.
+
+- Setup Wizard:
+    - Added a Setup Wizard with two modes:
+        - Standard — applies a clean default configuration focused on tactics with minimal extra features.
+        - Custom — walks users step-by-step to configure individual features and options.
+
+- Edit Mode:
+    - Added ability to reorder bosses in Edit Mode.
+
+- Settings:
+    - Added `Auto-Fade (25%)` for the Mini Window (dims to 25% opacity when not hovered).
+    - Added `Tactic text font size` for the Mini Window.
+    - Added `Window scale` settings for Dungeon Check, Mini Window, and Battle Res Tracker (50%–200%).
+    
+## Changed
+- Settings:
+    - Reorganized "General" settings into two sections: `Appearance` (right column) and `Behavior` (left column).
+
+- Edit Mode:
+    - Replaced the previous phase drop-down with a new phase drop-down.
+
+## Fixed
+- Edit Mode:
+    - Fixed an issue preventing deletion of standard phases.
+
+- Performance:
+    - Massive CPU optimizations across the codebase to reduce FPS drops and micro-stuttering.
+    - Optimized OnUpdate scripts and event handlers with debouncing and throttling to reduce CPU usage during combat.
+
+------------------------------------------------------------------------
+
+# v3.1.0 - May 20, 2026
 ## New
 - Battle Res Tracker: 
     - Compact, window showing BR count and next-charge timer.
@@ -23,9 +58,10 @@
     - Fixed interface blockages and combat errors (ADDON_ACTION_FORBIDDEN) when using teleport buttons (Key Card, Key List, and Mythic+ dungeon icons).
     - Reduced background updates and potential lag spikes from teleport buttons during combat.
 
- - Dungeon Check:
+- Dungeon Check:
     - Fixed a bug causing Lua errors ("attempt to index/compare local 'name'") during combat when the game hides or protects certain buff and item names.
 
+------------------------------------------------------------------------
 
 # v3.0.0 - May 6, 2026
 ## New

@@ -3,6 +3,19 @@
 
 BossUI = {}
 
+local math_max = math.max
+local math_min = math.min
+local math_pi = math.pi
+local math_floor = math.floor
+local table_insert = table.insert
+local table_remove = table.remove
+local table_sort = table.sort
+local table_concat = table.concat
+local string_gsub = string.gsub
+local ipairs = ipairs
+local type = type
+local unpack = unpack
+
 local frame, leftPanel, rightPanel, backButton
 local selectedButton = nil
 local currentDungeon = nil
@@ -175,6 +188,10 @@ local function CloseBossNotePanelIfOpen()
     end
 end
 
+-- Eksponer en BossUI-forward så andre moduler kan lukke boss-note panelet animeret
+if not BossUI then BossUI = {} end
+BossUI.CloseBossNotePanelIfOpen = CloseBossNotePanelIfOpen
+
 -- Settings Info Panel: åbn med indhold, luk animeret
 local _sip_hideTimer = nil
 
@@ -215,23 +232,6 @@ CloseSettingsInfoPanel = function(animated)
     end
 end
 
--- Helper: skjul tactic edit-mode UI (bruges fra flere steder)
-local function HideEditModeUI()
-    BossUI:HideEditModeUI()
-end
-
--- Enter tactic edit mode
-local function EnterEditMode()
-    BossUI:EnterEditMode()
-end
-
--- Exit tactic edit mode (saveChanges=true → gem, false → annuller)
-local function ExitEditMode(saveChanges)
-    BossUI:ExitEditMode(saveChanges)
-end
-
-
--- Lokale aliases til centrale animations-hjælpere (defineret i Animations.lua)
 local ShouldAnimateInCombat = BossHelper.Anim.ShouldAnimate
 local CrossfadeFrameText    = BossHelper.Anim.CrossfadeText
 
@@ -312,7 +312,7 @@ local function OpenCopyTextWindow(text)
         self:SetVerticalScroll(math.max(0, math.min(current - delta * 20, max)))
     end)
 
-    -- EditBox — mirroring SimulationCraft addon setup exactly
+    -- EditBox
     local ctrlDown = false
     local editBox = CreateFrame("EditBox", nil, scrollFrame)
     editBox:SetSize(scrollFrame:GetSize())
@@ -398,16 +398,10 @@ local function CreatePhaseDropdown(parent, rPanel, phases, textResolver)
     mainBtn.arrow:SetRotation(0)
 
     local panel = CreateFrame("Frame", nil, dropdown, "BackdropTemplate")
-    panel:SetSize(140, #phases * 26)
+    panel:SetSize(140 + 8, (#phases * 26) + 8)
     panel:SetPoint("TOP", mainBtn, "BOTTOM", 0, -2)
     panel:Hide()
-    panel:SetBackdrop({
-        bgFile   = "Interface\\DialogFrame\\UI-DialogBox-Background",
-        edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
-        tile = true, tileSize = 16, edgeSize = 16,
-        insets = { left = 4, right = 4, top = 4, bottom = 4 },
-    })
-    panel:SetBackdropColor(0.08, 0.09, 0.13, 0.95)
+    BossHelper.UI.ApplyBackdrop(panel, "EDITBOX", BossHelper.UI.C.BG_PANEL, BossHelper.UI.C.BORDER_AMBER)
     panel:SetFrameStrata("FULLSCREEN_DIALOG")
     panel:SetFrameLevel(2000)
     dropdown:SetFrameStrata("FULLSCREEN_DIALOG")
@@ -424,7 +418,7 @@ local function CreatePhaseDropdown(parent, rPanel, phases, textResolver)
 
     for i, phaseName in ipairs(phases) do
         local btn = CreateCustomButton(panel, 140, 26, phaseName)
-        btn:SetPoint("TOP", panel, "TOP", 0, -((i - 1) * 26))
+        btn:SetPoint("TOP", panel, "TOP", 0, -4 - ((i - 1) * 26))
         btn:SetScript("OnClick", function()
             SafePlay(BossHelper.Sounds.NORMAL_BUTTON)
             SelectPhase(i)
@@ -505,35 +499,47 @@ end
 
 -- Helper: SelectBoss
 local function SelectBoss(bossData, btn)
+    local wasInEditMode = BossUI.isInEditMode
+
+    if wasInEditMode then
+        if BossUI.SyncStagedTactics then
+            BossUI:SyncStagedTactics()
+        end
+    end
+
     HideAffixesView()
-    HideEditModeUI()
     CloseSettingsInfoPanel(true)
     ClearRightPanelContent(rightPanel)
     if selectedButton then selectedButton:SetSelected(false) end
     frame.selectedBoss = bossData
 
-    BossUI:ShowBoss(rightPanel, bossData)
+    if wasInEditMode then
+        BossUI:EnterEditMode()
+    else
+        BossUI:HideEditModeUI()
+        BossUI:ShowBoss(rightPanel, bossData)
 
-    if rightPanel.detailToggle then
-        rightPanel.detailToggle:SetText(Translate("SHOW_DETAILS"))
-        rightPanel.detailToggle:Show()
-    end
-    if rightPanel.postButton then
-        rightPanel.postButton:Show()
-        UpdatePostButtonLabel(rightPanel.postButton)
-    end
-    if rightPanel.bossNoteButton then rightPanel.bossNoteButton:Show() end
-    if rightPanel.editTacticsBtn then
-        rightPanel.editTacticsBtn:ClearAllPoints()
-        if rightPanel.phaseDropdown and rightPanel.phaseDropdown.mainBtn then
-            rightPanel.editTacticsBtn:SetPoint("LEFT", rightPanel.phaseDropdown.mainBtn, "RIGHT", 4, 0)
-        else
-            rightPanel.editTacticsBtn:SetPoint("TOPLEFT", rightPanel, "TOPLEFT", 8, -8)
+        if rightPanel.detailToggle then
+            rightPanel.detailToggle:SetText(Translate("SHOW_DETAILS"))
+            rightPanel.detailToggle:Show()
         end
-        rightPanel.editTacticsBtn:Show()
-    end
+        if rightPanel.postButton then
+            rightPanel.postButton:Show()
+            UpdatePostButtonLabel(rightPanel.postButton)
+        end
+        if rightPanel.bossNoteButton then rightPanel.bossNoteButton:Show() end
+        if rightPanel.editTacticsBtn then
+            rightPanel.editTacticsBtn:ClearAllPoints()
+            if rightPanel.phaseDropdown and rightPanel.phaseDropdown.mainBtn then
+                rightPanel.editTacticsBtn:SetPoint("LEFT", rightPanel.phaseDropdown.mainBtn, "RIGHT", 4, 0)
+            else
+                rightPanel.editTacticsBtn:SetPoint("TOPLEFT", rightPanel, "TOPLEFT", 8, -8)
+            end
+            rightPanel.editTacticsBtn:Show()
+        end
 
-    UpdateBossNotePanel(bossData.encounterID)
+        UpdateBossNotePanel(bossData.encounterID)
+    end
     if btn then btn:SetSelected(true); selectedButton = btn end
 end
 
@@ -660,33 +666,41 @@ end
 -- ShowAffixes: displays current week's Mythic+ affixes on right panel
 -- Made global (was local) so the dynamically created Affixes button (defined before this in execution) can call it
 function ShowAffixes()
-    currentLeftCategory = "affixes"
-    frame.selectedBoss = nil
-    if selectedButton then selectedButton:SetSelected(false); selectedButton = nil end
-    if leftPanel and leftPanel.affixButton then leftPanel.affixButton:SetSelected(true) end
-    if leftPanel and leftPanel.affixButton then leftPanel.affixButton.isAffixActive = true end
-    BossHelperDB = BossHelperDB or {}
-    BossHelperDB.lastOpenPanel = "affixes"
-    if backButton then backButton:Hide() end
-    -- dungeon buttons remain visible so player can switch dungeons after viewing affixes
-    -- Ryd rightPanel-indhold inden affixes vises
-    ClearRightPanelContent(rightPanel)
-    -- also hide boss note side panel if open
-    if frame and frame.bossNotePanel and frame.bossNotePanel:IsShown() then
-        frame.bossNotePanel:Hide()
-    end
-    if rightPanel and rightPanel.rightTitle then
-        CrossfadeFrameText(rightPanel.rightTitle, Translate("THIS_WEEK_AFFIXES") or "This Week Affixes")
-    end
-    if rightPanel then
-        if BossHelper_Affixes_Show then
-            local ok, err = pcall(BossHelper_Affixes_Show, rightPanel)
-            if not ok then
-                print("|cffFF4500[BossHelper]|r Affix view error:", err)
-            end
-        else
-            print("|cffFF4500[BossHelper]|r Affixes module not loaded (BossHelper_Affixes_Show nil)")
+    local function executeNav()
+        currentLeftCategory = "affixes"
+        frame.selectedBoss = nil
+        if selectedButton then selectedButton:SetSelected(false); selectedButton = nil end
+        if leftPanel and leftPanel.affixButton then leftPanel.affixButton:SetSelected(true) end
+        if leftPanel and leftPanel.affixButton then leftPanel.affixButton.isAffixActive = true end
+        BossHelperDB = BossHelperDB or {}
+        BossHelperDB.lastOpenPanel = "affixes"
+        if backButton then backButton:Hide() end
+        -- dungeon buttons remain visible so player can switch dungeons after viewing affixes
+        -- Ryd rightPanel-indhold inden affixes vises
+        ClearRightPanelContent(rightPanel)
+        -- also hide boss note side panel if open
+        if frame and frame.bossNotePanel and frame.bossNotePanel:IsShown() then
+            frame.bossNotePanel:Hide()
         end
+        if rightPanel and rightPanel.rightTitle then
+            CrossfadeFrameText(rightPanel.rightTitle, Translate("THIS_WEEK_AFFIXES") or "This Week Affixes")
+        end
+        if rightPanel then
+            if BossHelper_Affixes_Show then
+                local ok, err = pcall(BossHelper_Affixes_Show, rightPanel)
+                if not ok then
+                    print("|cffFF4500[BossHelper]|r Affix view error:", err)
+                end
+            else
+                print("|cffFF4500[BossHelper]|r Affixes module not loaded (BossHelper_Affixes_Show nil)")
+            end
+        end
+    end
+
+    if BossUI and BossUI.AttemptActionWithUnsavedChanges then
+        BossUI:AttemptActionWithUnsavedChanges(executeNav)
+    else
+        executeNav()
     end
 end
 
@@ -697,6 +711,65 @@ local function TryRestoreAffixes()
         return true
     end
     return false
+end
+
+
+
+function BossUI:MoveBossOrder(dungeonName, encounterID, offset)
+    local dungeonData = BossData[dungeonName]
+    if not dungeonData or not dungeonData.bosses then return end
+    
+    local currentOrder = BossHelper:GetOrderedBosses(dungeonName, dungeonData)
+    local idx = nil
+    for i, b in ipairs(currentOrder) do
+        if b.encounterID == encounterID then
+            idx = i
+            break
+        end
+    end
+    if not idx then return end
+
+    local newIdx = idx + offset
+    if newIdx < 1 or newIdx > #currentOrder then return end
+
+    currentOrder[idx], currentOrder[newIdx] = currentOrder[newIdx], currentOrder[idx]
+
+    local savedOrder = {}
+    for i, b in ipairs(currentOrder) do
+        table.insert(savedOrder, b.encounterID)
+    end
+    
+    if BossUI.isInEditMode then
+        BossUI.stagedOrder = savedOrder
+    else
+        BossHelperDB = BossHelperDB or {}
+        BossHelperDB.customBossOrders = BossHelperDB.customBossOrders or {}
+        BossHelperDB.customBossOrders[dungeonName] = savedOrder
+    end
+
+    if BossHelper and BossHelper.MiniWindow and BossHelper.MiniWindow.Refresh then
+        BossHelper.MiniWindow.Refresh()
+    end
+
+    local sBoss = frame.selectedBoss
+    ShowBosses(dungeonName)
+    
+    if sBoss then
+        for _, btn in ipairs(frame.bossButtons) do
+            if btn._bossData and btn._bossData.encounterID == sBoss.encounterID then
+                btn:SetSelected(true)
+                selectedButton = btn
+                break
+            end
+        end
+    end
+
+    if BossUI.isInEditMode then
+        for _, btn in ipairs(frame.bossButtons) do
+            if btn.moveUpBtn then btn.moveUpBtn:Show() end
+            if btn.moveDownBtn then btn.moveDownBtn:Show() end
+        end
+    end
 end
 
 -- ShowBosses
@@ -710,6 +783,8 @@ function ShowBosses(dungeonName)
 
     local dungeonData = BossData[dungeonName]
     if not dungeonData or not dungeonData.bosses then return end
+    
+    local orderedBosses = BossHelper:GetOrderedBosses(dungeonName, dungeonData)
 
     -- Set left panel title to dungeon name
     if leftPanel and leftPanel.leftTitle then
@@ -726,10 +801,11 @@ function ShowBosses(dungeonName)
 
     local y = -39  -- Align with rightPanel content at -39
 
-    for _, bossData in ipairs(dungeonData.bosses) do
+    for _, bossData in ipairs(orderedBosses) do
         local bossName = BossHelper:GetBossName(bossData.encounterID) or Translate("UNKNOWN_BOSS")
-        local btn = CreateCustomButton(leftPanel, 180, 30, bossName)
-        btn:SetPoint("TOP", leftPanel, "TOP", 0, y)
+        local btnWidth = BossUI.isInEditMode and 170 or 180
+        local btn = CreateCustomButton(leftPanel, btnWidth, 30, bossName)
+        btn:SetPoint("TOP", leftPanel, "TOP", BossUI.isInEditMode and -5 or 0, y)
         btn._bossData = bossData  -- gem reference til boss-data for re-selektion
 
         local iconTexture = bossData.icon or BossHelper:GetBossPortraitFileID(bossData.encounterID, bossData)
@@ -752,6 +828,96 @@ function ShowBosses(dungeonName)
             SafePlay(BossHelper.Sounds.BOSS_SELECT)
         end)
 
+        if frame.selectedBoss and frame.selectedBoss.encounterID == bossData.encounterID then
+            btn:SetSelected(true)
+            selectedButton = btn
+        end
+
+        local grip = CreateFrame("Button", nil, btn)
+        grip:SetSize(16, 26)
+        grip:SetPoint("LEFT", btn, "RIGHT", -1, 0)
+        grip:EnableMouse(true)
+        grip:RegisterForDrag("LeftButton")
+
+        local gripTex = grip:CreateTexture(nil, "OVERLAY")
+        gripTex:SetTexture("Interface\\AddOns\\BossHelper\\Media\\icon\\grip-vertical.png")
+        gripTex:SetSize(16, 16)
+        gripTex:SetPoint("CENTER")
+        gripTex:SetVertexColor(0.7, 0.7, 0.7)
+
+        grip:SetScript("OnEnter", function() gripTex:SetVertexColor(0.98, 0.82, 0.55) end)
+        grip:SetScript("OnLeave", function() gripTex:SetVertexColor(0.7, 0.7, 0.7) end)
+
+        grip:SetScript("OnDragStart", function()
+            btn.isDragging = true
+            gripTex:SetVertexColor(0.98, 0.82, 0.55)
+            local scale = btn:GetEffectiveScale()
+            local _, curY = GetCursorPosition()
+            btn.dragStartCurY = curY / scale
+            btn.dragStartY = select(5, btn:GetPoint(1))
+            btn:SetFrameLevel(btn:GetFrameLevel() + 5)
+            btn:SetAlpha(0.8)
+
+            btn:SetScript("OnUpdate", function(self)
+                local _, cy = GetCursorPosition()
+                local ny = self.dragStartY + ((cy / self:GetEffectiveScale()) - self.dragStartCurY)
+                local point, relativeTo, relativePoint, xOfs = self:GetPoint(1)
+                self:SetPoint(point, relativeTo, relativePoint, xOfs, ny)
+            end)
+        end)
+
+        grip:SetScript("OnDragStop", function()
+            if not btn.isDragging then return end
+            btn.isDragging = false
+            
+            gripTex:SetVertexColor(0.7, 0.7, 0.7)
+            btn:SetScript("OnUpdate", nil)
+            btn:SetAlpha(1)
+            btn:SetFrameLevel(math.max(1, btn:GetFrameLevel() - 5))
+
+            local _, _, _, _, finalY = btn:GetPoint(1)
+            local newIdx = math.floor((-39 - finalY) / 35 + 0.5) + 1
+            if newIdx < 1 then newIdx = 1 end
+            if newIdx > #orderedBosses then newIdx = #orderedBosses end
+
+            local oldIdx = nil
+            for k, storedBoss in ipairs(orderedBosses) do
+                if storedBoss.encounterID == bossData.encounterID then
+                    oldIdx = k
+                    break
+                end
+            end
+
+            if oldIdx and oldIdx ~= newIdx then
+                local movedBoss = table.remove(orderedBosses, oldIdx)
+                table.insert(orderedBosses, newIdx, movedBoss)
+
+                local customOrder = {}
+                for _, b in ipairs(orderedBosses) do
+                    table.insert(customOrder, b.encounterID)
+                end
+                
+                if BossUI.isInEditMode then
+                    BossUI.stagedOrder = customOrder
+                else
+                    BossHelperDB = BossHelperDB or {}
+                    BossHelperDB.customBossOrders = BossHelperDB.customBossOrders or {}
+                    BossHelperDB.customBossOrders[dungeonName] = customOrder
+                end
+                if BossHelper and BossHelper.MiniWindow and BossHelper.MiniWindow.Refresh then
+                    BossHelper.MiniWindow.Refresh()
+                end
+            end
+
+            ShowBosses(dungeonName)
+        end)
+
+        grip:Hide()
+        btn.dragGrip = grip
+
+        if BossUI.isInEditMode then
+            grip:Show()
+        end
 
         table.insert(frame.bossButtons, btn)
         y = y - 35
@@ -759,6 +925,10 @@ function ShowBosses(dungeonName)
 
     backButton:Show()
     if leftPanel and leftPanel.affixButton then leftPanel.affixButton:Hide() end
+
+    if MiniWindow and MiniWindow.Refresh then
+        MiniWindow.Refresh()
+    end
 end
 
 function BossUI:ShowBoss(rPanel, boss)
@@ -773,9 +943,9 @@ function BossUI:ShowBoss(rPanel, boss)
     if not rPanel.rightTitle then
         rPanel.rightTitle = rPanel:CreateFontString(nil, "OVERLAY", "GameFontHighlightHuge")
         rPanel.rightTitle:SetPoint("TOP", rPanel, "TOP", 0, -20)
-        rPanel.rightTitle:SetTextColor(1, 0.5, 0)
         rPanel.rightTitle:SetJustifyH("CENTER")
     end
+    rPanel.rightTitle:SetTextColor(1, 0.5, 0) -- Reset to default orange
 
     -- Scroll og text
     if not rPanel.rightShortText or not rPanel.rightShortContent or not rPanel.rightShortScroll then
@@ -804,32 +974,54 @@ function BossUI:ShowBoss(rPanel, boss)
     CrossfadeFrameText(rPanel.rightTitle, BossHelper:GetBossName(boss.encounterID) or Translate("UNKNOWN_BOSS"))
 
     -- Dropdown til faser med custom buttons
-    if boss.phases and #boss.phases > 0 then
+    local hasCustomPhase = BossUI.HasCustomTactics and BossUI.HasCustomTactics(currentDungeon, boss.encounterID)
+    local activePhases = {}
+
+    if hasCustomPhase then
+        local customList = BossUI.GetCustomPhases and BossUI.GetCustomPhases(currentDungeon, boss.encounterID) or {}
+        local customSet = {}
+        for _, p in ipairs(customList) do
+            customSet[p] = true
+        end
+
+        local seen = {}
+        -- 1. Standard faser først (i den rækkefølge de har i filen)
+        if boss.phases then
+            for _, p in ipairs(boss.phases) do
+                if customSet[p] and not seen[p] then
+                    seen[p] = true
+                    table.insert(activePhases, p)
+                end
+            end
+        end
+        -- 2. Custom faser altid nederst
+        for _, p in ipairs(customList) do
+            if p ~= "No phase" and not seen[p] then
+                seen[p] = true
+                table.insert(activePhases, p)
+            end
+        end
+    else
+        for _, p in ipairs(boss.phases or {}) do
+            table.insert(activePhases, p)
+        end
+    end
+
+    if #activePhases > 0 then
         if rPanel.phaseDropdown then
             rPanel.phaseDropdown:Hide()
             rPanel.phaseDropdown = nil
         end
 
-        -- Byg merged faseliste: native faser + custom-kun faser (ikke "No phase")
-        local mergedPhases = {}
-        local nativeSet = {}
-        for _, p in ipairs(boss.phases) do
-            table.insert(mergedPhases, p)
-            nativeSet[p] = true
-        end
-        local customPhaseList = BossUI.GetCustomPhases and BossUI.GetCustomPhases(currentDungeon, boss.encounterID) or {}
-        for _, p in ipairs(customPhaseList) do
-            if not nativeSet[p] and p ~= "No phase" then
-                table.insert(mergedPhases, p)
+        local function phaseTextResolver(phaseName)
+            if hasCustomPhase then
+                return (BossUI.GetCustomTacticsText and BossUI.GetCustomTacticsText(currentDungeon, boss.encounterID, phaseName)) or ""
+            else
+                return (boss.phaseText and boss.phaseText[phaseName]) or ""
             end
         end
 
-        local function nativeTextResolver(phaseName)
-            local customText = BossUI.GetCustomTacticsText and BossUI.GetCustomTacticsText(currentDungeon, boss.encounterID, phaseName)
-            return customText or (boss.phaseText and boss.phaseText[phaseName]) or ""
-        end
-
-        rPanel.phaseDropdown = CreatePhaseDropdown(rPanel, rPanel, mergedPhases, nativeTextResolver)
+        rPanel.phaseDropdown = CreatePhaseDropdown(rPanel, rPanel, activePhases, phaseTextResolver)
 
    else
         if rPanel.phaseDropdown then
@@ -839,35 +1031,24 @@ function BossUI:ShowBoss(rPanel, boss)
     
         --rPanel.rightShortText:SetText(ReplaceRoleIcons(boss.short or ""))
         --Anders: build buttons from lines in boss.short
-        -- Check for custom tactics first
-        local hasCustomNonPhase = BossUI.HasCustomTactics and BossUI.HasCustomTactics(currentDungeon, boss.encounterID)
-        if hasCustomNonPhase then
-            local customPhaseList = BossUI.GetCustomPhases and BossUI.GetCustomPhases(currentDungeon, boss.encounterID) or {}
-            if #customPhaseList > 1 then
-                -- Multiple custom faser → genbrugelig dropdown
-                local function customTextResolver(phaseName)
-                    return (BossUI.GetCustomTacticsText and BossUI.GetCustomTacticsText(currentDungeon, boss.encounterID, phaseName)) or ""
-                end
-                rPanel.phaseDropdown = CreatePhaseDropdown(rPanel, rPanel, customPhaseList, customTextResolver)
-            else
-                -- Enkelt eller ingen custom fase → vis flat liste
-                local txt = BossUI.GetCustomTacticsText and BossUI.GetCustomTacticsText(currentDungeon, boss.encounterID, customPhaseList[1])
-                if not txt then
-                    BossHelperDB = BossHelperDB or {}
-                    local ct = BossHelperDB.customTactics
-                    local raw = ct and ct[currentDungeon] and ct[currentDungeon][boss.encounterID]
-                    local allLines = {}
-                    if type(raw) == "string" then allLines = { raw }
-                    elseif type(raw) == "table" then
-                        for _, entry in ipairs(raw) do
-                            local t = (entry.text or ""):gsub("^%s+",""):gsub("%s+$","")
-                            if t ~= "" then table.insert(allLines, t) end
-                        end
+        -- Check for custom tactics first (som ikke har "faser" gemt i activePhases)
+        if hasCustomPhase then
+            local txt = BossUI.GetCustomTacticsText and BossUI.GetCustomTacticsText(currentDungeon, boss.encounterID, "No phase")
+            if not txt then
+                BossHelperDB = BossHelperDB or {}
+                local ct = BossHelperDB.customTactics
+                local raw = ct and ct[currentDungeon] and ct[currentDungeon][boss.encounterID]
+                local allLines = {}
+                if type(raw) == "string" then allLines = { raw }
+                elseif type(raw) == "table" then
+                    for _, entry in ipairs(raw) do
+                        local t = (entry.text or ""):gsub("^%s+",""):gsub("%s+$","")
+                        if t ~= "" then table.insert(allLines, t) end
                     end
-                    txt = table.concat(allLines, "\n")
                 end
-                BuildShortLineButtons(rPanel, txt or "")
+                txt = table.concat(allLines, "\n")
             end
+            BuildShortLineButtons(rPanel, txt or "")
         else
             BuildShortLineButtons(rPanel, boss.short or "")
         end
@@ -1151,92 +1332,103 @@ end
 -- PrepareForNavigation: fælles opsætning før enhver side
 -- (settings / info / generalNotes / affixes)
 -- ============================================================
-local function PrepareForNavigation()
-    HideAffixesView()
-    HideEditModeUI()
-    BossHelperDB = BossHelperDB or {}
-    if not frame and BossUI and BossUI.CreateUI then BossUI:CreateUI() end
-    ClearRightPanelContent(rightPanel)
-    if leftPanel and leftPanel.affixButton then
-        leftPanel.affixButton:Hide()
-        leftPanel.affixButton.isAffixActive = false
-        leftPanel.affixButton:SetSelected(false)
+local function PrepareForNavigation(doNav)
+    local function executeNav()
+        HideAffixesView()
+        BossUI:HideEditModeUI()
+        BossHelperDB = BossHelperDB or {}
+        if not frame and BossUI and BossUI.CreateUI then BossUI:CreateUI() end
+        ClearRightPanelContent(rightPanel)
+        if leftPanel and leftPanel.affixButton then
+            leftPanel.affixButton:Hide()
+            leftPanel.affixButton.isAffixActive = false
+            leftPanel.affixButton:SetSelected(false)
+        end
+        ClearRightPanelSettings()
+        CloseBossNotePanelIfOpen()
+        CloseSettingsInfoPanel(true)
+        if doNav then doNav() end
     end
-    ClearRightPanelSettings()
-    CloseBossNotePanelIfOpen()
-    CloseSettingsInfoPanel(true)
+
+    if BossUI and BossUI.AttemptActionWithUnsavedChanges then
+        BossUI:AttemptActionWithUnsavedChanges(executeNav)
+    else
+        executeNav()
+    end
 end
 
 -- --- Settings er i BossSettings.lua ---
 function ShowSettings()
-    PrepareForNavigation()
-    ClearRightPanelNotes()
-    BossHelperDB.lastOpenPanel = "settings"
+    PrepareForNavigation(function()
+        ClearRightPanelNotes()
+        BossHelperDB.lastOpenPanel = "settings"
 
-    if rightPanel then
-        rightPanel.settingsWidgets = rightPanel.settingsWidgets or {}
-    end
-    local function AddSettingsWidget(w)
-        if rightPanel and w then table.insert(rightPanel.settingsWidgets, w) end
-        return w
-    end
+        if rightPanel then
+            rightPanel.settingsWidgets = rightPanel.settingsWidgets or {}
+        end
+        local function AddSettingsWidget(w)
+            if rightPanel and w then table.insert(rightPanel.settingsWidgets, w) end
+            return w
+        end
 
-    if BossSettings and BossSettings.ShowSettings then
-        -- Åbn info-panelet straks i tom tilstand
-        if frame and frame.settingsInfoPanel then
-            local sip = frame.settingsInfoPanel
-            if sip.Reset then sip.Reset() end
-            if not sip:IsShown() then
-                local anim = BossHelper.Anim
-                local fullW = sip._fullWidth or 220
-                if anim and anim.AnimateWidth and anim.ShouldAnimate() then
-                    sip:SetWidth(0); sip:Show()
-                    anim.AnimateWidth(sip, 0, fullW, 0.15)
-                else
-                    sip:SetWidth(fullW); sip:Show()
+        if BossSettings and BossSettings.ShowSettings then
+            -- Åbn info-panelet straks i tom tilstand
+            if frame and frame.settingsInfoPanel then
+                local sip = frame.settingsInfoPanel
+                if sip.Reset then sip.Reset() end
+                if not sip:IsShown() then
+                    local anim = BossHelper.Anim
+                    local fullW = sip._fullWidth or 220
+                    if anim and anim.AnimateWidth and anim.ShouldAnimate() then
+                        sip:SetWidth(0); sip:Show()
+                        anim.AnimateWidth(sip, 0, fullW, 0.15)
+                    else
+                        sip:SetWidth(fullW); sip:Show()
+                    end
                 end
             end
+            BossSettings.ShowSettings{
+                frame = frame,
+                leftPanel = leftPanel,
+                rightPanel = rightPanel,
+                backButton = backButton,
+                CreateCustomButton = CreateCustomButton,
+                BossHelper = BossHelper,
+                BossHelperDB = BossHelperDB,
+                AddSettingsWidget = AddSettingsWidget,
+                ShowSettingsInfo = function(title, desc, image)
+                    OpenSettingsInfoPanel(title, desc, image)
+                end,
+                HideSettingsInfo = function()
+                    -- Gør ingenting – panelet beholder det sidst viste indhold
+                end,
+            }
+        else
+            print("|cffFF4500[BossUI]|r BossSettings not loaded!")
         end
-        BossSettings.ShowSettings{
-            frame = frame,
-            leftPanel = leftPanel,
-            rightPanel = rightPanel,
-            backButton = backButton,
-            CreateCustomButton = CreateCustomButton,
-            BossHelper = BossHelper,
-            BossHelperDB = BossHelperDB,
-            AddSettingsWidget = AddSettingsWidget,
-            ShowSettingsInfo = function(title, desc, image)
-                OpenSettingsInfoPanel(title, desc, image)
-            end,
-            HideSettingsInfo = function()
-                -- Gør ingenting – panelet beholder det sidst viste indhold
-            end,
-        }
-    else
-        print("|cffFF4500[BossUI]|r BossSettings not loaded!")
-    end
+    end)
 end
 
 -- --- Info er i BossInfo.lua ---
 function ShowInfo()
-    PrepareForNavigation()
-    ClearRightPanelNotes()
-    BossHelperDB.lastOpenPanel = "info"
+    PrepareForNavigation(function()
+        ClearRightPanelNotes()
+        BossHelperDB.lastOpenPanel = "info"
 
-    if BossInfo and BossInfo.ShowInfo then
-        BossInfo.ShowInfo{
-            frame = frame,
-            leftPanel = leftPanel,
-            rightPanel = rightPanel,
-            backButton = backButton,
-            CreateCustomButton = CreateCustomButton,
-            BossHelper = BossHelper,
-            BossHelperDB = BossHelperDB,
-        }
-    else
-        print("|cffFF4500[BossUI]|r BossInfo not loaded!")
-    end
+        if BossInfo and BossInfo.ShowInfo then
+            BossInfo.ShowInfo{
+                frame = frame,
+                leftPanel = leftPanel,
+                rightPanel = rightPanel,
+                backButton = backButton,
+                CreateCustomButton = CreateCustomButton,
+                BossHelper = BossHelper,
+                BossHelperDB = BossHelperDB,
+            }
+        else
+            print("|cffFF4500[BossUI]|r BossInfo not loaded!")
+        end
+    end)
 end
 
 function SelectInfoCategory(categoryName, btn)
@@ -1247,23 +1439,24 @@ end
 
 -- --- General Notes er i GeneralNotes.lua ---
 function ShowGeneralNotes()
-    PrepareForNavigation()
-    -- Bemærk: ClearRightPanelNotes IKKE kaldt her – GeneralNotes bygger selv sin widget-liste
-    BossHelperDB.lastOpenPanel = "notes"
+    PrepareForNavigation(function()
+        -- Bemærk: ClearRightPanelNotes IKKE kaldt her – GeneralNotes bygger selv sin widget-liste
+        BossHelperDB.lastOpenPanel = "notes"
 
-    if GeneralNotes and GeneralNotes.ShowGeneralNotes then
-        GeneralNotes.ShowGeneralNotes{
-            frame = frame,
-            leftPanel = leftPanel,
-            rightPanel = rightPanel,
-            backButton = backButton,
-            CreateCustomButton = CreateCustomButton,
-            BossHelper = BossHelper,
-            BossHelperDB = BossHelperDB,
-        }
-    else
-        print("|cffFF4500[BossUI]|r GeneralNotes not loaded!")
-    end
+        if GeneralNotes and GeneralNotes.ShowGeneralNotes then
+            GeneralNotes.ShowGeneralNotes{
+                frame = frame,
+                leftPanel = leftPanel,
+                rightPanel = rightPanel,
+                backButton = backButton,
+                CreateCustomButton = CreateCustomButton,
+                BossHelper = BossHelper,
+                BossHelperDB = BossHelperDB,
+            }
+        else
+            print("|cffFF4500[BossUI]|r GeneralNotes not loaded!")
+        end
+    end)
 end
 
 function SelectNotesCategory(categoryName, btn)
@@ -1740,32 +1933,76 @@ function BossUI:CreateUI()
     backButton = CreateCustomButton(leftPanel, 180, 30, "BACK")
     backButton:SetPoint("BOTTOM", leftPanel, "BOTTOM", 0, 10)
     backButton:SetScript("OnClick", function()
-        SafePlay(BossHelper.Sounds.BACK_BUTTON)
-        HideAffixesView()
-        HideEditModeUI()
-        if selectedButton then selectedButton:SetSelected(false); selectedButton = nil end
-        frame.selectedBoss = nil
-        currentDungeon = nil
-        BossHelperDB = BossHelperDB or {}
-        BossHelperDB.lastOpenPanel = nil
+        local function DoBack()
+            SafePlay(BossHelper.Sounds.BACK_BUTTON)
+            HideAffixesView()
+            BossUI:HideEditModeUI()
+            if selectedButton then selectedButton:SetSelected(false); selectedButton = nil end
+            frame.selectedBoss = nil
+            currentDungeon = nil
+            BossHelperDB = BossHelperDB or {}
+            BossHelperDB.lastOpenPanel = nil
 
-        BossHelper.UI.hide(rightPanel.phaseDropdown)
-        BossHelper.UI.hide(rightPanel.dropdownClickCatcher)
-        for _, b in ipairs(rightPanel.shortButtons or {}) do BossHelper.UI.destroyWidget(b) end
-        rightPanel.shortButtons = {}
-        if rightPanel.shortBtnContent then rightPanel.shortBtnContent:SetHeight(1) end
+            BossHelper.UI.hide(rightPanel.phaseDropdown)
+            BossHelper.UI.hide(rightPanel.dropdownClickCatcher)
+            for _, b in ipairs(rightPanel.shortButtons or {}) do BossHelper.UI.destroyWidget(b) end
+            rightPanel.shortButtons = {}
+            if rightPanel.shortBtnContent then rightPanel.shortBtnContent:SetHeight(1) end
 
-        ClearRightPanelContent(rightPanel)
-        ClearRightPanelSettings()
-        ClearRightPanelNotes()
-        CloseBossNotePanelIfOpen()
-        CloseSettingsInfoPanel(true)
+            ClearRightPanelContent(rightPanel)
+            ClearRightPanelSettings()
+            ClearRightPanelNotes()
+            CloseBossNotePanelIfOpen()
+            CloseSettingsInfoPanel(true)
 
-        backButton:Hide()
-        ShowStartPage(frame, rightPanel)
-        ShowDungeons()
+            backButton:Hide()
+            ShowStartPage(frame, rightPanel)
+            ShowDungeons()
+        end
+
+        if BossUI and BossUI.AttemptActionWithUnsavedChanges then
+            BossUI:AttemptActionWithUnsavedChanges(DoBack, true)
+        else
+            DoBack()
+        end
     end)
     backButton:Hide()
+
+    -- Reset Boss Order Button (Kun synlig i Edit Mode)
+    frame.resetOrderBtn = CreateCustomButton(leftPanel, 180, 30, Translate("RESET_ORDER") or "Reset Order")
+    frame.resetOrderBtn:SetPoint("BOTTOM", backButton, "TOP", 0, 5)
+    frame.resetOrderBtn:SetScript("OnClick", function()
+        if not currentDungeon then return end
+        
+        ConfirmDialog.Show({
+            title   = Translate("RESET_ORDER_TITLE") or "Reset Boss Order?",
+            message = Translate("RESET_ORDER_MSG") or "Are you sure you want to reset the custom boss sort order for this dungeon back to default?",
+            onOk    = function()
+                if BossUI.isInEditMode then
+                    BossUI.stagedOrder = {}
+                else
+                    BossHelperDB = BossHelperDB or {}
+                    BossHelperDB.customBossOrders = BossHelperDB.customBossOrders or {}
+                    BossHelperDB.customBossOrders[currentDungeon] = nil
+                end
+                if BossHelper and BossHelper.MiniWindow and BossHelper.MiniWindow.Refresh then
+                    BossHelper.MiniWindow.Refresh()
+                end
+                SafePlay(BossHelper.Sounds.NORMAL_BUTTON)
+                ShowBosses(currentDungeon)
+                -- Gendan Edit Mode view states
+                if BossUI.isInEditMode then
+                    for _, btn in ipairs(frame.bossButtons) do
+                        btn:SetWidth(170)
+                        local y = select(5, btn:GetPoint(1))
+                        btn:SetPoint("TOP", leftPanel, "TOP", -5, y)
+                        if btn.dragGrip then btn.dragGrip:Show() end
+                    end
+                end
+            end,
+        })
+    end)
+    frame.resetOrderBtn:Hide()
 
     -- (Removed old dual category bar; single Affixes button added dynamically in ShowDungeons)
 
@@ -1975,7 +2212,7 @@ function BossUI:CreateUI()
 
                     -- Beregn estimeret varighed
                     local interval = BossHelper.MESSAGE_INTERVAL or 1.5
-                    local queueLen = #BossHelper._messageQueue or 0
+                    local queueLen = BossHelper._messageQueue and #BossHelper._messageQueue or 0
 
                     -- Estimat: hvis systemet ikke allerede sender (_isSending==false) så første send sker med det samme,
                     -- så tiden er (added-1) * interval ; ellers tid ≈ queueLen * interval

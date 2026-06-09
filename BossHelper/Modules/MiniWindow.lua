@@ -4,6 +4,22 @@
 
 MiniWindow = MiniWindow or {}
 
+local math_max    = math.max
+local math_min    = math.min
+local math_abs    = math.abs
+local math_ceil   = math.ceil
+local math_floor  = math.floor
+local math_pi     = math.pi
+local string_lower= string.lower
+local string_format = string.format
+local table_insert = table.insert
+local table_concat = table.concat
+local tostring    = tostring
+local ipairs      = ipairs
+local select      = select
+local unpack      = unpack
+local GetTime     = GetTime
+
 -- ---------------------------------------------------------------------------
 -- Modul-tilstand
 -- ---------------------------------------------------------------------------
@@ -161,7 +177,7 @@ local function NormalizeText(rawText)
     for line in rawText:gmatch("[^\n]+") do
         lines[#lines + 1] = line
     end
-    return table.concat(lines, "\n\n")
+    return table_concat(lines, "\n\n")
 end
 
 local function GetBossTacticText(dungeonKey, boss)
@@ -194,15 +210,28 @@ local function GetMiniPhaseList(dungeonKey, boss)
     local hasCustom = BossUI and BossUI.HasCustomTactics and BossUI.HasCustomTactics(dungeonKey, boss.encounterID)
     if hasCustom then
         local customList = (BossUI.GetCustomPhases and BossUI.GetCustomPhases(dungeonKey, boss.encounterID)) or {}
-        local merged, seen = {}, {}
+        local customSet = {}
         for _, p in ipairs(customList) do
-            if p ~= "No phase" then
-                table.insert(merged, p)
-                seen[p] = true
+            customSet[p] = true
+        end
+
+        local merged = {}
+        local seen = {}
+        -- 1. Standard faser først (i den rækkefølge de har i filen)
+        if boss.phases then
+            for _, p in ipairs(boss.phases) do
+                if customSet[p] and not seen[p] then
+                    seen[p] = true
+                    table_insert(merged, p)
+                end
             end
         end
-        for _, p in ipairs(boss.phases or {}) do
-            if not seen[p] then table.insert(merged, p) end
+        -- 2. Custom faser altid nederst
+        for _, p in ipairs(customList) do
+            if p ~= "No phase" and not seen[p] then
+                seen[p] = true
+                table_insert(merged, p)
+            end
         end
         return merged, true
     end
@@ -236,11 +265,11 @@ local function ShowPhasePanel()
     local panel = miniFrame.phasePanel
     if not panel then return end
     panel:ClearAllPoints()
-    panel:SetPoint("TOPLEFT", miniFrame.phaseBar, "BOTTOMLEFT", 0, -2)
+    panel:SetPoint("TOPLEFT", miniFrame.phaseBar, "BOTTOMLEFT", -4, -2)
     panel:Show()
     if miniFrame.phaseCatcher then miniFrame.phaseCatcher:Show() end
     if miniFrame.phaseMainBtn and miniFrame.phaseMainBtn.arrow then
-        miniFrame.phaseMainBtn.arrow:SetRotation(math.pi)
+        miniFrame.phaseMainBtn.arrow:SetRotation(math_pi)
     end
 end
 
@@ -374,7 +403,7 @@ local function CreateScrollbar(parent, scroll, content)
         local totalH = content:GetHeight()
         local viewH  = scroll:GetHeight()
         if totalH <= 0 or trackH <= 0 then return end
-        local thumbH = math.max(math.floor(trackH * (viewH / totalH)), LAYOUT.THUMB_MIN_H)
+        local thumbH = math_max(math_floor(trackH * (viewH / totalH)), LAYOUT.THUMB_MIN_H)
         sbThumb:SetHeight(thumbH)
         local offset = scroll:GetVerticalScroll()
         local thumbY = (offset / maxScroll) * (trackH - thumbH)
@@ -385,7 +414,7 @@ local function CreateScrollbar(parent, scroll, content)
     scroll:SetScript("OnMouseWheel", function(self, delta)
         local cur  = self:GetVerticalScroll()
         local maxS = self:GetVerticalScrollRange()
-        self:SetVerticalScroll(math.max(0, math.min(maxS, cur - delta * LAYOUT.SCROLL_STEP)))
+        self:SetVerticalScroll(math_max(0, math_min(maxS, cur - delta * LAYOUT.SCROLL_STEP)))
         UpdateScrollThumb()
     end)
 
@@ -398,8 +427,8 @@ local function CreateScrollbar(parent, scroll, content)
             local trackH = sbTrack:GetHeight()
             local thumbH = sbThumb:GetHeight()
             local curY   = select(2, GetCursorPosition()) / UIParent:GetEffectiveScale()
-            local pct    = (startY - curY) / math.max(trackH - thumbH, 1)
-            scroll:SetVerticalScroll(math.max(0, math.min(maxS, startScroll + pct * maxS)))
+            local pct    = (startY - curY) / math_max(trackH - thumbH, 1)
+            scroll:SetVerticalScroll(math_max(0, math_min(maxS, startScroll + pct * maxS)))
             UpdateScrollThumb()
         end)
     end)
@@ -424,6 +453,18 @@ local function BuildPhaseBar(f)
     local phaseMainBtn = BossUI.CreateCustomButton(phaseBar, LAYOUT.PHASE_BTN_W, LAYOUT.PHASE_BTN_H, "")
     StripScaleAnim(phaseMainBtn)
     phaseMainBtn:SetPoint("LEFT", phaseBar, "LEFT", 0, 0)
+    phaseMainBtn:SetPoint("RIGHT", phaseBar, "RIGHT", 0, 0)
+
+    phaseMainBtn:SetScript("OnSizeChanged", function(self, width)
+        if f.phasePanel then
+            f.phasePanel:SetWidth(width + 8)
+            if f._phaseButtons then
+                for _, btn in ipairs(f._phaseButtons) do
+                    btn:SetWidth(width)
+                end
+            end
+        end
+    end)
 
     local arrow = phaseMainBtn:CreateTexture(nil, "OVERLAY")
     arrow:SetTexture("Interface\\AddOns\\BossHelper\\Media\\icon\\Arrow_Down_icon.png")
@@ -449,13 +490,12 @@ local function BuildScrollArea(f)
     scroll:EnableMouseWheel(true)
 
     local content = CreateFrame("Frame", nil, scroll)
-    content:SetWidth(LAYOUT.CONTENT_W)
     content:SetHeight(1)
     scroll:SetScrollChild(content)
 
     local tacticText = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     tacticText:SetPoint("TOPLEFT", content, "TOPLEFT", 4, -4)
-    tacticText:SetWidth(LAYOUT.TEXT_W)
+    tacticText:SetPoint("TOPRIGHT", content, "TOPRIGHT", -4, -4)
     tacticText:SetJustifyH("LEFT")
     tacticText:SetJustifyV("TOP")
     tacticText:SetWordWrap(true)
@@ -465,6 +505,17 @@ local function BuildScrollArea(f)
     f.tacticText    = tacticText
     f.tacticContent = content
     f.tacticScroll  = scroll
+
+    scroll:SetScript("OnSizeChanged", function(self, width, height)
+        content:SetWidth(width)
+        if f.tacticText then
+            C_Timer.After(0, function()
+                local h = f.tacticText:GetStringHeight() or 0
+                content:SetHeight(math_max(h + LAYOUT.CONTENT_VPADDING, LAYOUT.CONTENT_MIN_H))
+                if f._UpdateScrollThumb then f._UpdateScrollThumb() end
+            end)
+        end
+    end)
 
     local sbTrack, UpdateScrollThumb = CreateScrollbar(f, scroll, content)
     f.sbTrack            = sbTrack
@@ -631,12 +682,14 @@ RefreshContent = function()
         return
     end
 
+    local orderedBosses = BossHelper:GetOrderedBosses(currentDungeonKey, dungeonData)
+
     -- Bounds-check (cirkulær navigation)
-    local total = #dungeonData.bosses
+    local total = #orderedBosses
     if currentBossIndex < 1 then currentBossIndex = total end
     if currentBossIndex > total then currentBossIndex = 1 end
 
-    local boss = dungeonData.bosses[currentBossIndex]
+    local boss = orderedBosses[currentBossIndex]
 
     -- Nulstil fase ved boss-skift
     if currentBossIndex ~= lastBossIndexForPhase then
@@ -685,14 +738,7 @@ RefreshContent = function()
         -- Lazy-opret fase-panel og click-catcher første gang
         if not miniFrame.phasePanel then
             local panel = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
-            panel:SetBackdrop({
-                bgFile   = "Interface\\ChatFrame\\ChatFrameBackground",
-                edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-                tile = true, tileSize = 16, edgeSize = 14,
-                insets = { left = 3, right = 3, top = 3, bottom = 3 },
-            })
-            panel:SetBackdropColor(unpack(MC.PHASE_PANEL_BG))
-            panel:SetBackdropBorderColor(unpack(MC.PHASE_PANEL_BORDER))
+            BossHelper.UI.ApplyBackdrop(panel, "EDITBOX", BossHelper.UI.C.BG_PANEL, BossHelper.UI.C.BORDER_AMBER)
             panel:SetFrameStrata("FULLSCREEN_DIALOG")
             panel:SetFrameLevel(LAYOUT.PHASE_PANEL_LEVEL)
             panel:Hide()
@@ -713,19 +759,22 @@ RefreshContent = function()
         local buttons = miniFrame._phaseButtons
 
         -- Tilpas panel-størrelse og position
-        panel:SetSize(LAYOUT.PHASE_BTN_W, #phases * LAYOUT.PHASE_ITEM_H)
+        local actualBtnW = miniFrame.phaseMainBtn:GetWidth() or LAYOUT.PHASE_BTN_W
+        panel:SetSize(actualBtnW + 8, (#phases * LAYOUT.PHASE_ITEM_H) + 8)
         panel:ClearAllPoints()
-        panel:SetPoint("TOPLEFT", miniFrame.phaseBar, "BOTTOMLEFT", 0, -2)
+        panel:SetPoint("TOPLEFT", miniFrame.phaseBar, "BOTTOMLEFT", -4, -2)
 
         -- Opret / genrug fase-knapper
         for i = 1, #phases do
             if not buttons[i] then
-                buttons[i] = BossUI.CreateCustomButton(panel, LAYOUT.PHASE_BTN_W, LAYOUT.PHASE_BTN_H, "")
+                buttons[i] = BossUI.CreateCustomButton(panel, actualBtnW, LAYOUT.PHASE_BTN_H, "")
                 StripScaleAnim(buttons[i])
+            else
+                buttons[i]:SetWidth(actualBtnW)
             end
             local btn = buttons[i]
             btn:ClearAllPoints()
-            btn:SetPoint("TOP", panel, "TOP", 0, -((i - 1) * LAYOUT.PHASE_ITEM_H))
+            btn:SetPoint("TOP", panel, "TOP", 0, -4 - ((i - 1) * LAYOUT.PHASE_ITEM_H))
             btn:SetText(phases[i])
             btn:SetSelected(i == currentPhaseIndex)
             local phaseIdx = i
@@ -783,7 +832,7 @@ RefreshContent = function()
             C_Timer.After(0, function()
                 if not miniFrame or not miniFrame.tacticContent then return end
                 local h = miniFrame.tacticText:GetStringHeight() or 0
-                miniFrame.tacticContent:SetHeight(math.max(h + LAYOUT.CONTENT_VPADDING, LAYOUT.CONTENT_MIN_H))
+                miniFrame.tacticContent:SetHeight(math_max(h + LAYOUT.CONTENT_VPADDING, LAYOUT.CONTENT_MIN_H))
                 if miniFrame._UpdateScrollThumb then miniFrame._UpdateScrollThumb() end
             end)
 
@@ -798,7 +847,7 @@ RefreshContent = function()
         C_Timer.After(0, function()
             if not miniFrame or not miniFrame.tacticContent then return end
             local h = miniFrame.tacticText:GetStringHeight() or 0
-            miniFrame.tacticContent:SetHeight(math.max(h + LAYOUT.CONTENT_VPADDING, LAYOUT.CONTENT_MIN_H))
+            miniFrame.tacticContent:SetHeight(math_max(h + LAYOUT.CONTENT_VPADDING, LAYOUT.CONTENT_MIN_H))
             if miniFrame._UpdateScrollThumb then miniFrame._UpdateScrollThumb() end
         end)
     end
@@ -853,6 +902,7 @@ SetMinimized = function(minimized)
                 if miniFrame.nextBtn then miniFrame.nextBtn:Hide() end
                 if miniFrame.navLabel then miniFrame.navLabel:Hide() end
                 if miniFrame.phaseBar then miniFrame.phaseBar:Hide() end
+                if miniFrame.resizeBtn then miniFrame.resizeBtn:Hide() end
                 HidePhasePanel()
                 if miniFrame.headerSep then miniFrame.headerSep:Hide() end
                     if miniFrame.minimizeBtn and miniFrame.minimizeBtn.icon then
@@ -872,6 +922,7 @@ SetMinimized = function(minimized)
             if miniFrame.nextBtn then miniFrame.nextBtn:Hide() end
             if miniFrame.navLabel then miniFrame.navLabel:Hide() end
             if miniFrame.phaseBar then miniFrame.phaseBar:Hide() end
+            if miniFrame.resizeBtn then miniFrame.resizeBtn:Hide() end
             HidePhasePanel()
                 if miniFrame.headerSep then miniFrame.headerSep:Hide() end
                 if miniFrame.minimizeBtn and miniFrame.minimizeBtn.icon then
@@ -915,6 +966,7 @@ SetMinimized = function(minimized)
                 if miniFrame.tacticScroll and anim.AnimateAlpha then anim.AnimateAlpha(miniFrame.tacticScroll, 0, 1, 0.16) end
                 if miniFrame.sbTrack    and anim.AnimateAlpha then anim.AnimateAlpha(miniFrame.sbTrack,    0, 1, 0.16) end
                 if miniFrame.headerIndex then miniFrame.headerIndex:Hide() end
+                if miniFrame.resizeBtn then miniFrame.resizeBtn:Show() end
             end)
         else
             miniFrame:SetHeight(LAYOUT.FULL_H)
@@ -936,6 +988,7 @@ SetMinimized = function(minimized)
             if miniFrame.tacticScroll then miniFrame.tacticScroll:SetAlpha(1); miniFrame.tacticScroll:Show() end
             if miniFrame.sbTrack then miniFrame.sbTrack:SetAlpha(1); miniFrame.sbTrack:Show() end
             if miniFrame.headerIndex then miniFrame.headerIndex:Hide() end
+            if miniFrame.resizeBtn then miniFrame.resizeBtn:Show() end
         end
     end
 end
@@ -963,6 +1016,27 @@ local function ApplyMiniWindowSettings()
         miniFrame:Hide()
         return
     end
+
+    -- Skalering
+    local scale = tonumber(BossHelperDB.miniWindowScale) or 1.0
+    local oldScale = miniFrame:GetScale()
+    miniFrame:SetScale(scale)
+
+    if scale ~= oldScale then
+        if BossHelperDB.miniWindowCenterX and BossHelperDB.miniWindowCenterY then
+            miniFrame:ClearAllPoints()
+            miniFrame:SetPoint("CENTER", UIParent, "BOTTOMLEFT", BossHelperDB.miniWindowCenterX / scale, BossHelperDB.miniWindowCenterY / scale)
+        else
+            local cx, cy = miniFrame:GetCenter()
+            if cx and cy then
+                BossHelperDB.miniWindowCenterX = cx * scale
+                BossHelperDB.miniWindowCenterY = cy * scale
+                miniFrame:ClearAllPoints()
+                miniFrame:SetPoint("CENTER", UIParent, "BOTTOMLEFT", cx, cy)
+            end
+        end
+    end
+
     local noBorder = BossHelperDB and BossHelperDB.miniWindowNoBorder
 
     local bg = C.BG_PANEL_DARK
@@ -1018,6 +1092,12 @@ local function ApplyMiniWindowSettings()
         miniFrame:EnableMouse(true)
         miniFrame._mouseEnabled = true
     end
+    -- Taktik-tekst skriftstørrelse
+    if miniFrame.tacticText then
+        local fontSize = (BossHelperDB and BossHelperDB.miniWindowFontSize) or 12
+        fontSize = math_max(8, math_min(20, math_floor(fontSize + 0.5)))
+        miniFrame.tacticText:SetFont("Fonts\\FRIZQT__.TTF", fontSize, "")
+    end
 end
 
 MiniWindow.ApplySettings = ApplyMiniWindowSettings
@@ -1029,14 +1109,24 @@ local function CreateMiniWindow()
     if miniFrame then return end
 
     miniFrame = CreateFrame("Frame", "BossHelper_MiniFrame", UIParent, "BackdropTemplate")
+    
+    -- Anvend gemt størrelse (eller standard)
+    if BossHelperDB and BossHelperDB.miniWindowW and BossHelperDB.miniWindowH then
+        LAYOUT.W = BossHelperDB.miniWindowW
+        LAYOUT.FULL_H = BossHelperDB.miniWindowH
+    end
     miniFrame:SetSize(LAYOUT.W, LAYOUT.FULL_H)
 
+    local initScale = (BossHelperDB and tonumber(BossHelperDB.miniWindowScale)) or 1.0
+    miniFrame:SetScale(initScale)
+
     -- Gendan gemt position, ellers placer til højre for midten
-    if BossHelperDB and BossHelperDB.miniWindowX and BossHelperDB.miniWindowY then
-        miniFrame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT",
-            BossHelperDB.miniWindowX, BossHelperDB.miniWindowY)
+    if BossHelperDB and BossHelperDB.miniWindowCenterX and BossHelperDB.miniWindowCenterY then
+        miniFrame:SetPoint("CENTER", UIParent, "BOTTOMLEFT", BossHelperDB.miniWindowCenterX / initScale, BossHelperDB.miniWindowCenterY / initScale)
+    elseif BossHelperDB and BossHelperDB.miniWindowX and BossHelperDB.miniWindowY then
+        miniFrame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", BossHelperDB.miniWindowX / initScale, BossHelperDB.miniWindowY / initScale)
     else
-        miniFrame:SetPoint("CENTER", UIParent, "CENTER", 320, 0)
+        miniFrame:SetPoint("CENTER", UIParent, "CENTER", 320 / initScale, 0)
     end
 
     miniFrame:SetFrameStrata("HIGH")
@@ -1051,24 +1141,94 @@ local function CreateMiniWindow()
         self:StopMovingOrSizing()
         -- Gem position i SavedVariables
         BossHelperDB = BossHelperDB or {}
-        local scale = self:GetEffectiveScale() / UIParent:GetEffectiveScale()
-        BossHelperDB.miniWindowX = self:GetLeft() * scale
-        BossHelperDB.miniWindowY = self:GetTop() * scale
+        local scale = self:GetScale()
+        local cx, cy = self:GetCenter()
+        if cx and cy then
+            BossHelperDB.miniWindowCenterX = cx * scale
+            BossHelperDB.miniWindowCenterY = cy * scale
+            self:ClearAllPoints()
+            self:SetPoint("CENTER", UIParent, "BOTTOMLEFT", cx, cy)
+        end
     end)
-    miniFrame:SetScript("OnUpdate", function(self)
-        -- Shift-tjek: aktiver/deaktiver mus for drag vs. click-through (kun i lock-mode)
-        -- Kun selve rammen toggler; knapper forbliver altid klikbare.
-        local lockMove = BossHelperDB and BossHelperDB.miniWindowLockMove
-        if lockMove then
-            local shiftHeld = IsShiftKeyDown()
-            if shiftHeld ~= self._mouseEnabled then
-                self:EnableMouse(shiftHeld)
-                self._mouseEnabled = shiftHeld
+    
+    local updateTimer = 0
+    local updateFrame = CreateFrame("Frame", nil, miniFrame)
+    updateFrame:SetScript("OnUpdate", function(self, dt)
+        local frame = miniFrame
+        if not frame then return end
+        
+        -- Kun kør Shift / MouseOver tjek ca. 10 gange i sekundet (0.1s throttling)
+        -- Opdatering af Alpha kan køre hver frame, men tjekket kan vi cache.
+        updateTimer = updateTimer + dt
+        if updateTimer >= 0.1 then
+            updateTimer = 0
+            
+            -- Shift-tjek: aktiver/deaktiver mus for drag vs. click-through (kun i lock-mode)
+            local lockMove = BossHelperDB and BossHelperDB.miniWindowLockMove
+            if lockMove then
+                local shiftHeld = IsShiftKeyDown()
+                if shiftHeld ~= frame._mouseEnabled then
+                    frame:EnableMouse(shiftHeld)
+                    frame._mouseEnabled = shiftHeld
+                end
             end
+
+            -- Bestem isOver-tilstand
+            local isOver = frame:IsMouseOver()
+            if frame.phasePanel and frame.phasePanel:IsShown() and frame.phasePanel:IsMouseOver() then
+                isOver = true
+            end
+            
+            self.targetAlpha = 1.0
+            if BossHelperDB and BossHelperDB.miniWindowAutoFade and not isOver then
+                self.targetAlpha = 0.25
+            end
+        end
+
+        local targetAlpha = self.targetAlpha or 1.0
+        local curAlpha = frame:GetAlpha() or 1.0
+        
+        if math_abs(curAlpha - targetAlpha) > 0.01 then
+            local newAlpha = curAlpha + (targetAlpha - curAlpha) * math_min(1, dt * 15)
+            frame:SetAlpha(newAlpha)
+        elseif curAlpha ~= targetAlpha then
+            frame:SetAlpha(targetAlpha)
         end
     end)
     miniFrame:SetClampedToScreen(true)
     miniFrame:Hide()
+    
+    miniFrame:SetResizable(true)
+    if miniFrame.SetResizeBounds then
+        miniFrame:SetResizeBounds(200, 150, 800, 800)
+    else
+        miniFrame:SetMinResize(200, 150)
+        miniFrame:SetMaxResize(800, 800)
+    end
+
+    local resizeBtn = CreateFrame("Button", nil, miniFrame)
+    resizeBtn:SetSize(16, 16)
+    resizeBtn:SetPoint("BOTTOMRIGHT")
+    resizeBtn:SetNormalTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Up")
+    resizeBtn:SetHighlightTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Highlight")
+    resizeBtn:SetPushedTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Down")
+    resizeBtn:SetAlpha(0.65)
+    resizeBtn:SetScript("OnEnter", function(self) self:SetAlpha(1.0) end)
+    resizeBtn:SetScript("OnLeave", function(self) self:SetAlpha(0.5) end)
+    resizeBtn:SetScript("OnMouseDown", function(self, button)
+        if button == "LeftButton" and not miniMinimized then
+            miniFrame:StartSizing("BOTTOMRIGHT")
+        end
+    end)
+    resizeBtn:SetScript("OnMouseUp", function(self, button)
+        miniFrame:StopMovingOrSizing()
+        BossHelperDB = BossHelperDB or {}
+        BossHelperDB.miniWindowW = miniFrame:GetWidth()
+        BossHelperDB.miniWindowH = miniFrame:GetHeight()
+        LAYOUT.W = BossHelperDB.miniWindowW
+        LAYOUT.FULL_H = BossHelperDB.miniWindowH
+    end)
+    miniFrame.resizeBtn = resizeBtn
 
     -- Backdrop – identisk med resten af UI'et
     BossHelper.UI.ApplyBackdrop(miniFrame, "EDITBOX", C.BG_PANEL_DARK, C.BORDER_AMBER)
@@ -1130,13 +1290,14 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
         local dungeonData = BossData[currentDungeonKey]
         if not dungeonData or not dungeonData.bosses then return end
 
-        local total = #dungeonData.bosses
+        local orderedBosses = BossHelper:GetOrderedBosses(currentDungeonKey, dungeonData)
+        local total = #orderedBosses
         local matchedIndex = nil
         local matchMethod  = nil
 
         -- Primær match: dungeonEncounterID via EJ API (sprog-uafhængigt, direkte match med ENCOUNTER_END)
         for i = 1, total do
-            local dungeonEncID = BossHelper:GetDungeonEncounterID(dungeonData.bosses[i].encounterID)
+            local dungeonEncID = BossHelper:GetDungeonEncounterID(orderedBosses[i].encounterID)
             if dungeonEncID == encounterID then
                 matchedIndex = i
                 matchMethod  = "dungeonEncounterID"
@@ -1146,10 +1307,10 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
 
         -- Fallback: navn-match (bruges hvis EJ_GetEncounterInfo ikke returnerer et ID)
         if not matchedIndex and encounterName then
-            local lowerName = string.lower(encounterName)
+            local lowerName = string_lower(encounterName)
             for i = 1, total do
-                local bossName = BossHelper:GetBossName(dungeonData.bosses[i].encounterID)
-                if bossName and string.lower(bossName) == lowerName then
+                local bossName = BossHelper:GetBossName(orderedBosses[i].encounterID)
+                if bossName and string_lower(bossName) == lowerName then
                     matchedIndex = i
                     matchMethod  = "name-fallback"
                     break
@@ -1159,7 +1320,7 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
 
         -- må ikke fjernes, vigtigt for at kunne debugge og forbedre match-logikken i fremtiden
         -- Debug
-        --DEFAULT_CHAT_FRAME:AddMessage(string.format(
+        --DEFAULT_CHAT_FRAME:AddMessage(string_format(
         --    "|cff00ff00[BossHelper]|r ENCOUNTER_END %q (id=%d) → match=%s via %s",
         --    tostring(encounterName), encounterID,
         --    tostring(matchedIndex), tostring(matchMethod)
@@ -1223,6 +1384,14 @@ function MiniWindow.Toggle()
                 OpenForDungeon(fallback)
             end
         end
+    end
+end
+
+
+
+function MiniWindow.Refresh()
+    if miniFrame and miniFrame:IsShown() then
+        RefreshContent()
     end
 end
 

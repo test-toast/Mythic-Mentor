@@ -125,7 +125,8 @@ function Buttons.Create(parent, width, height, text)
         if not self._isSelected then
             self:SetBackdropColor(S.BG_HOVER[1],     S.BG_HOVER[2],     S.BG_HOVER[3],     S.BG_HOVER[4])
             self:SetBackdropBorderColor(S.BORDER_HOVER[1], S.BORDER_HOVER[2], S.BORDER_HOVER[3], S.BORDER_HOVER[4])
-            self.text:SetTextColor(S.TEXT_HOVER[1], S.TEXT_HOVER[2], S.TEXT_HOVER[3])
+            local c = self._hoverTextColor or S.TEXT_HOVER
+            self.text:SetTextColor(c[1], c[2], c[3])
         else
             self:SetBackdropColor(S.BG_SEL[1],     S.BG_SEL[2],     S.BG_SEL[3],     S.BG_SEL[4])
             self:SetBackdropBorderColor(S.BORDER_SEL[1], S.BORDER_SEL[2], S.BORDER_SEL[3], S.BORDER_SEL[4])
@@ -139,7 +140,8 @@ function Buttons.Create(parent, width, height, text)
         if not self._isSelected then
             self:SetBackdropColor(S.BG_NORMAL[1],     S.BG_NORMAL[2],     S.BG_NORMAL[3],     S.BG_NORMAL[4])
             self:SetBackdropBorderColor(S.BORDER_NORMAL[1], S.BORDER_NORMAL[2], S.BORDER_NORMAL[3], S.BORDER_NORMAL[4])
-            self.text:SetTextColor(S.TEXT_NORMAL[1], S.TEXT_NORMAL[2], S.TEXT_NORMAL[3])
+            local c = self._normalTextColor or S.TEXT_NORMAL
+            self.text:SetTextColor(c[1], c[2], c[3])
         else
             self:SetBackdropColor(S.BG_SEL[1],     S.BG_SEL[2],     S.BG_SEL[3],     S.BG_SEL[4])
             self:SetBackdropBorderColor(S.BORDER_SEL[1], S.BORDER_SEL[2], S.BORDER_SEL[3], S.BORDER_SEL[4])

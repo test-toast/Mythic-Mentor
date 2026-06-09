@@ -67,7 +67,7 @@ function BossHelper:ShowUpdatePopup(latestVersion)
     if self._updatePopupShownForVersion == latestVersion then return end
     self._updatePopupShownForVersion = latestVersion
 
-    local popupText = string.format(
+    local popupText = string_format(
         Translate("UPDATE_POPUP_TEXT"),
         tostring(self.VERSION_STRING),
         tostring(latestVersion)

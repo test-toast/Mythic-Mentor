@@ -1,6 +1,9 @@
 ﻿-- Functions.lua
 -- Her samler vi alle generelle hjælpefunktioner til BossHelper
 
+local table_insert = table.insert
+local table_remove = table.remove
+
 -- ================================================
 -- Registrer et frame så det kan lukkes med ESC
 -- ================================================
@@ -15,13 +18,13 @@ function BossHelper:RegisterEscClose(frame)
     -- Fjern altid først, så vi undgår dubletter
     for i = #UISpecialFrames, 1, -1 do
         if UISpecialFrames[i] == name then
-            table.remove(UISpecialFrames, i)
+            table_remove(UISpecialFrames, i)
         end
     end
 
     -- Tilføj kun hvis indstillingen er aktiv
     if BossHelperDB and BossHelperDB.allowEscClose then
-        table.insert(UISpecialFrames, name)
+        table_insert(UISpecialFrames, name)
     end
 end
 
@@ -300,7 +303,7 @@ function BossHelper:CreateMixedAlignmentContent(text, detailContent)
         if paragraph ~= "" then
             local isCentered = paragraph:match("{center}") ~= nil
             local cleanText = paragraph:gsub("{center}", ""):gsub("{/center}", "")
-            table.insert(paragraphs, {text = cleanText, centered = isCentered})
+            table_insert(paragraphs, {text = cleanText, centered = isCentered})
         end
     end
     
@@ -328,8 +331,43 @@ function BossHelper:CreateMixedAlignmentContent(text, detailContent)
         local height = fontString:GetStringHeight()
         currentY = currentY - height - 10 -- Add some spacing
         
-        table.insert(detailContent.mixedContentFrames, fontString)
+        table_insert(detailContent.mixedContentFrames, fontString)
     end
     
     return math.abs(currentY)
+end
+
+function BossHelper:GetOrderedBosses(dungeonName, dungeonData)
+    local customOrder = nil
+    if BossUI and BossUI.isInEditMode and BossUI.stagedOrder then
+        customOrder = BossUI.stagedOrder
+    else
+        BossHelperDB = BossHelperDB or {}
+        BossHelperDB.customBossOrders = BossHelperDB.customBossOrders or {}
+        customOrder = BossHelperDB.customBossOrders[dungeonName]
+    end
+
+    local ordered = {}
+    if customOrder and #customOrder > 0 then
+        local bossMap = {}
+        for _, boss in ipairs(dungeonData.bosses) do
+            bossMap[boss.encounterID] = boss
+        end
+        for _, id in ipairs(customOrder) do
+            if bossMap[id] then
+                table_insert(ordered, bossMap[id])
+                bossMap[id] = nil
+            end
+        end
+        for _, boss in ipairs(dungeonData.bosses) do
+            if bossMap[boss.encounterID] then
+                table_insert(ordered, boss)
+            end
+        end
+    else
+        for _, boss in ipairs(dungeonData.bosses) do
+            table_insert(ordered, boss)
+        end
+    end
+    return ordered
 end

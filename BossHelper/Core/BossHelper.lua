@@ -1,6 +1,19 @@
 ﻿-- BossHelper.lua
 BossHelper = {}
 
+local math_max = math.max
+local math_min = math.min
+local string_match = string.match
+local string_format = string.format
+local table_insert = table.insert
+local wipe = wipe
+local unpack = unpack
+local pairs = pairs
+local ipairs = ipairs
+local type = type
+local tostring = tostring
+local tonumber = tonumber
+
 --------------------------------------------------------------------------------
 -- Addon metadata and version helpers
 --------------------------------------------------------------------------------
@@ -42,6 +55,9 @@ BossHelper.Links = {
 -- one entry here instead of an extra if-nil block in the ADDON_LOADED handler.
 --------------------------------------------------------------------------------
 BossHelper.DB_DEFAULTS = {
+-- Quick Start completion flag
+    quickStartDone             = false,
+
 -- General settings
     language                   = "enUS",
     scale                      = 1.0,
@@ -59,12 +75,15 @@ BossHelper.DB_DEFAULTS = {
 
 -- mini-window settings
     miniWindowEnabled          = true,
+    miniWindowScale            = 1.0,
+    miniWindowFontSize         = 12,
     miniWindowTransparency     = 0.95,
     miniWindowNoBorder         = false,
     miniWindowHideSeparator    = false,
     miniWindowHideButtonChrome = false,
     miniWindowAutoExpand       = false,
     miniWindowLockMove         = false,
+    miniWindowAutoFade         = false,
 
 -- Key tracking settings    
     keyTrackerEnabled          = true,
@@ -78,6 +97,7 @@ BossHelper.DB_DEFAULTS = {
 
 -- Dungeon Check Window settings
     dcwEnabled                 = true,
+    dcwScale                   = 1.0,
     dcwNoBorder                = false,
     dcwTransparency            = 0.95,
     dcwShowSpec                = true,
@@ -88,7 +108,8 @@ BossHelper.DB_DEFAULTS = {
     dcwLockMove                = false,
 
 -- Battle Res Tracker settings
-    brtEnabled                 = true,
+    brtEnabled                 = false,
+    brtScale                   = 1.0,
     brtNoBorder                = false,
     brtTransparency            = 0.95,
     brtHideTitle               = false,
@@ -128,7 +149,11 @@ end
 
 function BossHelper.UI.setText(obj, txt)
     if not obj then return end
-    pcall(function() if obj.SetText then obj:SetText(txt) end end)
+    pcall(function() 
+        if obj.StopAnimating then obj:StopAnimating() end
+        if obj.SetAlpha then obj:SetAlpha(1) end
+        if obj.SetText then obj:SetText(txt) end 
+    end)
 end
 
 function BossHelper.UI.destroyWidget(w)
@@ -211,12 +236,12 @@ function BossHelper:CompareVersions(a, b)
         local out = {}
         ver = tostring(ver or "0")
         for num in ver:gmatch("%d+") do
-            table.insert(out, tonumber(num) or 0)
+            table_insert(out, tonumber(num) or 0)
         end
         return out
     end
     local aa, bb = split(a), split(b)
-    local n = math.max(#aa, #bb)
+    local n = math_max(#aa, #bb)
     for i = 1, n do
         local x = aa[i] or 0
         local y = bb[i] or 0
@@ -264,7 +289,7 @@ function BossHelper:GetMythicPlusDungeons()
     for i, mapID in ipairs(C_ChallengeMode.GetMapTable()) do
         local name, _, _, textureID = C_ChallengeMode.GetMapUIInfo(mapID)
         if name and textureID then
-            table.insert(dungeons, {id = mapID, name = name, texture = textureID})
+            table_insert(dungeons, {id = mapID, name = name, texture = textureID})
         end
     end
     return dungeons
@@ -421,6 +446,13 @@ _loader:SetScript("OnEvent", function(self, event, ...)
             if f then
                 BossHelper:RegisterEscClose(f)
             end
+        end
+
+        -- Vis Quick Start-guiden ved første installation
+        if BossHelper.QuickStart then
+            C_Timer.After(1, function()
+                BossHelper.QuickStart.ShowIfNeeded()
+            end)
         end
 
         -- Delay initial version broadcast slightly to ensure channel join completed

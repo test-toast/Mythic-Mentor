@@ -12,9 +12,21 @@
 
 if not BossSettings then BossSettings = {} end
 
+local math_max = math.max
+local math_min = math.min
+local math_floor = math.floor
+local math_abs = math.abs
+local math_pi = math.pi
+local table_insert = table.insert
+local string_format = string.format
+local string_gsub = string.gsub
+local type = type
+local tostring = tostring
+local tonumber = tonumber
+
 local deps = {} -- internal deps (populated fra Init eller ShowSettings args)
 
-local function trim(s) return (s or ""):gsub("^%s+", ""):gsub("%s+$", "") end
+local function trim(s) return string_gsub(string_gsub(s or "", "^%s+", ""), "%s+$", "") end
 
 function BossSettings.Init(d)
     if not d then return end
@@ -99,21 +111,24 @@ function BossSettings.BuildSettingsCategoryUI(rPanel, category, ctx)
     -- -----------------------------------------------------------------------
     local SIMG = "Interface\\AddOns\\BossHelper\\Media\\settings-img\\"
     local IMG = {
-        LANG          = SIMG .. "general\\select-language.blp",
-        MYTHIC        = SIMG .. "general\\mythic-tap-teleport.blp",
-        NOTES         = SIMG .. "general\\auto-boss-note.blp",
-        CLOSE_ON_POST = SIMG .. "general\\close-on-post.blp",
-        MINI          = SIMG .. "mini.window\\mini-window.blp",
-        KEY_CARD      = SIMG .. "key-tracker\\key-card.blp",
-        KEY_LIST      = SIMG .. "key-tracker\\key-list.blp",
-        DCW           = SIMG .. "dungeon-check\\check-w.blp",
+        LANG          = SIMG .. "general\\select-language.png",
+        MYTHIC        = SIMG .. "general\\mythic-tap-teleport.png",
+        NOTES         = SIMG .. "general\\auto-boss-note.png",
+        CLOSE_ON_POST = SIMG .. "general\\close-on-post.png",
+        MINI          = SIMG .. "mini-Window\\mini-window.png",
+        KEY_CARD      = SIMG .. "key-tracker\\key-card.png",
+        KEY_CARD_TELE = SIMG .. "key-tracker\\teleport\\key-card-teleport.png",
+        KEY_LIST      = SIMG .. "key-tracker\\key-list.png",
+        KEY_LIST_TELE = SIMG .. "key-tracker\\teleport\\key-list-teleport.png",
+        DCW           = SIMG .. "dungeon-check\\check-w.png",
+        BR            = SIMG .. "br-tracker\\br-tracker.png",
     }
 
     -- -----------------------------------------------------------------------
     -- Widget registry: tracks everything created so it can be cleaned up.
     -- -----------------------------------------------------------------------
     local function W(w)
-        table.insert(rPanel.settingsWidgets, w)
+        table_insert(rPanel.settingsWidgets, w)
         return w
     end
 
@@ -129,7 +144,7 @@ function BossSettings.BuildSettingsCategoryUI(rPanel, category, ctx)
         scroll:SetScript("OnMouseWheel", function(self, delta)
             local current = self:GetVerticalScroll()
             local max = self:GetVerticalScrollRange()
-            self:SetVerticalScroll(math.max(0, math.min(current - delta * 20, max)))
+            self:SetVerticalScroll(math_max(0, math_min(current - delta * 20, max)))
         end)
         local content = CreateFrame("Frame", nil, scroll)
         content:SetWidth(540)
@@ -168,7 +183,7 @@ function BossSettings.BuildSettingsCategoryUI(rPanel, category, ctx)
     -- -----------------------------------------------------------------------
     local function MakeCard(title, col)
         col = col or "full"
-        local HALF_W = math.floor((CARD_W - CARD_GAP) / 2)
+        local HALF_W = math_floor((CARD_W - CARD_GAP) / 2)
         local thisW  = (col == "full") and CARD_W or HALF_W
         local thisX  = (col == "right") and (CARD_X + HALF_W + CARD_GAP) or CARD_X
 
@@ -194,13 +209,13 @@ function BossSettings.BuildSettingsCategoryUI(rPanel, category, ctx)
         local function CY() return cy end
         local function Adv(n) cy = cy - n end
         local function Fin()
-            local h = math.abs(cy) + CARD_PV
+            local h = math_abs(cy) + CARD_PV
             card:SetHeight(h)
             if col == "left" then
                 pendingRowH = h
                 pendingRowY = cardY
             elseif col == "right" then
-                cardY = cardY - math.max(pendingRowH, h) - CARD_GAP
+                cardY = cardY - math_max(pendingRowH, h) - CARD_GAP
                 pendingRowH = 0
             else
                 cardY = cardY - h - CARD_GAP
@@ -290,13 +305,13 @@ function BossSettings.BuildSettingsCategoryUI(rPanel, category, ctx)
 
         -- Full-row hover zone with animated gradient (via Animations.lua)
         local ROW_H  = BOX + 8
-        local halfW  = math.floor((card:GetWidth() - 4 - rp) / 2)
+        local halfW  = math_floor((card:GetWidth() - 4 - rp) / 2)
         local rowFrame = W(CreateFrame("Frame", nil, card))
         rowFrame:SetHeight(ROW_H)
         rowFrame:SetPoint("TOPLEFT",  card, "TOPLEFT",  2,       cy + 4)
         rowFrame:SetPoint("TOPRIGHT", card, "TOPRIGHT", -2 - rp, cy + 4)
         rowFrame:EnableMouse(true)
-        rowFrame:SetFrameLevel(math.max(1, cb:GetFrameLevel() - 1))
+        rowFrame:SetFrameLevel(math_max(1, cb:GetFrameLevel() - 1))
 
         BossHelper.Anim.ApplySettingsRowHover(
             rowFrame, cb, labelBtn, halfW,
@@ -351,7 +366,7 @@ function BossSettings.BuildSettingsCategoryUI(rPanel, category, ctx)
         local THUMB_W = 6
         local THUMB_H = 16
         local TW      = 170
-        local fmt     = formatFn or function(v) return string.format("%.2f", v) end
+        local fmt     = formatFn or function(v) return string_format("%.2f", v) end
 
         -- Label (left)
         local lbl = W(card:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall"))
@@ -396,12 +411,12 @@ function BossSettings.BuildSettingsCategoryUI(rPanel, category, ctx)
         valEB:Hide()
 
         local function CommitEB()
-            local raw = valEB:GetText():gsub("%%", ""):gsub(",", ".")
+            local raw = string_gsub(string_gsub(valEB:GetText(), "%%", ""), ",", ".")
             local num = parseFn and parseFn(raw) or tonumber(raw)
             if num then
-                num = math.max(minVal, math.min(maxVal, num))
+                num = math_max(minVal, math_min(maxVal, num))
                 if step and step > 0 then
-                    num = math.floor(num / step + 0.5) * step
+                    num = math_floor(num / step + 0.5) * step
                 end
                 sld:SetValue(num)
                 if onRelease then onRelease(num) end
@@ -464,8 +479,8 @@ function BossSettings.BuildSettingsCategoryUI(rPanel, category, ctx)
         thumb:SetVertexColor(GOLD[1], GOLD[2], GOLD[3], 0.9)
 
         local function UpdateFill(value)
-            local pct = (value - minVal) / math.max(1e-6, maxVal - minVal)
-            fill:SetWidth(math.max(1, math.floor(pct * (TW - 2))))
+            local pct = (value - minVal) / math_max(1e-6, maxVal - minVal)
+            fill:SetWidth(math_max(1, math_floor(pct * (TW - 2))))
         end
 
         sld:SetScript("OnValueChanged", function(self, value)
@@ -538,16 +553,10 @@ function BossSettings.BuildSettingsCategoryUI(rPanel, category, ctx)
         mainBtn.arrow:SetRotation(0)
 
         local panel = W(CreateFrame("Frame", nil, rPanel, "BackdropTemplate"))
-        panel:SetSize(170, #languages * 26)
+        panel:SetSize(170 + 8, (#languages * 26) + 8)
         panel:SetPoint("TOP", mainBtn, "BOTTOM", 0, -2)
         panel:Hide()
-        panel:SetBackdrop({
-            bgFile   = "Interface\\DialogFrame\\UI-DialogBox-Background",
-            edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
-            tile = true, tileSize = 16, edgeSize = 16,
-            insets = { left = 4, right = 4, top = 4, bottom = 4 },
-        })
-        panel:SetBackdropColor(0.08, 0.09, 0.13, 0.95)
+        BossHelper.UI.ApplyBackdrop(panel, "EDITBOX", BossHelper.UI.C.BG_PANEL, BossHelper.UI.C.BORDER_AMBER)
         panel:SetFrameStrata("FULLSCREEN_DIALOG")
         panel:SetFrameLevel(2000)
 
@@ -608,13 +617,13 @@ function BossSettings.BuildSettingsCategoryUI(rPanel, category, ctx)
 
         for i, lang in ipairs(languages) do
             local btn = W(CreateCustomButton(panel, 170, 26, lang.label))
-            btn:SetPoint("TOP", panel, "TOP", 0, -((i - 1) * 26))
+            btn:SetPoint("TOP", panel, "TOP", 0, -4 - ((i - 1) * 26))
             btn:SetScript("OnClick", function()
                 _safeSound(856)
                 SelectLanguage(i, true, true)
                 ClosePanel()
             end)
-            table.insert(buttons, btn)
+            table_insert(buttons, btn)
         end
 
         local startIndex = 1
@@ -637,7 +646,7 @@ function BossSettings.BuildSettingsCategoryUI(rPanel, category, ctx)
                     rPanel.languageDropdownCatcher:Show()
                 end
                 BossHelper.Anim.PlayDropdownOpen(panel)
-                if mainBtn.arrow then mainBtn.arrow:SetRotation(math.pi) end
+                if mainBtn.arrow then mainBtn.arrow:SetRotation(math_pi) end
             end
         end)
 
@@ -655,7 +664,7 @@ function BossSettings.BuildSettingsCategoryUI(rPanel, category, ctx)
             { Translate(tooltipKeys[1]), Translate(tooltipKeys[2]) },
             0.0, 1.0, 0.01,
             tonumber(BossHelperDB[dbKey]) or 0.95,
-            function(v) return string.format("%d%%", math.floor(v * 100 + 0.5)) end,
+            function(v) return string_format("%d%%", math_floor(v * 100 + 0.5)) end,
             nil,
             function(value)
                 BossHelperDB[dbKey] = value
@@ -670,65 +679,34 @@ function BossSettings.BuildSettingsCategoryUI(rPanel, category, ctx)
     -- ===========================================================================
     if category == Translate("GENERAL_CATE") then
 
-        -- Card 1: Display (language + scale)
+        -- Quick Start card (full-width, at top)
         do
-            local card, CY, Adv, Fin = MakeCard(Translate("SETTINGS_DISPLAY_SECTION"))
+            local card, CY, Adv, Fin = MakeCard(Translate("QUICK_START_CARD"), "full")
+            local rowY       = CY()
+            local SIDE_BTN_W = 200
 
-            local langLabel = W(card:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall"))
-            langLabel:SetPoint("TOPLEFT", card, "TOPLEFT", CARD_PH, CY())
-            langLabel:SetText(Translate("SELECT_LANGUAGE_TITLE"))
-            langLabel:SetTextColor(GOLD[1], GOLD[2], GOLD[3])
-            Adv(17)
-
-            BuildLanguageDropdown(card, CY())
-            Adv(30)
-
-            Adv(10)
-            CardSlider(card, CY(),
-                Translate("SCALE_SLIDER_TITLE"),
-                { Translate("SCALE_SLIDER_TITLE"), Translate("SCALE_TOOLTIP") },
-                0.5, 2.0, 0.05,
-                BossHelperDB.scale or 1.0,
-                function(v) return string.format("%d%%", math.floor(v * 100 + 0.5)) end,
-                nil,
-                function(value)
-                    BossHelperDB.scale = value
-                    if BossUI and BossUI.GetFrame then
-                        local f = BossUI.GetFrame()
-                        if f then f:SetScale(value) end
-                    end
-                end,
-                function(s) local n = tonumber(s); return n and (n / 100) end)
-            Adv(44)
-
+            local qsBtn = W(CreateCustomButton(card, SIDE_BTN_W, 30, Translate("QUICK_START_OPEN_BTN")))
+            qsBtn:SetPoint("TOPLEFT", card, "TOPLEFT", CARD_PH, rowY + 6)
+            AttachInfoHover(qsBtn, Translate("QUICK_START_OPEN_BTN"), Translate("QUICK_START_OPEN_BTN_TOOLTIP"))
+            qsBtn:SetScript("OnClick", function()
+                if BossUI and BossUI.GetFrame then
+                    local f = BossUI.GetFrame()
+                    if f then f:Hide() end
+                end
+                if BossHelper.QuickStart and BossHelper.QuickStart.Show then
+                    BossHelper.QuickStart.Show()
+                end
+            end)
+            Adv(24)
             Fin()
         end
 
-        -- Card 2: Teleport (left)
+        local startY = cardY
+        local leftH = 0
+
+        -- Card 1: Behavior (left)
         do
-            local card, CY, Adv, Fin = MakeCard(Translate("TELEPORT_CARD"), "left")
-
-            CardCheck(card, CY(), Translate("TELEPORT_MYTHIC_TAB_TITLE"), Translate("TELEPORT_MYTHIC_TAB_TOOLTIP"),
-                BossHelperDB.teleportOnMythicTab ~= false,
-                function(v)
-                    BossHelperDB.teleportOnMythicTab = v
-                    if BossHelper.MythicTeleport and BossHelper.MythicTeleport.UpdateVisibility then
-                        BossHelper.MythicTeleport.UpdateVisibility()
-                    end
-                end, IMG.MYTHIC)
-            Adv(28)
-
-            Fin()
-        end
-
-        -- Card 3: Behavior + Minimap (right)
-        do
-            local card, CY, Adv, Fin = MakeCard(Translate("SETTINGS_BEHAVIOR_SECTION"), "right")
-
-            CardCheck(card, CY(), Translate("ANIMATIONS_COMBT_TITLE"), Translate("ANIMATIONS_TOOLTIP"),
-                BossHelperDB.allowAnimationsInCombat,
-                function(v) BossHelperDB.allowAnimationsInCombat = v end)
-            Adv(28)
+            local card, CY, Adv, Fin = MakeCard(Translate("SETTINGS_BEHAVIOR_SECTION"), "left")
 
             CardCheck(card, CY(), Translate("CLOSE_WINDOW_TITLE"), Translate("CLOSE_WINDOW_TOOLTIP"),
                 BossHelperDB.closeOnPost,
@@ -749,6 +727,69 @@ function BossSettings.BuildSettingsCategoryUI(rPanel, category, ctx)
             CardCheck(card, CY(), Translate("AUTO_OPEN_NOTES_TITLE"), Translate("AUTO_OPEN_NOTES_TOOLTIP"),
                 BossHelperDB.autoOpenBossNotes ~= false,
                 function(v) BossHelperDB.autoOpenBossNotes = v end, IMG.NOTES)
+            Adv(28)
+
+            Fin()
+            leftH = pendingRowH
+        end
+
+        cardY = cardY - leftH - CARD_GAP
+
+        -- Card 2: Teleport (left)
+        do
+            local card, CY, Adv, Fin = MakeCard(Translate("TELEPORT_CARD"), "left")
+
+            CardCheck(card, CY(), Translate("TELEPORT_MYTHIC_TAB_TITLE"), Translate("TELEPORT_MYTHIC_TAB_TOOLTIP"),
+                BossHelperDB.teleportOnMythicTab ~= false,
+                function(v)
+                    BossHelperDB.teleportOnMythicTab = v
+                    if BossHelper.MythicTeleport and BossHelper.MythicTeleport.UpdateVisibility then
+                        BossHelper.MythicTeleport.UpdateVisibility()
+                    end
+                end, IMG.MYTHIC)
+            Adv(28)
+
+            Fin()
+            leftH = leftH + CARD_GAP + pendingRowH
+        end
+
+        cardY = startY
+        pendingRowH = leftH
+
+        -- Card 3: Appearance (right)
+        do
+            local card, CY, Adv, Fin = MakeCard(Translate("SETTINGS_APPEARANCE_SECTION"), "right")
+            
+            local langLabel = W(card:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall"))
+            langLabel:SetPoint("TOPLEFT", card, "TOPLEFT", CARD_PH, CY())
+            langLabel:SetText(Translate("SELECT_LANGUAGE_TITLE"))
+            langLabel:SetTextColor(GOLD[1], GOLD[2], GOLD[3])
+            Adv(17)
+
+            BuildLanguageDropdown(card, CY())
+            Adv(30)
+
+            Adv(10)
+            CardSlider(card, CY(),
+                Translate("SCALE_SLIDER_TITLE"),
+                { Translate("SCALE_SLIDER_TITLE"), Translate("SCALE_TOOLTIP") },
+                0.5, 2.0, 0.05,
+                BossHelperDB.scale or 1.0,
+                function(v) return string_format("%d%%", math_floor(v * 100 + 0.5)) end,
+                nil,
+                function(value)
+                    BossHelperDB.scale = value
+                    if BossUI and BossUI.GetFrame then
+                        local f = BossUI.GetFrame()
+                        if f then f:SetScale(value) end
+                    end
+                end,
+                function(s) local n = tonumber(s); return n and (n / 100) end)
+            Adv(44)
+
+            CardCheck(card, CY(), Translate("ANIMATIONS_COMBT_TITLE"), Translate("ANIMATIONS_TOOLTIP"),
+                BossHelperDB.allowAnimationsInCombat,
+                function(v) BossHelperDB.allowAnimationsInCombat = v end)
             Adv(28)
 
             CardCheck(card, CY(), Translate("START_PAGE_HIDE_GUIDE_TITLE"), Translate("START_PAGE_HIDE_GUIDE_TOOLTIP"),
@@ -1056,6 +1097,11 @@ function BossSettings.BuildSettingsCategoryUI(rPanel, category, ctx)
                 function(v) BossHelperDB.miniWindowAutoExpand = v end, IMG.MINI)
             Adv(28)
 
+            CardCheck(card, CY(), Translate("MINI_WINDOW_AUTO_FADE_TITLE"), Translate("MINI_WINDOW_AUTO_FADE_TOOLTIP"),
+                BossHelperDB.miniWindowAutoFade,
+                function(v) BossHelperDB.miniWindowAutoFade = v; ApplyMiniWindow() end, IMG.MINI)
+            Adv(28)
+
             Fin()
             miniBehaviorCard = card
         end
@@ -1064,6 +1110,21 @@ function BossSettings.BuildSettingsCategoryUI(rPanel, category, ctx)
         local miniAppearanceCard
         do
             local card, CY, Adv, Fin = MakeCard(Translate("SETTINGS_APPEARANCE_SECTION"), "right")
+
+            CardSlider(card, CY(),
+                Translate("MINI_WINDOW_SCALE_TITLE"),
+                { Translate("MINI_WINDOW_SCALE_TITLE"), Translate("MINI_WINDOW_SCALE_TOOLTIP") },
+                0.5, 2.0, 0.05,
+                BossHelperDB.miniWindowScale or 1.0,
+                function(v) return string_format("%d%%", math_floor(v * 100 + 0.5)) end,
+                nil,
+                function(value)
+                    BossHelperDB.miniWindowScale = value
+                    ApplyMiniWindow()
+                end,
+                function(s) local n = tonumber(s); return n and (n / 100) end,
+                IMG.MINI)
+            Adv(44)
 
             PctSlider(card, CY(),
                 "MINI_WINDOW_TRANSPARENT_TITLE",
@@ -1090,6 +1151,21 @@ function BossSettings.BuildSettingsCategoryUI(rPanel, category, ctx)
                 BossHelperDB.miniWindowLockMove,
                 function(v) BossHelperDB.miniWindowLockMove = v; ApplyMiniWindow() end, IMG.MINI)
             Adv(28)
+
+            CardSlider(card, CY(),
+                Translate("MINI_WINDOW_FONT_SIZE_TITLE"),
+                { Translate("MINI_WINDOW_FONT_SIZE_TITLE"), Translate("MINI_WINDOW_FONT_SIZE_TOOLTIP") },
+                8, 20, 1,
+                BossHelperDB.miniWindowFontSize or 12,
+                function(v) return string_format("%d", math_floor(v + 0.5)) end,
+                nil,
+                function(value)
+                    BossHelperDB.miniWindowFontSize = math_floor(value + 0.5)
+                    ApplyMiniWindow()
+                end,
+                function(s) local n = tonumber(s); return n end,
+                IMG.MINI)
+            Adv(44)
 
             Fin()
             miniAppearanceCard = card
@@ -1132,9 +1208,12 @@ function BossSettings.BuildSettingsCategoryUI(rPanel, category, ctx)
                     end
                     if updateKeySubCards then updateKeySubCards(v) end
                 end, IMG.KEY_CARD)
-            Adv(28)
+            Adv(24)
             Fin()
         end
+
+        local startY = cardY
+        local leftH = 0
 
         -- Start Page (left)
         local keyStartPageCard
@@ -1156,17 +1235,20 @@ function BossSettings.BuildSettingsCategoryUI(rPanel, category, ctx)
                 function(v)
                     BossHelperDB.teleportOnKeyCard = v
                     BossHelper.RefreshAllKeystoneWidgets()
-                end, IMG.KEY_CARD)
+                end, IMG.KEY_CARD_TELE)
             Adv(28)
 
             Fin()
             keyStartPageCard = card
+            leftH = pendingRowH
         end
 
-        -- Group Finder toggles (right)
+        cardY = cardY - leftH - CARD_GAP
+
+        -- Group Finder toggles (left)
         local keyGFTogglesCard
         do
-            local card, CY, Adv, Fin = MakeCard(Translate("KEY_TRACKER_GF_APPEARANCE"), "right")
+            local card, CY, Adv, Fin = MakeCard(Translate("KEY_TRACKER_GF_APPEARANCE"), "left")
 
             CardCheck(card, CY(), Translate("KEY_TRACKER_GROUPFINDER_TITLE"), Translate("KEY_TRACKER_GROUPFINDER_TOOLTIP"),
                 BossHelperDB.showKeysInGroupFinder ~= false,
@@ -1178,17 +1260,21 @@ function BossSettings.BuildSettingsCategoryUI(rPanel, category, ctx)
                 function(v)
                     BossHelperDB.teleportOnKeyList = v
                     BossHelper.RefreshAllKeystoneWidgets()
-                end, IMG.KEY_LIST)
+                end, IMG.KEY_LIST_TELE)
             Adv(28)
 
             Fin()
             keyGFTogglesCard = card
+            leftH = leftH + CARD_GAP + pendingRowH
         end
 
-        -- Group Finder Appearance (full)
+        cardY = startY
+        pendingRowH = leftH
+
+        -- Group Finder Appearance (right)
         local keyAppearanceCard
         do
-            local card, CY, Adv, Fin = MakeCard(Translate("SETTINGS_APPEARANCE_SECTION"))
+            local card, CY, Adv, Fin = MakeCard(Translate("SETTINGS_APPEARANCE_SECTION"), "right")
 
             PctSlider(card, CY(),
                 "KEY_TRACKER_GF_TRANSPARENT_TITLE",
@@ -1283,7 +1369,22 @@ function BossSettings.BuildSettingsCategoryUI(rPanel, category, ctx)
         -- Appearance (right)
         local dcwAppearanceCard
         do
-            local card, CY, Adv, Fin = MakeCard(Translate("DCW_SETTINGS_APPEARANCE"), "right")
+            local card, CY, Adv, Fin = MakeCard(Translate("SETTINGS_APPEARANCE_SECTION"), "right")
+
+            CardSlider(card, CY(),
+                Translate("DCW_SCALE_TITLE"),
+                { Translate("DCW_SCALE_TITLE"), Translate("DCW_SCALE_TOOLTIP") },
+                0.5, 2.0, 0.05,
+                BossHelperDB.dcwScale or 1.0,
+                function(v) return string_format("%d%%", math_floor(v * 100 + 0.5)) end,
+                nil,
+                function(value)
+                    BossHelperDB.dcwScale = value
+                    ApplyDCW()
+                end,
+                function(s) local n = tonumber(s); return n and (n / 100) end,
+                IMG.DCW)
+            Adv(44)
 
             PctSlider(card, CY(),
                 "DCW_TRANSPARENT_TITLE",
@@ -1343,11 +1444,11 @@ function BossSettings.BuildSettingsCategoryUI(rPanel, category, ctx)
                         end
                     end
                     if updateBRTSubCards then updateBRTSubCards(v) end
-                end, nil, SIDE_BTN_W + CARD_PH + 4)
+                end, IMG.BR, SIDE_BTN_W + CARD_PH + 4)
 
             local openBtn = W(CreateCustomButton(card, SIDE_BTN_W, 30, Translate("BRT_OPEN_BTN")))
             openBtn:SetPoint("TOPRIGHT", card, "TOPRIGHT", -CARD_PH, rowY + 6)
-            AttachInfoHover(openBtn, Translate("BRT_OPEN_BTN"), Translate("BRT_OPEN_BTN_TOOLTIP"), nil)
+            AttachInfoHover(openBtn, Translate("BRT_OPEN_BTN"), Translate("BRT_OPEN_BTN_TOOLTIP"), IMG.BR)
             openBtn:SetScript("OnClick", function()
                 if BattleResTracker and BattleResTracker.Show then BattleResTracker.Show() end
             end)
@@ -1357,27 +1458,42 @@ function BossSettings.BuildSettingsCategoryUI(rPanel, category, ctx)
 
         local brtAppearanceCard
         do
-            local card, CY, Adv, Fin = MakeCard(Translate("DCW_SETTINGS_APPEARANCE"))
+            local card, CY, Adv, Fin = MakeCard(Translate("SETTINGS_APPEARANCE_SECTION"))
+
+            CardSlider(card, CY(),
+                Translate("BRT_SCALE_TITLE"),
+                { Translate("BRT_SCALE_TITLE"), Translate("BRT_SCALE_TOOLTIP") },
+                0.5, 2.0, 0.05,
+                BossHelperDB.brtScale or 1.0,
+                function(v) return string_format("%d%%", math_floor(v * 100 + 0.5)) end,
+                nil,
+                function(value)
+                    BossHelperDB.brtScale = value
+                    ApplyBRT()
+                end,
+                function(s) local n = tonumber(s); return n and (n / 100) end,
+                IMG.BR)
+            Adv(44)
 
             PctSlider(card, CY(),
                 "BRT_TRANSPARENT_TITLE",
                 { "BRT_TRANSPARENT_TITLE", "BRT_TRANSPARENT_TOOLTIP" },
-                "brtTransparency", ApplyBRT, nil)
+                "brtTransparency", ApplyBRT, IMG.BR)
             Adv(44)
 
             CardCheck(card, CY(), Translate("BRT_NO_BORDER_TITLE"), Translate("BRT_NO_BORDER_TOOLTIP"),
                 BossHelperDB.brtNoBorder,
-                function(v) BossHelperDB.brtNoBorder = v; ApplyBRT() end, nil)
+                function(v) BossHelperDB.brtNoBorder = v; ApplyBRT() end, IMG.BR)
             Adv(28)
 
             CardCheck(card, CY(), Translate("BRT_HIDE_TITLE_TITLE"), Translate("BRT_HIDE_TITLE_TOOLTIP"),
                 BossHelperDB.brtHideTitle,
-                function(v) BossHelperDB.brtHideTitle = v; ApplyBRT() end, nil)
+                function(v) BossHelperDB.brtHideTitle = v; ApplyBRT() end, IMG.BR)
             Adv(28)
 
             CardCheck(card, CY(), Translate("BRT_LOCK_MOVE_TITLE"), Translate("BRT_LOCK_MOVE_TOOLTIP"),
                 BossHelperDB.brtLockMove ~= false,
-                function(v) BossHelperDB.brtLockMove = v; ApplyBRT() end, nil)
+                function(v) BossHelperDB.brtLockMove = v; ApplyBRT() end, IMG.BR)
             Adv(28)
 
             Fin()
@@ -1391,7 +1507,7 @@ function BossSettings.BuildSettingsCategoryUI(rPanel, category, ctx)
 
     end
 
-    settingsContent:SetHeight(math.abs(cardY) + 8)
+    settingsContent:SetHeight(math_abs(cardY) + 8)
 end
 
 -- ===========================================================================
@@ -1513,7 +1629,7 @@ function BossSettings.ShowSettings(ctx)
             })
             _safeSound(856)
         end)
-        table.insert(frame.bossButtons, btn)
+        table_insert(frame.bossButtons, btn)
         y = y - 35
     end
 
