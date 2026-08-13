@@ -1,47 +1,39 @@
-﻿Dungeon5_daDK = {
-    instanceID = 476,
+Dungeon5_daDK = {
+    instanceID = 1311, -- Den of Nalorakk
     bosses = {
         {
-            encounterID = 965,
+            encounterID = 2776, -- The Hoardmonger
             short       = [[
-1. Dodge ALT og hold dig væk fra kanten af platformen.
+1. Avoid frontal/bones
+2. Soak mushrooms, but be careful as they apply a stacking poison DoT.
 ]],
-            details     = [[Kommer snart
+            details     = [[Coming soon
 ]]
         },
 
         {
-            encounterID = 966,
+            encounterID = 2777, -- Sentinel of Winter
             short       = [[
-1. Soak de tre lysstråler; gå væk når de bliver til trekanter.
+1. Raging Squall = loosely stack.
+2. Kick/Kill adds asap and soak swirl once they die.
+3. Stay inside snow pile during Frozen Tempest.
 
-Tank. Vend bossen væk fra gruppen & dodge frontal.
+Healer: Dispel debuffs asap.
 ]],
-            details     = [[Kommer snart
+            details     = [[Coming soon
 ]]
         },
 
         {
-            encounterID = 967,
+            encounterID = 2778, -- Nalorakk
             short       = [[
-1. Når adds dør, efterlader de et æg; dræb IKKE andre adds tæt på æggene.
-2. Løb væk når du bliver fixated.
-3. Gem dig bag en pillar under Searing Quills.
+1. Move out with circles. Drop them close together.
+2. Hide behind shield during Overwhelming Onslaught.
+3. Intercept dashing red bears.
 
-DPS. Stå ikke på hver sin side af den samme pillar.
+Tank: Soak circle after Onslaught.
 ]],
-            details     = [[Kommer snart
-]]
-        },
-
-        {
-            encounterID = 968,
-            short       = [[
-1. Interrupt Solar Blast.
-2. Brug CC & nuke adds ASAP.
-3. Hvis du bliver targetet, så kite beamet ud til kanten af rummet for at spare plads.
-]],
-            details     = [[Kommer snart
+            details     = [[Coming soon
 ]]
         },
     }

@@ -1,45 +1,49 @@
 Dungeon7_frFR = {
-    instanceID = 945,
+    instanceID = 1041, -- King’s Rest
     bosses = {
         {
-            encounterID = 1979,
+            encounterID = 2165, -- The Golden Serpent
             short       = [[
-1. Évitez l'attaque frontale.
-2. Sortez en suivant le cercle.
-3. Tuer les adds dès que possible.
+1. Drop circles close together and far away from boss.
+2. Kill the adds that spawn before they reach the boss.
 ]],
-            details     = [[A venir
+            details     = [[Coming soon
 ]]
         },
 
         {
-            encounterID = 1980,
+            encounterID = 2171, -- Mchimba
             short       = [[
-1. Nettoyez les bombes du vide via les cercles.
-2. Interrompez le familier Aile d'Ombre.
+1. Don’t drop puddles near coffins.
+2. Free entombed players asap.
+3. Kick & kill adds.
 ]],
-            details     = [[A venir
+            details     = [[Coming soon
 ]]
         },
 
         {
-            encounterID = 1981,
+            encounterID = 2170, -- Council of Tribes
             short       = [[
-1. Interrupt Fouet mental, and tuer les adds tentacules dès que possible.
-2. À 100 d'énergie, concentrez-vous sur le boss.
+Boss #1: Axes = bad
+Boss #2: Everyone soak circle.
+Boss #3: Kick Poison Nova & Kill totems: explosive then thundering then torrent.
+
+Healer: Don’t cast during Disrupting.
 ]],
-            details     = [[A venir
+            details     = [[Coming soon
 ]]
         },
         
         {
-            encounterID = 1982,
+            encounterID = 2172, -- Dazar
             short       = [[
-1. Pointez le faisceau discordant sur les notes qui les entourent.
-2. Les faisceaux rotatifs du mal.
-3. Évitez les énormes explosions.
+1. Interrupt & prio kill Reban.
+2. Avoid frontal & brown circles.
+3. Spread with red circle.
+4. Gilded Destruction = RUN.
 ]],
-            details     = [[A venir
+            details     = [[Coming soon
 ]]
         },
     }

@@ -1,32 +1,35 @@
-﻿Dungeon3 = {
-    instanceID = 1316, -- Nexus-Point Xenas
+Dungeon3 = {
+    instanceID = 1313, -- Voidscar Arena
     bosses = {
         {
-            encounterID = 2813, -- Chief Corewright Kasreth
+            encounterID = 2791, -- Taz’Rah
             short       = [[
-1. Avoid beams & kick boss.
-2. When you get the Reflux Charge debuff, move INTO the beams to remove it (ideally move into overlaping beams).
+1. Don’t overlap line beams.
+2. Avoid balls & puddles.
+
+Tank: Slowly kite the boss around the edge of the room.
 ]],
             details     = [[Coming soon
 ]]
         },
 
         {
-            encounterID = 2814, -- Corewarden Nysarra
+            encounterID = 2792, -- Atroxus
             short       = [[
-1. Move out with circle.
-2. Kick and nuke adds.
-3. When yellow guy appears, do NOT stand between him and the boss. AFTER he stuns the boss, move into yellow ray.
+1. Kill add ASAP.
 ]],
             details     = [[Coming soon
 ]]
         },
 
         {
-            encounterID = 2815, -- Lothraxion
+            encounterID = 2793, -- Charonus
             short       = [[
-1. Move out with circles, and don't stand in the giant arrows of doom.
-2. After the attack at 100 energy, the boss clones itself. Only interrupt the clone WITHOUT horns.
+1. Spread with circles.
+2. Bait orbs into black holes.
+3. Run out & around when targeted by cascade attack.
+
+Tank: Point frontal away from group.
 ]],
             details     = [[Coming soon
 ]]

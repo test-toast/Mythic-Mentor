@@ -1,56 +1,47 @@
-﻿Dungeon8_daDK = {
-    instanceID = 1201,
+Dungeon8_daDK = {
+    instanceID = 1030, -- Temple of Sethraliss
     bosses = {
         {
-            encounterID = 2509,
+            encounterID = 2142, -- Adderis & Aspix
             short       = [[
-1. Soak orbs (1 hver).
-2. Gå væk med cirklen.
-
-Tank. Vend frontal væk fra gruppen.
+1. Hit guy without shield.
+2. Don’t overlap beams.
+3. Soak blue circle and then move out.
+4. Drop pools out of the way.
 ]],
-            details     = [[Kommer snart
+            details     = [[Coming soon
 ]]
         },
 
         {
-            encounterID = 2512,
+            encounterID = 2143, -- Merektha
             short       = [[
-1. Spawn Germinate adds tæt sammen; nuke ASAP.
-2. Rens debuffs i grøn cirkel.
-3. Interrupt Ancient Branch add.
+1. Use CC to break knots and kill small sneks asap.
+2. Drop pools out of the way.
+3. In intermission: kick/kill adds and avoid burrow charge.
 ]],
-            details     = [[Kommer snart
+            details     = [[Coming soon
 ]]
         },
 
         {
-            encounterID = 2495,
-            phases = {"Phase 1", "Wind Phase", "Fire Phase"},
-            phaseText = {
-                ["Phase 1"] = [[
-1. Undgå frontal, spread cirkler, cast ikke under screech.
+            encounterID = 2144, -- Galvazzt
+            short       = [[
+Soak beams.
 ]],
-                ["Wind Phase"] = [[
-1. Tag orbs & dodge onde tornadoer.
-]],
-                ["Fire Phase"] = [[
-1. Ild = farligt.
-]]
-            },
-            details     = [[Kommer snart
+            details     = [[Coming soon
 ]]
         },
         
         {
-            encounterID = 2514,
+            encounterID = 2145, -- Avatar of Sethraliss
             short       = [[
-1. Alle attacks giver en debuff. Gå væk lige før du rammer 3 stacks.
-2. Undgå orbs & løb væk når du bliver suget ind.
+1. Two players soak the orbs when they spawn. Stagger this to allow the debuff to expire.
+2. Kick/kill adds. Move circles out.
 
-Tank. Vend frontal væk fra gruppen.
+Healer: Run when fixated. Heal Avatar.
 ]],
-            details     = [[Kommer snart
+            details     = [[Coming soon
 ]]
         },
     }

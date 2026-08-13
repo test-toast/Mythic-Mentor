@@ -1,49 +1,52 @@
 Dungeon2_frFR = {
-    instanceID = 249,
+    instanceID = 1304, --  Murder Row
     bosses = {
         {
-            encounterID = 2659,
+            encounterID = 2679, -- Kystia & Nibbles
             short       = [[
-1. Évitez les flaques et grouper lors de l'apparition des orbes (idéalement loin du boss).
+1. Focus Nibbles to break shield.
+2. CC/Kick mirror image.
+3. Beware: frontal beam rotates.
 
-Healer. Dissipez les debuffs dès que possible.
-Tank. Le boss crée des flaques. Attirer le boss près des murs pour contrôler l'espace.
+Healer: Dispel debuffs asap. Big heals during Destabilized.
 ]],
-            details     = [[A venir
+            details     = [[Coming soon
 ]]
         },
 
         {
-            encounterID = 2661,
+            encounterID = 2680, -- Zaen Bladesorrow
             short       = [[
-1. 3 joueurs sont marqués. Entrez dans la zone violette pour enlever la marque, mais attention à le faire de façon progressive et non en une fois !
-2. Entrez dans la zone violette lorsque le boss lance Vœu de Silence.
-3. Missiles = mauvais.
+1. Move with red circle on GREEN barrels
+2. Hide behind barrels when he shoots. 
 
-
+Tank: Dispel poison if you can.
 ]],
-            details     = [[A venir
+            details     = [[Coming soon
 ]]
         },
         {
-            encounterID = 2660,
+            encounterID = 2681, -- Xathuux
             short       = [[
-1. Éloignez-vous lorsque vous êtes la cible de Piqûre Cosmique.
-2. Lorsque la flèche bleue apparaît, suivez-la et touchez le clone.
-3. Courez après avoir été aspiré.
+1. Destroy Axe asap.
+2. Spread with circles.
+
+Tank: Point frontal away from group.
+Tank: Slowly kite during Demonic Rage.
 ]],
-            details = [[A venir
+            details = [[Coming soon
 ]]
         },
         {
-            encounterID = 2662,
+            encounterID = 2662, -- Lithiel Cinderfury
             short       = [[
-1. La pièce est divisée en 4 quadrants. Il faut au moins un joueur sur chacun.
-2. Grouper lors de l'apparition de la balle pendant qu'elle rebondit entre les quadrants.
+1. Interrupt Chaos Bolt.
+2. Loosely stack with circles and prio CC/kill the adds.
+3. Use gateway during wave attack.
 
-Tank/healer Ecartez vous avec le debuff pour permettre au soigneur de le dissiper facilement.
+Tank: Kite infernal. Keep it reasonably far from the group.
 ]],
-            details = [[A venir
+            details = [[Coming soon
 ]]
         },
         

@@ -1,47 +1,52 @@
-﻿Dungeon2_daDK = {
-    instanceID = 249,
+Dungeon2_daDK = {
+    instanceID = 1304, --  Murder Row
     bosses = {
         {
-            encounterID = 2659,
+            encounterID = 2679, -- Kystia & Nibbles
             short       = [[
-1. Undgå puddles, og soak orbs når de kommer (helst ikke tæt på bossen).
+1. Focus Nibbles to break shield.
+2. CC/Kick mirror image.
+3. Beware: frontal beam rotates.
 
-Healer. Dispel debuffs asap.
-Tank. Bossen laver puddles. Kite langs væggene for at styre pladsen.
+Healer: Dispel debuffs asap. Big heals during Destabilized.
 ]],
-            details     = [[Kommer snart
+            details     = [[Coming soon
 ]]
         },
 
         {
-            encounterID = 2661,
+            encounterID = 2680, -- Zaen Bladesorrow
             short       = [[
-1. 3 spillere bliver markeret. Gå ind i den lilla zone for at fjerne det – men stagger det!
-2. Gå ind i den lilla zone når bossen caster Vow of Silence.
-3. Missiles = farligt.
-]],
-            details     = [[Kommer snart
-]]
-        },
-        {
-            encounterID = 2660,
-            short       = [[
-1. Flyt dig væk når du bliver ramt af Cosmic Sting.
-2. Når en blå pil vises, følg den & rør klonen.
-3. Løb væk når du bliver suget ind.
-]],
-            details = [[Kommer snart
-]]
-        },
-        {
-            encounterID = 2662,
-            short       = [[
-1. Rummet er delt op i 4 felter. Der skal være mindst én spiller i hver.
-2. Soak bolden mens den hopper mellem felterne.
+1. Move with red circle on GREEN barrels
+2. Hide behind barrels when he shoots. 
 
-Tank/healer. Gå væk med debuff så healeren kan dispel.
+Tank: Dispel poison if you can.
 ]],
-            details = [[Kommer snart
+            details     = [[Coming soon
+]]
+        },
+        {
+            encounterID = 2681, -- Xathuux
+            short       = [[
+1. Destroy Axe asap.
+2. Spread with circles.
+
+Tank: Point frontal away from group.
+Tank: Slowly kite during Demonic Rage.
+]],
+            details = [[Coming soon
+]]
+        },
+        {
+            encounterID = 2662, -- Lithiel Cinderfury
+            short       = [[
+1. Interrupt Chaos Bolt.
+2. Loosely stack with circles and prio CC/kill the adds.
+3. Use gateway during wave attack.
+
+Tank: Kite infernal. Keep it reasonably far from the group.
+]],
+            details = [[Coming soon
 ]]
         },
         

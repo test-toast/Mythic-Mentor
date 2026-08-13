@@ -1,30 +1,38 @@
-﻿Dungeon3_ruRU = {
-    instanceID = 1316,
+Dungeon3_ruRU = {
+    instanceID = 1313, -- Voidscar Arena
     bosses = {
         {
-            encounterID = 2813,
-            short = [[
-1. Избегай лучей & прерви босса.
-2. Reflux Charge — зайди в лучи чтобы снять (лучше в наложенные лучи).
+            encounterID = 2791, -- Taz’Rah
+            short       = [[
+1. Don’t overlap line beams.
+2. Avoid balls & puddles.
+
+Tank: Slowly kite the boss around the edge of the room.
 ]],
-            details = [[Скоро]]
+            details     = [[Coming soon
+]]
         },
+
         {
-            encounterID = 2814,
-            short = [[
-1. Выйди из круга.
-2. Прерви & уничтожь адов.
-3. Жёлтый моб: НЕ стой между ним и боссом. Потом зайди в жёлтый луч.
+            encounterID = 2792, -- Atroxus
+            short       = [[
+1. Kill add ASAP.
 ]],
-            details = [[Скоро]]
+            details     = [[Coming soon
+]]
         },
+
         {
-            encounterID = 2815,
-            short = [[
-1. Уходи от кругов и больших стрелок.
-2. На 100 энергии босс клонируется. Прерви только клона БЕЗ рогов.
+            encounterID = 2793, -- Charonus
+            short       = [[
+1. Spread with circles.
+2. Bait orbs into black holes.
+3. Run out & around when targeted by cascade attack.
+
+Tank: Point frontal away from group.
 ]],
-            details = [[Скоро]]
+            details     = [[Coming soon
+]]
         },
     }
 }

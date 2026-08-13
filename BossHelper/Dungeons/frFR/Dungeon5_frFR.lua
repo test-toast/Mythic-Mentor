@@ -1,47 +1,39 @@
-Dungeon5_frFR = {
-    instanceID = 476,
+﻿Dungeon5_frFR = {
+    instanceID = 1311, -- Den of Nalorakk
     bosses = {
         {
-            encounterID = 965,
+            encounterID = 2776, -- The Hoardmonger
             short       = [[
-1. Évitez TOUT et restez loin du bord de la plateforme.
+1. Avoid frontal/bones
+2. Soak mushrooms, but be careful as they apply a stacking poison DoT.
 ]],
-            details     = [[A venir
+            details     = [[Coming soon
 ]]
         },
 
         {
-            encounterID = 966,
+            encounterID = 2777, -- Sentinel of Winter
             short       = [[
-1. Regroupez les trois rayons lumineux ; éloignez-vous lorsqu'ils forment des triangles.
+1. Raging Squall = loosely stack.
+2. Kick/Kill adds asap and soak swirl once they die.
+3. Stay inside snow pile during Frozen Tempest.
 
-Tank. Éloignez le boss du groupe et esquivez les attaques frontales.
+Healer: Dispel debuffs asap.
 ]],
-            details     = [[A venir
+            details     = [[Coming soon
 ]]
         },
 
         {
-            encounterID = 967,
+            encounterID = 2778, -- Nalorakk
             short       = [[
-1. Les adds laissent un oeuf à leur mort; NE LES TUEZ PAS les adds lors qu'ils sont prêts des oeufs.
-2. Courez lorsque ciblé.
-3. Cachez-vous derrière un pilier pendant l'attaque Plumes incendiaires.
+1. Move out with circles. Drop them close together.
+2. Hide behind shield during Overwhelming Onslaught.
+3. Intercept dashing red bears.
 
-DPS. Ne vous tenez pas de chaque côté du pilier.
+Tank: Soak circle after Onslaught.
 ]],
-            details     = [[A venir
-]]
-        },
-
-        {
-            encounterID = 968,
-            short       = [[
-1. Interrompre le souffle solaire.
-2. Interrompez et  concentrez vous sur les adds dès que possible.
-3. Lorsque ciblé, orientez le faisceau vers le bord de la pièce pour donner de l'espace au groupe.
-]],
-            details     = [[A venir
+            details     = [[Coming soon
 ]]
         },
     }

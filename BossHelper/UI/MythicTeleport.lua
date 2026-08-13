@@ -15,14 +15,16 @@ local math_ceil = math.ceil
 -- Opdatér disse når en ny M+ sæson starter.
 -- ============================================================
 BossHelper.TeleportSpells = {
-    [402] = 393273,  -- Algeth'ar Academy
-    [558] = 1254572, -- Magisters' Terrace
-    [560] = 1254559, -- Maisara Caverns
-    [559] = 1254563, -- Nexus-Point Xenas
-    [556] = 1254555, -- Pit of Saron
-    [239] = 1254551, -- Seat of the Triumvirate
-    [161] = 159898,  -- Skyreach
-    [557] = 1254400, -- Windrunner Spire
+
+  --MapID --SpellID   -- Dungeon Name
+    [587] = 1286809,  -- Murder Row
+    [588] = 1286812,  -- Alter of Fangs
+    [586] = 1286807,  -- Den of Nalorakk
+    [584] = 1286801,  -- Blinding Vale
+    [399] = 393256,   -- Ruby Life Pools
+    [250] = 1286828,  -- Temple of Sethraliss
+    [249] = 1286831,  -- Kings Rest
+    [585] = 1286804,  -- Voidscar Arena
 }
 
 -- Slå teleport-spell op for et dungeon mapID (bruges af KeystoneWidget og denne fil)

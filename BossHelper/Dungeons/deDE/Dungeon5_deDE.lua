@@ -1,47 +1,39 @@
 ﻿Dungeon5_deDE = {
-    instanceID = 476,
+    instanceID = 1311, -- Den of Nalorakk
     bosses = {
         {
-            encounterID = 965,
+            encounterID = 2776, -- The Hoardmonger
             short       = [[
-1. ALLES dodgen und weg vom Plattform-Rand bleiben.
+1. Avoid frontal/bones
+2. Soak mushrooms, but be careful as they apply a stacking poison DoT.
 ]],
-            details     = [[Kommt bald
+            details     = [[Coming soon
 ]]
         },
 
         {
-            encounterID = 966,
+            encounterID = 2777, -- Sentinel of Winter
             short       = [[
-1. Die drei Lichtstrahlen soak'en; rausgehen wenn sie zu Dreiecken werden.
+1. Raging Squall = loosely stack.
+2. Kick/Kill adds asap and soak swirl once they die.
+3. Stay inside snow pile during Frozen Tempest.
 
-Tank: Boss von der Gruppe weg drehen & Frontal dodgen.
+Healer: Dispel debuffs asap.
 ]],
-            details     = [[Kommt bald
+            details     = [[Coming soon
 ]]
         },
 
         {
-            encounterID = 967,
+            encounterID = 2778, -- Nalorakk
             short       = [[
-1. Wenn Adds sterben, bleiben Eier zurück; NICHT andere Adds neben diesen Eiern töten.
-2. Run wenn fixiert.
-3. Hinter Pillar verstecken während Searing Quills.
+1. Move out with circles. Drop them close together.
+2. Hide behind shield during Overwhelming Onslaught.
+3. Intercept dashing red bears.
 
-DPS: nicht auf beiden Seiten der gleichen Pillar stehen.
+Tank: Soak circle after Onslaught.
 ]],
-            details     = [[Kommt bald
-]]
-        },
-
-        {
-            encounterID = 968,
-            short       = [[
-1. Solar Blast interrupt'en.
-2. CC & Adds ASAP nuken.
-3. Wenn targeted, Beam zum Rand der Arena kiten um Platz zu sparen.
-]],
-            details     = [[Kommt bald
+            details     = [[Coming soon
 ]]
         },
     }

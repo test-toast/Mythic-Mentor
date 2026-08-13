@@ -1,48 +1,45 @@
 ﻿Dungeon4_deDE = {
-    instanceID = 1299,
+    instanceID = 1309, --The Blinding Vale
     bosses = {
         {
-            encounterID = 2656,
+            encounterID = 2769, -- Lightblossom Trinity
             short       = [[
-1. Boss interrupt'en, und mit Kreisen rausgehen.
-2. Adds CC'en (oder Curse dispel zum despawnen)
-3. Wenn du von Hookshot targeted wirst, hinter die spooky Ghost Lady gehen.
-
-Tank: Boss bewegen wenn der Boden zu voll wird.
+1. Kick bolt, move out with circles, and soak all 3 seeds during Lightblossom.
 ]],
-            details     = [[Kommt bald
+            details     = [[Coming soon
 ]]
         },
 
         {
-            encounterID = 2655,
+            encounterID = 2770, -- Ikuzz
             short       = [[
-1. Feuer = schlecht
+1. Stepping on roots = bad. 
+2. Stack circles close together, but don't overlap. Kill/Remove the roots that spawn asap.
+3. When fixated, bait boss over roots.
 ]],
-            details     = [[Kommt bald
+            details     = [[Coming soon
 ]]
         },
 
         {
-            encounterID = 2657,
+            encounterID = 2771, -- Lightwarden Ruia
             short       = [[
-1. Braune Kreise = schlecht.
-2. Lila Kreise overlappen.
-3. Run wenn fixiert.
-4. Wenn Adds spawnen, Mystic prio nuken.
+1. Warden’s Wrath = kick.
+2. Tornadoes = dodge.
+3. Red arrows = spread.
 ]],
-            details     = [[Kommt bald
+            details     = [[Coming soon
 ]]
         },
 
         {
-            encounterID = 2658,
+            encounterID = 2772, -- Ziekket
             short       = [[
-1. Auf kleine Wind-Pfeile treten um Squall Leap DoT zu entfernen UND die expanding Shockwave zu springen.
-2. Frontal ausweichen wenn du nicht targeted bist.
-3. Große Kreise benutzen um Electric Stuff vom Boden zu clearen.
+1. Orbs are yummy, soak them.
+2. CC/kick & kill lashers asap.
+3. When targeted by frontal beam, point the beam on the lasgers corpses.
 ]],
-            details     = [[Kommt bald
+            details     = [[Coming soon
 ]]
         },
     }

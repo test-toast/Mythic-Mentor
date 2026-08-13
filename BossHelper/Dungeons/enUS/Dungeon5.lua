@@ -1,45 +1,37 @@
-﻿Dungeon5 = {
-    instanceID = 476, -- Skyreach
+Dungeon5 = {
+    instanceID = 1311, -- Den of Nalorakk
     bosses = {
         {
-            encounterID = 965, -- Ranjit
+            encounterID = 2776, -- The Hoardmonger
             short       = [[
-1. Dodge EVERYTHING and stay away from the platform's edge.
+1. Avoid frontal/bones
+2. Soak mushrooms, but be careful as they apply a stacking poison DoT.
 ]],
             details     = [[Coming soon
 ]]
         },
 
         {
-            encounterID = 966, -- Arknath
+            encounterID = 2777, -- Sentinel of Winter
             short       = [[
-1. Soak the three light rays; move out when they become triangles.
+1. Raging Squall = loosely stack.
+2. Kick/Kill adds asap and soak swirl once they die.
+3. Stay inside snow pile during Frozen Tempest.
 
-Tank. Point boss away from the group & dodge frontal.
+Healer: Dispel debuffs asap.
 ]],
             details     = [[Coming soon
 ]]
         },
 
         {
-            encounterID = 967, -- Rukhran
+            encounterID = 2778, -- Nalorakk
             short       = [[
-1. Killing adds leaves behind an egg; do NOT kill other adds next to these eggs.
-2. Run when fixated.
-3. Hide behind pillar during the Searing Quills attack.
+1. Move out with circles. Drop them close together.
+2. Hide behind shield during Overwhelming Onslaught.
+3. Intercept dashing red bears.
 
-DPS. Please don't stand on each side of the pillar.
-]],
-            details     = [[Coming soon
-]]
-        },
-
-        {
-            encounterID = 968, -- High Sage Viryx
-            short       = [[
-1. Interrupt Solar Blast.
-2. CC & nuke adds ASAP.
-3. When targeted, kite the beam to the edge of the room to save space.
+Tank: Soak circle after Onslaught.
 ]],
             details     = [[Coming soon
 ]]

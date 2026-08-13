@@ -1,4 +1,4 @@
-﻿-- Functions.lua
+-- Functions.lua
 -- Her samler vi alle generelle hjælpefunktioner til BossHelper
 
 local table_insert = table.insert

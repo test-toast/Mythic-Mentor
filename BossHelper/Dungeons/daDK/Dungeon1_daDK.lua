@@ -1,37 +1,41 @@
-﻿Dungeon1_daDK = {
-    instanceID = 1315,
+Dungeon1_daDK = {
+    -- JournalInstanceID
+    instanceID = 1322, -- Altar of Fangs
     bosses = {
         {
-            encounterID = 2810,
+            -- JournalEncounterID
+            encounterID = 2878, -- Rav’i
             short       = [[
-1. Isfælder, grønne cirkler & frontal barrage = farligt.
-2. Hvis du bliver ramt af Carrion Swoop, så gå IND i en isfælde.
+1. Soak swirls during Ssscavenging.
+2. Avoid obvious damage (poison waves, falling debris, etc).
+
+Tank: Position the boss next to a bone pile without meat.
 ]],
-            details     = [[Kommer snart
+            details     = [[Coming soon
 ]]
         },
 
         {
-            encounterID = 2811,
+            encounterID = 2879, -- The Writhing Coil
             short       = [[
-1. Bossen spawner 4 phantoms som fixer på tank og DPS. Læg phantoms oven i hinanden for at få dem til at despawne – men stagger det!.
-2. Undgå den roterende frontal beam og flyvende orbs.
-
-Healer. Når phantoms despawner = stor skade på hele gruppen.
+1. Toxic Atrophy requires 3 kicks.
+2. Avoid charge and frontal spew.
+3. After being sucked in, run out to break tethers. Then, kick/kill fixating adds.
 ]],
-            details     = [[Kommer snart
+            details     = [[Coming soon
 ]]
         },
 
         {
-            encounterID = 2812,
+            encounterID = 2880, -- Zul’jan
             short       = [[
-1. Bossen hopper til 3 spillere og efterlader totems. Undgå at blive ramt, og ødelæg totems hurtigt.
-2. Under soul phase, brug CC & kick på store adds mens du løber mod bossen.
+1. Soak beams or DIE. Then, get hit by the frontal to remove debuff stacks.
 
-Tank. Placér puddles væk fra gruppen.
+(Getting hit by axes also works, but the frontal is preferred.)
+
+Tank: Keep the middle area clear of puddles.
 ]],
-            details     = [[Kommer snart
+            details     = [[Coming soon
 ]]
         },
     }

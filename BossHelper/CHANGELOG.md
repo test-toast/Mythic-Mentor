@@ -1,6 +1,19 @@
 ### Changelog ###
 
-#### v3.2.0 - Jun 8, 2026
+#### v3.2.1 - Aug 13, 2026
+## New
+
+## Changed
+- Updated all boss tactics for Season 2 dungeons.
+- Updated Mythic Teleports spellId and mapId.
+- Updated toc.
+
+## Fixed
+- Settings:
+    - Fixed a Lua error (attempt to call a nil value) when hovering over settings due to a deprecated WoW API call.
+------------------------------------------------------------------------
+
+# v3.2.0 - Jun 8, 2026
 ## New
 - Mini Window:
     - Added a resizable drag handle in the bottom-right of the Mini Window.

@@ -1,41 +1,40 @@
 ﻿Dungeon5_ruRU = {
-    instanceID = 476,
+    instanceID = 1311, -- Den of Nalorakk
     bosses = {
         {
-            encounterID = 965,
-            short = [[
-1. Dodge ВСЁ и не стой на краю платформы.
+            encounterID = 2776, -- The Hoardmonger
+            short       = [[
+1. Avoid frontal/bones
+2. Soak mushrooms, but be careful as they apply a stacking poison DoT.
 ]],
-            details = [[Скоро]]
+            details     = [[Coming soon
+]]
         },
-        {
-            encounterID = 966,
-            short = [[
-1. Впитай 3 световых луча; выйди когда они становятся треугольниками.
 
-Танк. Уклонись от фронтальной атаки в сторону.
-]],
-            details = [[Скоро]]
-        },
         {
-            encounterID = 967,
-            short = [[
-1. Адов оставляют яйца — не убивай рядом других адов.
-2. Беги при зафиксировании.
-3. Спрячься за колонной во время Searing Quills.
+            encounterID = 2777, -- Sentinel of Winter
+            short       = [[
+1. Raging Squall = loosely stack.
+2. Kick/Kill adds asap and soak swirl once they die.
+3. Stay inside snow pile during Frozen Tempest.
 
-Уронщик. не стой по разные стороны колонны.
+Healer: Dispel debuffs asap.
 ]],
-            details = [[Скоро]]
+            details     = [[Coming soon
+]]
         },
+
         {
-            encounterID = 968,
-            short = [[
-1. Прерви Solar Blast.
-2. Обездвижи & уничтожь адов срочно.
-3. Кайтируй луч к краю комнаты.
+            encounterID = 2778, -- Nalorakk
+            short       = [[
+1. Move out with circles. Drop them close together.
+2. Hide behind shield during Overwhelming Onslaught.
+3. Intercept dashing red bears.
+
+Tank: Soak circle after Onslaught.
 ]],
-            details = [[Скоро]]
+            details     = [[Coming soon
+]]
         },
     }
 }

@@ -1,56 +1,47 @@
-﻿Dungeon8_deDE = {
-    instanceID = 1201,
+Dungeon8_deDE = {
+    instanceID = 1030, -- Temple of Sethraliss
     bosses = {
         {
-            encounterID = 2509,
+            encounterID = 2142, -- Adderis & Aspix
             short       = [[
-1. Orbs soak'en (1 hver).
-2. Mit Kreis rausgehen.
-
-Tank: Frontal von der Gruppe weg drehen.
+1. Hit guy without shield.
+2. Don’t overlap beams.
+3. Soak blue circle and then move out.
+4. Drop pools out of the way.
 ]],
-            details     = [[Kommt bald
+            details     = [[Coming soon
 ]]
         },
 
         {
-            encounterID = 2512,
+            encounterID = 2143, -- Merektha
             short       = [[
-1. Germinate Adds close together spawnen; ASAP nuken.
-2. Debuffs im grünen Kreis cleanse'n.
-3. Ancient Branch add interrupt'en.
+1. Use CC to break knots and kill small sneks asap.
+2. Drop pools out of the way.
+3. In intermission: kick/kill adds and avoid burrow charge.
 ]],
-            details     = [[Kommt bald
+            details     = [[Coming soon
 ]]
         },
 
         {
-            encounterID = 2495,
-            phases = {"Phase 1", "Wind Phase", "Fire Phase"},
-            phaseText = {
-                ["Phase 1"] = [[
-1. Frontal vermeiden, Kreise spreaden, nicht casten während Screech.
+            encounterID = 2144, -- Galvazzt
+            short       = [[
+Soak beams.
 ]],
-                ["Wind Phase"] = [[
-1. Orbs sammeln & böse Tornados dodgen.
-]],
-                ["Fire Phase"] = [[
-1. Feuer = schlecht.
-]]
-            },
-            details     = [[Kommt bald
+            details     = [[Coming soon
 ]]
         },
         
         {
-            encounterID = 2514,
+            encounterID = 2145, -- Avatar of Sethraliss
             short       = [[
-1. Alle Angriffe geben Debuff. Rausgehen kurz bevor du 3 Stacks hast.
-2. Orbs vermeiden & run wenn du eingesaugt wirst.
+1. Two players soak the orbs when they spawn. Stagger this to allow the debuff to expire.
+2. Kick/kill adds. Move circles out.
 
-Tank: Frontal von der Gruppe weg drehen.
+Healer: Run when fixated. Heal Avatar.
 ]],
-            details     = [[Kommt bald
+            details     = [[Coming soon
 ]]
         },
     }

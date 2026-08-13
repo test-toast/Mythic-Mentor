@@ -1,49 +1,52 @@
-﻿Dungeon2_deDE = {
-    instanceID = 249,
+Dungeon2_deDE = {
+    instanceID = 1304, --  Murder Row
     bosses = {
         {
-            encounterID = 2659,
+            encounterID = 2679, -- Kystia & Nibbles
             short       = [[
-1. Pfützen vermeiden, und Orbs soak'en wenn sie kommen (idealerweise nicht beim Boss).
+1. Focus Nibbles to break shield.
+2. CC/Kick mirror image.
+3. Beware: frontal beam rotates.
 
-Heiler. Debuffs ASAP dispellen.
-Tank. Boss erzeugt Pfützen. Near Wall kiten um Space zu managen.
+Healer: Dispel debuffs asap. Big heals during Destabilized.
 ]],
-            details     = [[Kommt bald
+            details     = [[Coming soon
 ]]
         },
 
         {
-            encounterID = 2661,
+            encounterID = 2680, -- Zaen Bladesorrow
             short       = [[
-1. 3 Spieler werden markiert. In die purple Zone gehen zum Entfernen – aber stagger das!
-2. In die purple Zone gehen wenn Boss Vow of Silence castet.
-3. Missiles = schlecht.
+1. Move with red circle on GREEN barrels
+2. Hide behind barrels when he shoots. 
+
+Tank: Dispel poison if you can.
 ]],
-            details     = [[Kommt bald
+            details     = [[Coming soon
 ]]
         },
-
         {
-            encounterID = 2660,
+            encounterID = 2681, -- Xathuux
             short       = [[
-1. Move out wenn du von Cosmic Sting targeted wirst.
-2. Wenn der blaue Pfeil erscheint, follow ihn & touch den Clone.
-3. Run wenn du eingesaugt wirst.
+1. Destroy Axe asap.
+2. Spread with circles.
+
+Tank: Point frontal away from group.
+Tank: Slowly kite during Demonic Rage.
 ]],
-            details = [[Kommt bald
+            details = [[Coming soon
 ]]
         },
-
         {
-            encounterID = 2662,
+            encounterID = 2662, -- Lithiel Cinderfury
             short       = [[
-1. Der Raum ist in 4 Quadranten geteilt. Mindestens 1 Spieler pro Quadrant.
-2. Ball soak'en während er zwischen Quadranten bounced.
+1. Interrupt Chaos Bolt.
+2. Loosely stack with circles and prio CC/kill the adds.
+3. Use gateway during wave attack.
 
-Tank/Heiler: mit Debuff rausgehen für Heiler-Dispel.
+Tank: Kite infernal. Keep it reasonably far from the group.
 ]],
-            details = [[Kommt bald
+            details = [[Coming soon
 ]]
         },
         

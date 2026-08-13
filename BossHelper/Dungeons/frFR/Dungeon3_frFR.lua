@@ -1,34 +1,37 @@
 Dungeon3_frFR = {
-    instanceID = 1316,
+    instanceID = 1313, -- Voidscar Arena
     bosses = {
         {
-            encounterID = 2813,
+            encounterID = 2791, -- Taz’Rah
             short       = [[
-1. Évitez les rayons et interrompez le boss.
-2. Lorsque vous subissez l'effet de Charge de reflux, déplacez-vous DANS les faisceaux pour le dissiper (idéalement, déplacez-vous dans des faisceaux qui se chevauchent).
+1. Don’t overlap line beams.
+2. Avoid balls & puddles.
+
+Tank: Slowly kite the boss around the edge of the room.
 ]],
-            details     = [[A venir
+            details     = [[Coming soon
 ]]
         },
 
         {
-            encounterID = 2814,
+            encounterID = 2792, -- Atroxus
             short       = [[
-1. Déplacez vous en cercle.
-2. Interrompez et focalisez vous sur les adds.
-3. Quand le personnage jaune apparaît, ne vous placez PAS entre lui et le boss. APRÈS qu'il ait étourdi le boss, déplacez-vous dans le rayon jaune.
+1. Kill add ASAP.
 ]],
-            details     = [[A venir
+            details     = [[Coming soon
 ]]
         },
 
         {
-            encounterID = 2815,
+            encounterID = 2793, -- Charonus
             short       = [[
-1. Déplacez vous en cercle, et ne vous tenez pas dans les flèches géantes de la mort.
-2. Après l'attaque à 100 points d'énergie, le boss se clone. Interrompez uniquement le clone SANS cornes.
+1. Spread with circles.
+2. Bait orbs into black holes.
+3. Run out & around when targeted by cascade attack.
+
+Tank: Point frontal away from group.
 ]],
-            details     = [[A venir
+            details     = [[Coming soon
 ]]
         },
     }

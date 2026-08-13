@@ -1,39 +1,51 @@
-﻿Dungeon7_ruRU = {
-    instanceID = 945,
+Dungeon7_ruRU = {
+    instanceID = 1041, -- King’s Rest
     bosses = {
         {
-            encounterID = 1979,
-            short = [[
-1. Уклоняться от фронтального атаки.
-2. Выйти из круга.
-3. Убить адов как можно быстрее.
+            encounterID = 2165, -- The Golden Serpent
+            short       = [[
+1. Drop circles close together and far away from boss.
+2. Kill the adds that spawn before they reach the boss.
 ]],
-            details = [[Скоро]]
+            details     = [[Coming soon
+]]
         },
+
         {
-            encounterID = 1980,
-            short = [[
-1. Очистить круги пустотных бомб.
-2. Прервать питомца.
+            encounterID = 2171, -- Mchimba
+            short       = [[
+1. Don’t drop puddles near coffins.
+2. Free entombed players asap.
+3. Kick & kill adds.
 ]],
-            details = [[Скоро]]
+            details     = [[Coming soon
+]]
         },
+
         {
-            encounterID = 1981,
-            short = [[
-1. Прервать Mind Blast и уничтожить щупальца.
-2. При 100 энергии собраться на босса.
+            encounterID = 2170, -- Council of Tribes
+            short       = [[
+Boss #1: Axes = bad
+Boss #2: Everyone soak circle.
+Boss #3: Kick Poison Nova & Kill totems: explosive then thundering then torrent.
+
+Healer: Don’t cast during Disrupting.
 ]],
-            details = [[Скоро]]
+            details     = [[Coming soon
+]]
         },
+        
         {
-            encounterID = 1982,
-            short = [[
-1. Луч на заметки.
-2. Вращающиеся лучи = уклоняться.
-3. Большие круги = уклоняться.
+            encounterID = 2172, -- Dazar
+            short       = [[
+1. Interrupt & prio kill Reban.
+2. Avoid frontal & brown circles.
+3. Spread with red circle.
+4. Gilded Destruction = RUN.
 ]],
-            details = [[Скоро]]
+            details     = [[Coming soon
+]]
         },
     }
+    
 }

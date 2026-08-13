@@ -1,45 +1,50 @@
-﻿Dungeon2 = {
-    instanceID = 249, --  Magister's Terrace
+Dungeon2 = {
+    instanceID = 1304, --  Murder Row
     bosses = {
         {
-            encounterID = 2659, -- Arcanotron Custos
+            encounterID = 2679, -- Kystia & Nibbles
             short       = [[
-1. Avoid puddles, and soak orbs when they come (ideally not near the boss).
+1. Focus Nibbles to break shield.
+2. CC/Kick mirror image.
+3. Beware: frontal beam rotates.
 
-Healer. Dispel debuffs asap.
-Tank. Boss creates puddles. Kite near walls to managed space.
+Healer: Dispel debuffs asap. Big heals during Destabilized.
 ]],
             details     = [[Coming soon
 ]]
         },
 
         {
-            encounterID = 2661, -- Seranel Sunlash
+            encounterID = 2680, -- Zaen Bladesorrow
             short       = [[
-1. 3 players get marked. Step in purple zone to remove - but stagger this!
-2. Go into the purple zone when boss cast Vow of Silence.
-3. Missles = bad.
+1. Move with red circle on GREEN barrels
+2. Hide behind barrels when he shoots. 
+
+Tank: Dispel poison if you can.
 ]],
             details     = [[Coming soon
 ]]
         },
         {
-            encounterID = 2660, -- Gemellus
+            encounterID = 2681, -- Xathuux
             short       = [[
-1. Move out when targeted by Cosmic Sting.
-2. When blue arrow appears, follow it & touch the clone
-3. Run when sucked.
+1. Destroy Axe asap.
+2. Spread with circles.
+
+Tank: Point frontal away from group.
+Tank: Slowly kite during Demonic Rage.
 ]],
             details = [[Coming soon
 ]]
         },
         {
-            encounterID = 2662, -- Degentrius
+            encounterID = 2662, -- Lithiel Cinderfury
             short       = [[
-1. The room is split in 4 quadrants. You need at least one player in each.
-2. Soak ball as it bounces between quadrants.
+1. Interrupt Chaos Bolt.
+2. Loosely stack with circles and prio CC/kill the adds.
+3. Use gateway during wave attack.
 
-Tank/healer move out with debuff for healer dispel.
+Tank: Kite infernal. Keep it reasonably far from the group.
 ]],
             details = [[Coming soon
 ]]

@@ -1,40 +1,40 @@
-﻿Dungeon6_daDK = {
-    instanceID = 278,
+Dungeon6_daDK = {
+    instanceID = 1202, -- Ruby Life Polls
     bosses = {
         {
-            encounterID = 608,
+            encounterID = 2488, -- Melidrussa
             short       = [[
-1. Gem dig bag Saronite Ores under Glacial Overload.
+1. Move out with circle. 
+2. Don’t get sucked or knocked into spikes.
+3. Burst adds & shield at 66% & 33% HP.
 
-Healer. Dispel debuffs ASAP.
-Tank. Stil dig ved en Saronite Ore når han caster Cryostomp.
+Tank: Frigid Shard can be kicked.
 ]],
-            details     = [[Kommer snart
+            details     = [[Coming soon
 ]]
         },
 
         {
-            encounterID = 609,
+            encounterID = 2485, -- Kokia Blazehoof
             short       = [[
-1. Prio kick på Krick's Death Bolt.
-2. Interrupt & dræb adds.
-3. Løb væk når du bliver fixated.
-
-Tank. Undgå at placere Blight Smash puddles oven i lilla swirlies.
+1. Prio kick/Kill adds
+2. Point boulders away from group. Try to conserve space as much as possible.
 ]],
-            details     = [[Kommer snart
+            details     = [[Coming soon
 ]]
         },
 
         {
-            encounterID = 610,
+            encounterID = 2503, -- Kyrakka & Erkhart
             short       = [[
-1. Flyt de blå cirkler hen over grønne lysende corpse piles.
-2. Kick & dræb adds.
+1. The wind direction changes counter-clockwise
+2. Place circles so that they’re blown away from the group.
+3. Fire = bad
 
-Tank. Flyt bossen til en lysende corpse pile under Army of the Dead cast.
+Healer: Don’t cast during Interrupting Cloudburst.
+Healer: Dispel tank. 
 ]],
-            details     = [[Kommer snart
+            details     = [[Coming soon
 ]]
         },
     }

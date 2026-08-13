@@ -1,34 +1,37 @@
-﻿Dungeon3_deDE = {
-    instanceID = 1316,
+Dungeon3_deDE = {
+    instanceID = 1313, -- Voidscar Arena
     bosses = {
         {
-            encounterID = 2813,
+            encounterID = 2791, -- Taz’Rah
             short       = [[
-1. Beams vermeiden & Boss kick'en.
-2. Wenn du den Reflux Charge Debuff bekommst, geh IN die Beams zum entfernen (idealerweise in overlappende Beams).
+1. Don’t overlap line beams.
+2. Avoid balls & puddles.
+
+Tank: Slowly kite the boss around the edge of the room.
 ]],
-            details     = [[Kommt bald
+            details     = [[Coming soon
 ]]
         },
 
         {
-            encounterID = 2814,
+            encounterID = 2792, -- Atroxus
             short       = [[
-1. Mit Kreis rausgehen.
-2. Adds kick'en und nuken.
-3. Wenn der gelbe Typ erscheint, NICHT zwischen ihm und dem Boss stehen. NACHDEM er den Boss stunned, in den gelben Strahl gehen.
+1. Kill add ASAP.
 ]],
-            details     = [[Kommt bald
+            details     = [[Coming soon
 ]]
         },
 
         {
-            encounterID = 2815,
+            encounterID = 2793, -- Charonus
             short       = [[
-1. Mit Kreisen rausgehen und nicht in den großen Doom-Arrows stehen.
-2. Nach dem Angriff bei 100 Energy klont sich der Boss. Nur den Clone OHNE Hörner interrupten.
+1. Spread with circles.
+2. Bait orbs into black holes.
+3. Run out & around when targeted by cascade attack.
+
+Tank: Point frontal away from group.
 ]],
-            details     = [[Kommt bald
+            details     = [[Coming soon
 ]]
         },
     }

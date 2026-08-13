@@ -1,54 +1,45 @@
-﻿Dungeon8 = {
-    instanceID = 1201, -- Algeth'ar Academy
+Dungeon8 = {
+    instanceID = 1030, -- Temple of Sethraliss
     bosses = {
         {
-            encounterID = 2509, -- Vexamus
+            encounterID = 2142, -- Adderis & Aspix
             short       = [[
-1. Soak orbs (1 each).
-2. Move out with circle.
-
-Tank. Point frontal away from group.
+1. Hit guy without shield.
+2. Don’t overlap beams.
+3. Soak blue circle and then move out.
+4. Drop pools out of the way.
 ]],
             details     = [[Coming soon
 ]]
         },
 
         {
-            encounterID = 2512, -- Overgrown Ancient
+            encounterID = 2143, -- Merektha
             short       = [[
-1. Spawn Germinate adds close together; nuke ASAP.
-2. Clense debuffs in green circle.
-3. Interrupt Ancient Branch add.
+1. Use CC to break knots and kill small sneks asap.
+2. Drop pools out of the way.
+3. In intermission: kick/kill adds and avoid burrow charge.
 ]],
             details     = [[Coming soon
 ]]
         },
 
         {
-            encounterID = 2495, -- Crawth
-            phases = {"Phase 1", "Wind Phase", "Fire Phase"},
-            phaseText = {
-                ["Phase 1"] = [[
-1. Avoid frontal, spread circles, don't cast during screech.
+            encounterID = 2144, -- Galvazzt
+            short       = [[
+Soak beams.
 ]],
-                ["Wind Phase"] = [[
-1. Grab orbs & dodge evil tornadoes.
-]],
-                ["Fire Phase"] = [[
-1. Fire = bad.
-]]
-            },
             details     = [[Coming soon
 ]]
         },
         
         {
-            encounterID = 2514, -- Echo of Doragosa
+            encounterID = 2145, -- Avatar of Sethraliss
             short       = [[
-1. All attacks apply a debuff. Move out right before you get 3 stacks.
-2. Avoid orbs & run when sucked.
+1. Two players soak the orbs when they spawn. Stagger this to allow the debuff to expire.
+2. Kick/kill adds. Move circles out.
 
-Tank. Point frontal away from group.
+Healer: Run when fixated. Heal Avatar.
 ]],
             details     = [[Coming soon
 ]]

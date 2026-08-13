@@ -1,40 +1,40 @@
 Dungeon6_frFR = {
-    instanceID = 278,
+    instanceID = 1202, -- Ruby Life Polls
     bosses = {
         {
-            encounterID = 608,
+            encounterID = 2488, -- Melidrussa
             short       = [[
-1. Cachez-vous derrière les minerais de saronite pendant la surcharge glaciaire.
+1. Move out with circle. 
+2. Don’t get sucked or knocked into spikes.
+3. Burst adds & shield at 66% & 33% HP.
 
-Healer. Dissipez les débuffs dès que possible.
-Tank. Déplacez-vous à côté d'un minerai de saronite lorsqu'il lance Cryo-piétinement.
+Tank: Frigid Shard can be kicked.
 ]],
-            details     = [[A venir
+            details     = [[Coming soon
 ]]
         },
 
         {
-            encounterID = 609,
+            encounterID = 2485, -- Kokia Blazehoof
             short       = [[
-1. Prioriez les interruptions de Trait de mort et Ombrelien de Kricks
-2. Interrompez et tuer les adds.
-3. Courez lorsque ciblé.
-
-Tank. Évitez de placer des flaques de Choc pestifère sur des tourbillons violets.
+1. Prio kick/Kill adds
+2. Point boulders away from group. Try to conserve space as much as possible.
 ]],
-            details     = [[Comming soon
+            details     = [[Coming soon
 ]]
         },
 
         {
-            encounterID = 610,
+            encounterID = 2503, -- Kyrakka & Erkhart
             short       = [[
-1. Déplacez-vous en même temps que les cercles bleus au-dessus des tas de cadavres verts et lumineux.
-2. Interrompez et tuer les adds.
+1. The wind direction changes counter-clockwise
+2. Place circles so that they’re blown away from the group.
+3. Fire = bad
 
-Tank. Déplacez-vous vers le tas de cadavres incandescents pendant Armée des morts.
+Healer: Don’t cast during Interrupting Cloudburst.
+Healer: Dispel tank. 
 ]],
-            details     = [[A venir
+            details     = [[Coming soon
 ]]
         },
     }

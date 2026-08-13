@@ -1,43 +1,47 @@
-﻿Dungeon7 = {
-    instanceID = 945, -- Seat of the Triumvirate
+Dungeon7 = {
+    instanceID = 1041, -- King’s Rest
     bosses = {
         {
-            encounterID = 1979, -- Zuraal the Ascended
+            encounterID = 2165, -- The Golden Serpent
             short       = [[
-1. Avoid frontal.
-2. Move out with circle.
-3. Kill adds ASAP.
+1. Drop circles close together and far away from boss.
+2. Kill the adds that spawn before they reach the boss.
 ]],
             details     = [[Coming soon
 ]]
         },
 
         {
-            encounterID = 1980, -- Saprish
+            encounterID = 2171, -- Mchimba
             short       = [[
-1. Clear void bombs with circles.
-2. Interrupt the Shadewing pet.
+1. Don’t drop puddles near coffins.
+2. Free entombed players asap.
+3. Kick & kill adds.
 ]],
             details     = [[Coming soon
 ]]
         },
 
         {
-            encounterID = 1981, -- Viceroy Nezhar
+            encounterID = 2170, -- Council of Tribes
             short       = [[
-1. Kick Mind Blast, and nuke tentacle adds ASAP.
-2. At 100 energy, stack on boss.
+Boss #1: Axes = bad
+Boss #2: Everyone soak circle.
+Boss #3: Kick Poison Nova & Kill totems: explosive then thundering then torrent.
+
+Healer: Don’t cast during Disrupting.
 ]],
             details     = [[Coming soon
 ]]
         },
         
         {
-            encounterID = 1982, -- L'ura
+            encounterID = 2172, -- Dazar
             short       = [[
-1. Point Discordant Beam at the notes around the room.
-2. Dodge the rotating beams of evil.
-3. Avoid big circle explosions.
+1. Interrupt & prio kill Reban.
+2. Avoid frontal & brown circles.
+3. Spread with red circle.
+4. Gilded Destruction = RUN.
 ]],
             details     = [[Coming soon
 ]]

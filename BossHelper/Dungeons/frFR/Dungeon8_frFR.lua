@@ -1,56 +1,47 @@
 Dungeon8_frFR = {
-    instanceID = 1201,
+    instanceID = 1030, -- Temple of Sethraliss
     bosses = {
         {
-            encounterID = 2509,
+            encounterID = 2142, -- Adderis & Aspix
             short       = [[
-1. Tanker les orbes (1 de chaque).
-2. Sortez en suivant le cercle.
-
-Tank. Attirer le boss loin du groupe.
+1. Hit guy without shield.
+2. Don’t overlap beams.
+3. Soak blue circle and then move out.
+4. Drop pools out of the way.
 ]],
-            details     = [[A venir
+            details     = [[Coming soon
 ]]
         },
 
         {
-            encounterID = 2512,
+            encounterID = 2143, -- Merektha
             short       = [[
-1. Le sort Germinate ajoute des adds, concentrez les et ciblez en priorité .
-2. Dissiper les malus en allant dans les cercles verts.
-3. Interrompez les add du boss.
+1. Use CC to break knots and kill small sneks asap.
+2. Drop pools out of the way.
+3. In intermission: kick/kill adds and avoid burrow charge.
 ]],
-            details     = [[A venir
+            details     = [[Coming soon
 ]]
         },
-        
+
         {
-            encounterID = 2495,
-            phases = {"Phase 1", "Phase Vent", "Phase Feu"},
-            phaseText = {
-                ["Phase 1"] = [[
-1. Évitez les attaques frontales, dispersez les cercles, ne lancez pas de sorts pendant Cris stridents.
+            encounterID = 2144, -- Galvazzt
+            short       = [[
+Soak beams.
 ]],
-                ["Phase Vent"] = [[
-1. attrapez les orbes et esquivez les tornades.
-]],
-                ["Phase Feu"] = [[
-1. le feu = mauvais.
-]]
-            },
-            details     = [[A venir
+            details     = [[Coming soon
 ]]
         },
         
         {
-            encounterID = 2514,
+            encounterID = 2145, -- Avatar of Sethraliss
             short       = [[
-1. Toutes les attaques appliquent un debuff. Éloignez-vous juste avant d'atteindre 3 cumuls.
-2. Évitez les orbes et éloignez vous du boss après avoir été aspiré.
+1. Two players soak the orbs when they spawn. Stagger this to allow the debuff to expire.
+2. Kick/kill adds. Move circles out.
 
-Tank. Eloignez le boss du groupe.
+Healer: Run when fixated. Heal Avatar.
 ]],
-            details     = [[A venir
+            details     = [[Coming soon
 ]]
         },
     }

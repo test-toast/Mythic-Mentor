@@ -1,35 +1,39 @@
-﻿Dungeon1 = {
-    instanceID = 1315, -- Maisara Caverns
+Dungeon1 = {
+    -- JournalInstanceID
+    instanceID = 1322, -- Altar of Fangs
     bosses = {
         {
-            encounterID = 2810, -- Muro'jin and Nekraxx
+            -- JournalEncounterID
+            encounterID = 2878, -- Rav’i
             short       = [[
-1. Ice traps, green circles & frontal barrage = bad.
-2. If targeted by Carrion Swoop, move INTO an ice trap.
+1. Soak swirls during Ssscavenging.
+2. Avoid obvious damage (poison waves, falling debris, etc).
+
+Tank: Position the boss next to a bone pile without meat.
 ]],
             details     = [[Coming soon
 ]]
         },
 
         {
-            encounterID = 2811, -- Vordaza
+            encounterID = 2879, -- The Writhing Coil
             short       = [[
-1. Boss spawns 4 phantoms fixating the tank & the DPS. Overlap phantoms to despawn them - but stagger this!.
-2. Avoid rotating frontal beam, and floating orbs.
-
-Healer. Phantoms despawning = big group damage.
+1. Toxic Atrophy requires 3 kicks.
+2. Avoid charge and frontal spew.
+3. After being sucked in, run out to break tethers. Then, kick/kill fixating adds.
 ]],
             details     = [[Coming soon
 ]]
         },
 
         {
-            encounterID = 2812, -- Rak'tul, Vessel of Souls
+            encounterID = 2880, -- Zul’jan
             short       = [[
-1. Boss leaps to 3 players & leaves totems behind. Don't get crushed, and destroy totems asap.
-2. During soul phase, CC & kick big adds as you run to boss.
+1. Soak beams or DIE. Then, get hit by the frontal to remove debuff stacks.
 
-Tank. Place puddles away from group.
+(Getting hit by axes also works, but the frontal is preferred.)
+
+Tank: Keep the middle area clear of puddles.
 ]],
             details     = [[Coming soon
 ]]

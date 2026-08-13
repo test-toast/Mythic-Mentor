@@ -1,48 +1,45 @@
-Dungeon4_frFR = {
-    instanceID = 1299,
+﻿Dungeon4_frFR = {
+    instanceID = 1309, --The Blinding Vale
     bosses = {
         {
-            encounterID = 2656,
+            encounterID = 2769, -- Lightblossom Trinity
             short       = [[
-1. Interrompez le boss et déplacez-vous en cercle.
-2. Interrompez les add (ou dissipe la malédiction pour la faire disparaître)
-3. Lorsque vous êtes la cible du grappin, déplacez-vous derrière la dame fantôme.
-
-Tank Déplacez le boss lorsque qu'il y a trop de zones au sol.
+1. Kick bolt, move out with circles, and soak all 3 seeds during Lightblossom.
 ]],
-            details     = [[A venir
+            details     = [[Coming soon
 ]]
         },
 
         {
-            encounterID = 2655,
+            encounterID = 2770, -- Ikuzz
             short       = [[
-1. Le feu = mauvais
+1. Stepping on roots = bad. 
+2. Stack circles close together, but don't overlap. Kill/Remove the roots that spawn asap.
+3. When fixated, bait boss over roots.
 ]],
-            details     = [[A venir
+            details     = [[Coming soon
 ]]
         },
 
         {
-            encounterID = 2657,
+            encounterID = 2771, -- Lightwarden Ruia
             short       = [[
-1. Cercles bruns = mauvais.
-2. Superposez les cercles violets.
-3. Courir lorsqu'on est ciblé.
-4. Dès que des adds apparaissent, focalisez vous sur "Mystic".
+1. Warden’s Wrath = kick.
+2. Tornadoes = dodge.
+3. Red arrows = spread.
 ]],
-            details     = [[A venir
+            details     = [[Coming soon
 ]]
         },
 
         {
-            encounterID = 2658,
+            encounterID = 2772, -- Ziekket
             short       = [[
-1. Marchez sur les petites flèches venteuses pour supprimer les dégâts sur la durée de Saut de bourrasque ET pour sauter par-dessus l'onde de choc en expansion.
-2. Éloignez-vous de la zone frontale si vous n'êtes pas ciblé.
-3. Utilisez les grands cercles pour nettoyer les cercles electriques.
+1. Orbs are yummy, soak them.
+2. CC/kick & kill lashers asap.
+3. When targeted by frontal beam, point the beam on the lasgers corpses.
 ]],
-            details     = [[A venir
+            details     = [[Coming soon
 ]]
         },
     }

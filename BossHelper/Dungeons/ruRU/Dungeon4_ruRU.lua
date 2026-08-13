@@ -1,42 +1,46 @@
 ﻿Dungeon4_ruRU = {
-    instanceID = 1299,
+    instanceID = 1309, --The Blinding Vale
     bosses = {
         {
-            encounterID = 2656,
-            short = [[
-1. Прерви босса и уходи от кругов.
-2. Обездвижи адов (или диспеллируй проклятие для исчезновения)
-3. Hookshot — за спину привидению.
+            encounterID = 2769, -- Lightblossom Trinity
+            short       = [[
+1. Kick bolt, move out with circles, and soak all 3 seeds during Lightblossom.
+]],
+            details     = [[Coming soon
+]]
+        },
 
-Танк. Перемещай босса когда пол грязный.
-]],
-            details = [[Скоро]]
-        },
         {
-            encounterID = 2655,
-            short = [[
-1. Fire = плохо
+            encounterID = 2770, -- Ikuzz
+            short       = [[
+1. Stepping on roots = bad. 
+2. Stack circles close together, but don't overlap. Kill/Remove the roots that spawn asap.
+3. When fixated, bait boss over roots.
 ]],
-            details = [[Скоро]]
+            details     = [[Coming soon
+]]
         },
+
         {
-            encounterID = 2657,
-            short = [[
-1. Коричневые круги = плохо.
-2. Наложи фиолетовые круги.
-3. Беги при зафиксировании.
-4. Адов → приоритет Мистик уничтожь.
+            encounterID = 2771, -- Lightwarden Ruia
+            short       = [[
+1. Warden’s Wrath = kick.
+2. Tornadoes = dodge.
+3. Red arrows = spread.
 ]],
-            details = [[Скоро]]
+            details     = [[Coming soon
+]]
         },
+
         {
-            encounterID = 2658,
-            short = [[
-1. Наступай на стрелки ветра чтобы снять непрерывный урон и прыгнуть через волну.
-2. Уклонись от фронтала если ты не под целью.
-3. Большие круги очищают электрический пол.
+            encounterID = 2772, -- Ziekket
+            short       = [[
+1. Orbs are yummy, soak them.
+2. CC/kick & kill lashers asap.
+3. When targeted by frontal beam, point the beam on the lasgers corpses.
 ]],
-            details = [[Скоро]]
+            details     = [[Coming soon
+]]
         },
     }
 }

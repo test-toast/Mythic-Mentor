@@ -1,12 +1,19 @@
-﻿## Interface: 120001, 120000
+## Interface: 120007, 120100
 ## Title: Mythic Mentor
-## Notes: Minimalistisk M+ Boss Helper
-## Author: testtoast & QuteBytes / Burning Toast Studio
-## Version: 3.2.0
+## Notes: Minimalist M+ Boss Helper
+## Version: 3.2.1
 ## SavedVariables: BossHelperDB
 ## IconTexture: Interface\AddOns\BossHelper\Media\Mythic Mentor no te 512x512.png
+
+
+
+## Author: testtoast & QuteBytes from Burning Toast Studio
+## From Denmark with love
+
+
 ## Discord: https://discord.gg/sYFdZDPKr3
 ## GitHub: https://github.com/test-toast/Mythic-Mentor
+
 
 
 #----------------------------------------

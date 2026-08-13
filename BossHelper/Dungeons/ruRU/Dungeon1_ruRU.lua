@@ -1,33 +1,42 @@
-﻿Dungeon1_ruRU = {
-    instanceID = 1315,
+Dungeon1_ruRU = {
+    -- JournalInstanceID
+    instanceID = 1322, -- Altar of Fangs
     bosses = {
         {
-            encounterID = 2810,
-            short = [[
-1. Ледяные ловушки, зелёные круги & фронтальная атака = плохо.
-2. Если ты под целью Carrion Swoop — зайди в ледяную ловушку.
-]],
-            details = [[Скоро]]
-        },
-        {
-            encounterID = 2811,
-            short = [[
-1. Босс спавнит 4 фантома, которые фиксируют танка и уронщиков. Наложи фантомов чтобы их удалить — но распредели это!
-2. Избегай вращающегося фронтального луча и летающих орбов.
+            -- JournalEncounterID
+            encounterID = 2878, -- Rav’i
+            short       = [[
+1. Soak swirls during Ssscavenging.
+2. Avoid obvious damage (poison waves, falling debris, etc).
 
-Целитель. Фантомы исчезают = большой урон группе.
+Tank: Position the boss next to a bone pile without meat.
 ]],
-            details = [[Скоро]]
+            details     = [[Coming soon
+]]
         },
-        {
-            encounterID = 2812,
-            short = [[
-1. Босс прыгает к 3 игрокам и оставляет тотемы. Не получай урон и уничтожай тотемы срочно.
-2. В фазе душ: обездвижи и прерви больших адов пока бежишь к боссу.
 
-Танк. Поставь лужи подальше от группы.
+        {
+            encounterID = 2879, -- The Writhing Coil
+            short       = [[
+1. Toxic Atrophy requires 3 kicks.
+2. Avoid charge and frontal spew.
+3. After being sucked in, run out to break tethers. Then, kick/kill fixating adds.
 ]],
-            details = [[Скоро]]
+            details     = [[Coming soon
+]]
+        },
+
+        {
+            encounterID = 2880, -- Zul’jan
+            short       = [[
+1. Soak beams or DIE. Then, get hit by the frontal to remove debuff stacks.
+
+(Getting hit by axes also works, but the frontal is preferred.)
+
+Tank: Keep the middle area clear of puddles.
+]],
+            details     = [[Coming soon
+]]
         },
     }
 }

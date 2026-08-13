@@ -1,14 +1,14 @@
 -- BossData.lua
 BossData = {}
 BossData.DungeonOrder = {
-    "Maisara Caverns",
-    "Magister's Terrace",
-    "Nexus-Point Xenas",
-    "Windrunner Spire",
-    "Skyreach",
-    "Pit of Saron",
-    "Seat of the Triumvirate",
-    "Algeth'ar Academy",
+    "Altar of Fangs",
+    "Murder Row",
+    "Voidscar Arena",
+    "The Blinding Vale",
+    "Den of Nalorakk",
+    "Ruby Life Pools",
+    "Kings' Rest",
+    "Temple of Sethraliss",
 }
 
 

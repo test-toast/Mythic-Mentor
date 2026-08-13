@@ -1,44 +1,48 @@
-﻿Dungeon8_ruRU = {
-    instanceID = 1201,
+Dungeon8_ruRU = {
+    instanceID = 1030, -- Temple of Sethraliss
     bosses = {
         {
-            encounterID = 2509,
-            short = [[
-1. Поглощай орбы (по 1 каждому).
-2. Выходи из круга.
+            encounterID = 2142, -- Adderis & Aspix
+            short       = [[
+1. Hit guy without shield.
+2. Don’t overlap beams.
+3. Soak blue circle and then move out.
+4. Drop pools out of the way.
+]],
+            details     = [[Coming soon
+]]
+        },
 
-Танк. Уклонись от фронтальной атаки в сторону.
+        {
+            encounterID = 2143, -- Merektha
+            short       = [[
+1. Use CC to break knots and kill small sneks asap.
+2. Drop pools out of the way.
+3. In intermission: kick/kill adds and avoid burrow charge.
 ]],
-            details = [[Скоро]]
+            details     = [[Coming soon
+]]
         },
-        {
-            encounterID = 2512,
-            short = [[
-1. Адов рядом → уничтожь срочно.
-2. Очищай зелёный круг.
-3. Прерывай Ancient Branch.
-]],
-            details = [[Скоро]]
-        },
-        {
-            encounterID = 2495,
-            phases = {"Фаза 1", "Фаза ветра", "Фаза огня"},
-            phaseText = {
-                ["Фаза 1"] = [[Уходи от фронтала, разбегайся, не кастуй]],
-                ["Фаза ветра"] = [[Поглощай орбы + уходи от торнадо]],
-                ["Фаза огня"] = [[Огонь = плохо]]
-            },
-            details = [[Скоро]]
-        },
-        {
-            encounterID = 2514,
-            short = [[
-1. Стаки дебафа на 3 выходи.
-2. Избегай орбов и убегай когда затягивает.
 
-Танк. Уклонись от фронтальной атаки в сторону.
+        {
+            encounterID = 2144, -- Galvazzt
+            short       = [[
+Soak beams.
 ]],
-            details = [[Скоро]]
+            details     = [[Coming soon
+]]
+        },
+        
+        {
+            encounterID = 2145, -- Avatar of Sethraliss
+            short       = [[
+1. Two players soak the orbs when they spawn. Stagger this to allow the debuff to expire.
+2. Kick/kill adds. Move circles out.
+
+Healer: Run when fixated. Heal Avatar.
+]],
+            details     = [[Coming soon
+]]
         },
     }
 }

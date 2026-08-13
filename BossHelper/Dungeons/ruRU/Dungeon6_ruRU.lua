@@ -1,36 +1,42 @@
-﻿Dungeon6_ruRU = {
-    instanceID = 278,
+Dungeon6_ruRU = {
+    instanceID = 1202, -- Ruby Life Polls
     bosses = {
         {
-            encounterID = 608,
-            short = [[
-1. Прячься за рудой Саронита во время Glacial Overload.
+            encounterID = 2488, -- Melidrussa
+            short       = [[
+1. Move out with circle. 
+2. Don’t get sucked or knocked into spikes.
+3. Burst adds & shield at 66% & 33% HP.
 
-Целитель. Диспеллируй как можно скорее.
-Танк. Cryostomp → стой рядом с рудой.
+Tank: Frigid Shard can be kicked.
 ]],
-            details = [[Скоро]]
+            details     = [[Coming soon
+]]
         },
-        {
-            encounterID = 609,
-            short = [[
-1. Приоритет прерывания Death Bolt.
-2. Прерывай и убивай адды.
-3. Беги при fixate.
 
-Танк. Не оставляй лужи на фиолетовых спиралях.
+        {
+            encounterID = 2485, -- Kokia Blazehoof
+            short       = [[
+1. Prio kick/Kill adds
+2. Point boulders away from group. Try to conserve space as much as possible.
 ]],
-            details = [[Скоро]]
+            details     = [[Coming soon
+]]
         },
-        {
-            encounterID = 610,
-            short = [[
-1. Синие круги на кучи зелёных трупов.
-2. Прерывай и убивай адды.
 
-Танк. Переместите босса на кучу трупов при касте Army of the Dead.
+        {
+            encounterID = 2503, -- Kyrakka & Erkhart
+            short       = [[
+1. The wind direction changes counter-clockwise
+2. Place circles so that they’re blown away from the group.
+3. Fire = bad
+
+Healer: Don’t cast during Interrupting Cloudburst.
+Healer: Dispel tank. 
 ]],
-            details = [[Скоро]]
+            details     = [[Coming soon
+]]
         },
     }
+    
 }

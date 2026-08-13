@@ -411,7 +411,7 @@ function BossInfo.BuildInfoCategoryUI(rPanel, category, ctx)
     end
 
     -- ==================================================================
-    -- CATEGORY CONTENT
+    -- MARK: ABOUT
     -- ==================================================================
 
     if category == "About" then
@@ -420,6 +420,8 @@ function BossInfo.BuildInfoCategoryUI(rPanel, category, ctx)
             add("text", "Simple in-game Mythic+ guide that shows quick boss tactics, lets you share them instantly with your group, and keeps everything accessible without leaving the game.")
             add("spacer", 10)
             add("text", "Built by Burning Toast Studio — Simple, Fast, & Easy.")
+            add("spacer", 10)
+            add("text", "From Denmark with love.")
             fin()
         end
         do
@@ -436,6 +438,10 @@ function BossInfo.BuildInfoCategoryUI(rPanel, category, ctx)
             add("keyval", "GitHub",      "  Source code & bug reports")
             fin()
         end
+
+        -- ============================================================
+        -- MARK: FEATURES
+        -- ============================================================
 
     elseif category == "Features" then
         do
@@ -488,10 +494,31 @@ function BossInfo.BuildInfoCategoryUI(rPanel, category, ctx)
             fin()
         end
 
+    -- ============================================================
+    -- MARK: CHANGELOG
+    -- ============================================================
+
     elseif category == "Changelog" then
         do
             local ver = BossHelper.VERSION_STRING or "unknown"
-            local _, add, fin = MakeCard("v" .. ver .. "  —  Jun 8, 2026", {collapsible=true, startExpanded=true})
+            local _, add, fin = MakeCard("v" .. ver .. "  —  Aug 13, 2026", {collapsible=true, startExpanded=true})
+            add("header", "Changed")
+            add("bullet", "Updated all boss tactics for Season 2 dungeons.")
+            add("spacer", 6)
+            add("bullet", "Updated Mythic Teleports spellId and mapId.")
+            add("spacer", 6)
+            add("bullet", "Updated toc.")
+            add("spacer", 8)
+            add("header", "Fixed")
+            add("bullet", "Settings:")
+            add("subbullet", "Fixed a Lua error (attempt to call a nil value) when hovering over settings due to a deprecated WoW API call.")
+            fin()
+        end
+
+
+        do
+            local ver = BossHelper.VERSION_STRING or "unknown"
+            local _, add, fin = MakeCard("v3.2.0  —  Jun 8, 2026", {collapsible=true})
             add("header", "New")
             add("bullet", " Mini Window")
             add("subbullet", "Added a resizable drag handle in the bottom-right of the Mini Window.")
@@ -773,6 +800,10 @@ function BossInfo.BuildInfoCategoryUI(rPanel, category, ctx)
             fin()
         end
 
+        -- ============================================================
+        -- MARK: HELP
+        -- ============================================================
+
     elseif category == "Help" then
         do
             local _, add, fin = MakeCard("Getting Started")
@@ -787,6 +818,10 @@ function BossInfo.BuildInfoCategoryUI(rPanel, category, ctx)
             add("bullet", "Report bugs via the  bug  icon on the Start Page or on GitHub")
             fin()
         end
+
+        -- ============================================================
+        -- MARK: COMMANDS
+        -- ============================================================
 
     elseif category == "Commands" then
         do
@@ -811,6 +846,10 @@ function BossInfo.BuildInfoCategoryUI(rPanel, category, ctx)
             add("bullet", "Any player who whispers that keyword will receive a group invite")
             fin()
         end
+
+        -- ============================================================
+        -- MARK: CREDITS
+        -- ============================================================
 
     elseif category == "Credits" then
         do

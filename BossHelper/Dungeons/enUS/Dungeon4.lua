@@ -1,46 +1,43 @@
 ﻿Dungeon4 = {
-    instanceID = 1299, --Windrunner Spire
+    instanceID = 1309, --The Blinding Vale
     bosses = {
         {
-            encounterID = 2656, -- Derelict Duo
+            encounterID = 2769, -- Lightblossom Trinity
             short       = [[
-1. Interrupt boss, and move out with circles.
-2. CC adds (or curse dispel to despawn)
-3. When targeted by hookshot, move behind spooky ghost lady.
-
-Tank Move boss when ground gets too cluttered.
+1. Kick bolt, move out with circles, and soak all 3 seeds during Lightblossom.
 ]],
             details     = [[Coming soon
 ]]
         },
 
         {
-            encounterID = 2655, -- Emberdawn
+            encounterID = 2770, -- Ikuzz
             short       = [[
-1. Fire = bad
+1. Stepping on roots = bad. 
+2. Stack circles close together, but don't overlap. Kill/Remove the roots that spawn asap.
+3. When fixated, bait boss over roots.
 ]],
             details     = [[Coming soon
 ]]
         },
 
         {
-            encounterID = 2657, -- Commander Kroluk
+            encounterID = 2771, -- Lightwarden Ruia
             short       = [[
-1. Brown circles = bad.
-2. Overlap purple circles.
-3. Run when fixated.
-4. When adds spawn, prio nuke Mystic.
+1. Warden’s Wrath = kick.
+2. Tornadoes = dodge.
+3. Red arrows = spread.
 ]],
             details     = [[Coming soon
 ]]
         },
 
         {
-            encounterID = 2658, -- The Restless Heart
+            encounterID = 2772, -- Ziekket
             short       = [[
-1. Step on small windy arrows to remove Squall Leap DoT AND to jump over expanding shockwave.
-2. Move out of frontal if not targeted.
-3. Use big circles to clear electric stuff off the ground.
+1. Orbs are yummy, soak them.
+2. CC/kick & kill lashers asap.
+3. When targeted by frontal beam, point the beam on the lasgers corpses.
 ]],
             details     = [[Coming soon
 ]]

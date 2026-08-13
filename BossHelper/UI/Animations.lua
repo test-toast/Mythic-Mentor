@@ -688,7 +688,7 @@ function Anim.ApplySettingsRowHover(rowFrame, cb, labelBtn, halfW, r, g, b, onSh
 
     local function Hide()
         C_Timer.After(0.03, function()
-            if MouseIsOver(rowFrame) or MouseIsOver(cb) or MouseIsOver(labelBtn) then return end
+            if rowFrame:IsMouseOver() or cb:IsMouseOver() or labelBtn:IsMouseOver() then return end
             if animState == "shown" or animState == "sliding_in" then
                 animT = 0; animState = "sliding_out"
             end
