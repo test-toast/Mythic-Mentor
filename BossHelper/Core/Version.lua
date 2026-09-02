@@ -23,8 +23,13 @@ function BossHelper:BroadcastVersion()
         end
     end
 
-    if IsInGroup(LE_PARTY_CATEGORY_INSTANCE) then send("INSTANCE_CHAT") end
-    if IsInRaid() then
+    -- Kun ÉN gruppekanal. IsInGroup()/IsInRaid() uden argument er sande også i
+    -- en instansgruppe (delve, dungeon finder, LFR), så de to separate if-blokke
+    -- sendte både INSTANCE_CHAT og PARTY/RAID -- serveren afviser den sidste med
+    -- "You aren't in a party." / "You are not in a raid group."
+    if IsInGroup(LE_PARTY_CATEGORY_INSTANCE or 2) then
+        send("INSTANCE_CHAT")
+    elseif IsInRaid() then
         send("RAID")
     elseif IsInGroup() then
         send("PARTY")

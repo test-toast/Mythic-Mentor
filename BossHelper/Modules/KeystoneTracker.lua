@@ -82,7 +82,11 @@ local function PruneAndRequest()
         end
     end
 
-    if not IsInRaid() and IsInGroup() then
+    -- LibKeystone.Request accepterer kun PARTY eller GUILD, så en instansgruppe
+    -- (delve, dungeon finder, LFR) kan slet ikke nås -- og et PARTY-kald der
+    -- giver "You aren't in a party.". Derfor tjekkes HOME-kategorien eksplicit.
+    local HOME = LE_PARTY_CATEGORY_HOME or 1
+    if IsInGroup(HOME) and not IsInRaid(HOME) then
         LibKeystone.Request("PARTY")
     end
 

@@ -15,12 +15,14 @@ local ChatManager = {
     isSending = false
 }
 
--- Returnerer den aktive gruppe-kanal, eller nil hvis man ikke er i en gruppe
+-- Returnerer den aktive gruppe-kanal, eller nil hvis man ikke er i en gruppe.
+-- Instansgruppen SKAL tjekkes først: IsInRaid() uden argument er også sand i
+-- LFR, og "RAID" bliver dér afvist af serveren med "You are not in a raid group."
 function ChatManager:GetChannel()
-    if IsInRaid() then
-        return "RAID"
-    elseif IsInGroup(LE_PARTY_CATEGORY_INSTANCE) then
+    if IsInGroup(LE_PARTY_CATEGORY_INSTANCE or 2) then
         return "INSTANCE_CHAT"
+    elseif IsInRaid() then
+        return "RAID"
     elseif IsInGroup() then
         return "PARTY"
     end
